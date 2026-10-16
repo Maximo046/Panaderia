@@ -1,0 +1,13 @@
+{
+    "nunito": {
+        "300": "C:\\xampp\\htdocs\\Panaderia\\Libreria\\dompdf\\vendor\\dompdf\\dompdf\/lib\/fonts\/nunito_300_3fddd15c1bb67fc87ce8d7db67a29039",
+        "normal": "C:\\xampp\\htdocs\\Panaderia\\Libreria\\dompdf\\vendor\\dompdf\\dompdf\/lib\/fonts\/nunito_normal_2a4acf31ca5aa91962c9c83f1afda778",
+        "600": "C:\\xampp\\htdocs\\Panaderia\\Libreria\\dompdf\\vendor\\dompdf\\dompdf\/lib\/fonts\/nunito_600_9be183611b7cff0c8409e669730fe188",
+        "bold": "nunito_bold_2cc487c0c57c944bf324bd79c4bcce59"
+    },
+    "playfair display": {
+        "italic": "C:\\xampp\\htdocs\\Panaderia\\Libreria\\dompdf\\vendor\\dompdf\\dompdf\/lib\/fonts\/playfair_display_italic_bab3bae3f62f67e682f698e956a7d149",
+        "normal": "C:\\xampp\\htdocs\\Panaderia\\Libreria\\dompdf\\vendor\\dompdf\\dompdf\/lib\/fonts\/playfair_display_normal_ec27347baaef350a626d943a8fab74c6",
+        "bold": "playfair_display_bold_1e531eb7e3e1e9744697b9dd01c254b4"
+    }
+}
