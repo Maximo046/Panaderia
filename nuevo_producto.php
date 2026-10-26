@@ -18,6 +18,7 @@ require_once 'auth.php';
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Nunito:wght@300;400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="Framework/bootstrap-5.1.3/css/bootstrap.min.css"/>
   <link rel="stylesheet" href="CSS/styles.css"/>
+  <script src="JS/app.js" defer></script>
 </head>
 <body>
 
@@ -50,6 +51,8 @@ require_once 'auth.php';
     <section class="card form-card">
       <div class="card-header"><h2>Datos del Producto</h2></div>
 
+      <div id="notif-producto" class="notif" role="status"></div>
+
       <form id="form-nuevo-producto" method="POST">
         <div class="form-group">
           <label>Nombre del producto</label>
@@ -63,7 +66,7 @@ require_once 'auth.php';
             $lista_unidades = mysqli_query($conexion, "SELECT idunidad_de_medida, nombre FROM unidad_de_medida");
             while ($unidad = mysqli_fetch_assoc($lista_unidades)):
             ?>
-              <option value="<?= $unidad['idunidad_de_medida'] ?>"><?= $unidad['nombre'] ?></option>
+              <option value="<?= (int) $unidad['idunidad_de_medida'] ?>"><?= htmlspecialchars($unidad['nombre']) ?></option>
             <?php endwhile; ?>
           </select>
         </div>
@@ -73,19 +76,13 @@ require_once 'auth.php';
   </main>
 
   <script>
-  document.getElementById('form-nuevo-producto').addEventListener('submit', function(evento) {
-      evento.preventDefault();
-      var peticion = new XMLHttpRequest();
-      peticion.open('POST', 'PHP/registrar_producto.php', true);
-      peticion.onreadystatechange = function() {
-          if (peticion.readyState == 4) {
-              var respuesta = JSON.parse(peticion.responseText);
-              alert(respuesta.mensaje);
-              if (respuesta.ok) document.getElementById('form-nuevo-producto').reset();
-          }
-      };
-      peticion.send(new FormData(document.getElementById('form-nuevo-producto')));
-  });
+    document.addEventListener('DOMContentLoaded', function () {
+      window.enviarFormulario(
+        document.getElementById('form-nuevo-producto'),
+        'PHP/registrar_producto.php',
+        { notificacion: 'notif-producto', reset: true }
+      );
+    });
   </script>
 
   <script src="Framework/bootstrap-5.1.3/js/bootstrap.bundle.min.js"></script>

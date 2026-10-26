@@ -7,6 +7,7 @@ use PHPMailer\PHPMailer\PHPMailer;
 require_once __DIR__ . '/../Libreria/PHPMailer/src/Exception.php';
 require_once __DIR__ . '/../Libreria/PHPMailer/src/PHPMailer.php';
 require_once __DIR__ . '/../Libreria/PHPMailer/src/SMTP.php';
+require_once __DIR__ . '/utilidades.php';
 
 function enviar_alerta_stock(mysqli $conexion): bool
 {
@@ -23,11 +24,14 @@ function enviar_alerta_stock(mysqli $conexion): bool
     $alertas = [];
 
     $insumos = mysqli_query($conexion, "
-        SELECT i.nombre, s.cantidad, s.stock_minimo, u.abreviatura
-        FROM stock_insumos s
-        INNER JOIN insumos i ON i.idinsumos = s.id_insumo
+        SELECT i.nombre,
+               COALESCE(s.cantidad, 0) AS cantidad,
+               COALESCE(s.stock_minimo, 10) AS stock_minimo,
+               u.abreviatura
+        FROM insumos i
         INNER JOIN unidad_de_medida u ON u.idunidad_de_medida = i.idunidad_de_medida
-        WHERE s.cantidad <= s.stock_minimo
+        LEFT  JOIN stock_insumos s    ON s.id_insumo = i.idinsumos
+        WHERE COALESCE(s.cantidad, 0) < COALESCE(s.stock_minimo, 10)
         ORDER BY i.nombre
     ");
 
@@ -44,11 +48,14 @@ function enviar_alerta_stock(mysqli $conexion): bool
     }
 
     $productos = mysqli_query($conexion, "
-        SELECT p.nombre, s.cantidad, s.stock_minimo, u.abreviatura
-        FROM stock_productos s
-        INNER JOIN productos p ON p.idproductos = s.id_producto
+        SELECT p.nombre,
+               COALESCE(s.cantidad, 0) AS cantidad,
+               COALESCE(s.stock_minimo, 10) AS stock_minimo,
+               u.abreviatura
+        FROM productos p
         INNER JOIN unidad_de_medida u ON u.idunidad_de_medida = p.idunidad_de_medida
-        WHERE s.cantidad <= s.stock_minimo
+        LEFT  JOIN stock_productos s  ON s.id_producto = p.idproductos
+        WHERE COALESCE(s.cantidad, 0) < COALESCE(s.stock_minimo, 10)
         ORDER BY p.nombre
     ");
 
@@ -95,8 +102,8 @@ function enviar_alerta_stock(mysqli $conexion): bool
     $filas_html = '';
     $filas_texto = '';
     foreach ($alertas as $alerta) {
-        $cantidad = rtrim(rtrim(number_format($alerta['cantidad'], 3, '.', ''), '0'), '.');
-        $minimo = rtrim(rtrim(number_format($alerta['minimo'], 3, '.', ''), '0'), '.');
+        $cantidad = formatear_cantidad($alerta['cantidad']);
+        $minimo = formatear_cantidad($alerta['minimo']);
         $nombre = htmlspecialchars($alerta['nombre'], ENT_QUOTES, 'UTF-8');
         $tipo = htmlspecialchars($alerta['tipo'], ENT_QUOTES, 'UTF-8');
         $unidad = htmlspecialchars($alerta['unidad'], ENT_QUOTES, 'UTF-8');
@@ -119,7 +126,7 @@ function enviar_alerta_stock(mysqli $conexion): bool
         $correo->isHTML(true);
         $correo->Subject = 'Alerta de stock bajo - Panadería Normal 10';
         $correo->Body = '<h2>Alerta de stock bajo</h2>'
-            . '<p>Los siguientes artículos están en el mínimo o por debajo:</p>'
+            . '<p>Los siguientes artículos están por debajo del stock mínimo:</p>'
             . '<ul>' . $filas_html . '</ul>';
         $correo->AltBody = "Alerta de stock bajo\n\n{$filas_texto}";
         $correo->send();

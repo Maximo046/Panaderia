@@ -1,4 +1,7 @@
 <?php
+// XAMPP trae PHP con Europe/Berlin por defecto; usamos la hora local.
+date_default_timezone_set('America/Argentina/Buenos_Aires');
+
 $servidor    = "localhost";
 $usuario     = "root";
 $contrasena  = "";

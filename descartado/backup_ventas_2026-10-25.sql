@@ -1,0 +1,87 @@
+-- MariaDB dump 10.19  Distrib 10.4.32-MariaDB, for Win64 (AMD64)
+--
+-- Host: localhost    Database: panaderia_normal10
+-- ------------------------------------------------------
+-- Server version	10.4.32-MariaDB
+
+/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
+/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
+/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
+/*!40101 SET NAMES utf8mb4 */;
+/*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;
+/*!40103 SET TIME_ZONE='+00:00' */;
+/*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;
+/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
+/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
+/*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
+
+--
+-- Table structure for table `ventas`
+--
+
+DROP TABLE IF EXISTS `ventas`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `ventas` (
+  `idventas` int(11) NOT NULL AUTO_INCREMENT,
+  `id_metodopago` int(11) NOT NULL,
+  `fecha` datetime NOT NULL DEFAULT current_timestamp(),
+  `total` decimal(10,2) NOT NULL DEFAULT 0.00,
+  PRIMARY KEY (`idventas`),
+  KEY `fk_venta_metodopago_idx` (`id_metodopago`),
+  CONSTRAINT `fk_venta_metodopago` FOREIGN KEY (`id_metodopago`) REFERENCES `metodos_pago` (`idmetodos_pago`)
+) ENGINE=InnoDB AUTO_INCREMENT=29 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `ventas`
+--
+
+LOCK TABLES `ventas` WRITE;
+/*!40000 ALTER TABLE `ventas` DISABLE KEYS */;
+INSERT INTO `ventas` VALUES (1,1,'2026-06-13 21:49:06',4800.00),(2,2,'2026-06-13 21:49:22',3600.00),(3,1,'2026-06-13 22:23:37',22000.00),(4,3,'2026-06-13 23:49:43',7600.00),(5,1,'2026-06-18 13:58:54',10000.00),(6,1,'2026-06-18 14:01:23',1000.00),(7,4,'2026-08-17 17:53:21',1800.00),(8,1,'2026-08-17 17:53:40',1200.00),(9,1,'2026-08-18 16:43:08',7200.00),(10,1,'2026-08-30 21:32:43',6500.00),(11,1,'2026-08-30 23:40:37',3000.00),(12,1,'2026-08-30 23:45:10',3600.00),(13,2,'2026-08-31 00:00:54',2400.00),(14,1,'2026-08-31 00:30:09',25600.00),(15,1,'2026-09-03 14:48:16',6800.00),(16,1,'2026-09-12 19:56:26',25000.00),(17,1,'2026-09-13 22:50:35',500.00),(18,1,'2026-09-13 22:50:39',500.00),(19,1,'2026-09-13 22:51:10',600.00),(20,1,'2026-09-13 22:51:32',1000.00),(21,1,'2026-09-20 17:28:29',2000.00),(22,1,'2026-09-20 17:28:33',2000.00),(23,2,'2026-10-01 13:59:47',5000.00),(24,1,'2026-10-01 15:12:18',3000.00),(25,1,'2026-10-09 13:08:42',61300.00),(26,1,'2026-10-09 13:38:18',500.00),(27,1,'2026-10-15 20:28:22',5400.00),(28,1,'2026-10-15 20:33:01',5200.00);
+/*!40000 ALTER TABLE `ventas` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `detalle_venta`
+--
+
+DROP TABLE IF EXISTS `detalle_venta`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `detalle_venta` (
+  `iddetalle_venta` int(11) NOT NULL AUTO_INCREMENT,
+  `id_venta` int(11) NOT NULL,
+  `id_producto` int(11) NOT NULL,
+  `cantidad` decimal(10,3) NOT NULL,
+  `precio_unitario` decimal(10,2) NOT NULL,
+  `subtotal` decimal(10,2) NOT NULL,
+  PRIMARY KEY (`iddetalle_venta`),
+  KEY `fk_detalle_venta_idx` (`id_venta`),
+  KEY `fk_detalle_producto_idx` (`id_producto`),
+  CONSTRAINT `fk_detalle_producto` FOREIGN KEY (`id_producto`) REFERENCES `productos` (`idproductos`),
+  CONSTRAINT `fk_detalle_venta` FOREIGN KEY (`id_venta`) REFERENCES `ventas` (`idventas`)
+) ENGINE=InnoDB AUTO_INCREMENT=46 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `detalle_venta`
+--
+
+LOCK TABLES `detalle_venta` WRITE;
+/*!40000 ALTER TABLE `detalle_venta` DISABLE KEYS */;
+INSERT INTO `detalle_venta` VALUES (1,1,2,4.000,1200.00,4800.00),(2,2,2,3.000,1200.00,3600.00),(3,3,1,4.000,400.00,1600.00),(4,3,2,2.000,1200.00,2400.00),(5,3,4,3.000,6000.00,18000.00),(6,4,1,1.000,400.00,400.00),(7,4,2,1.000,1200.00,1200.00),(8,4,4,1.000,6000.00,6000.00),(9,5,3,5.000,2000.00,10000.00),(10,6,3,0.500,2000.00,1000.00),(11,7,3,1.500,1200.00,1800.00),(12,8,1,2.000,600.00,1200.00),(13,9,3,6.000,1200.00,7200.00),(14,10,2,5.000,1300.00,6500.00),(15,11,3,3.000,1000.00,3000.00),(16,12,5,3.000,1200.00,3600.00),(17,13,3,2.000,1200.00,2400.00),(18,14,3,3.000,1000.00,3000.00),(19,14,1,6.000,600.00,3600.00),(20,14,4,1.000,15000.00,15000.00),(21,14,5,4.000,1000.00,4000.00),(22,15,3,5.000,1000.00,5000.00),(23,15,1,3.000,600.00,1800.00),(24,16,3,25.000,1000.00,25000.00),(25,17,1,1.000,500.00,500.00),(26,18,1,1.000,500.00,500.00),(27,19,1,1.000,600.00,600.00),(28,20,5,1.000,1000.00,1000.00),(29,21,3,2.000,1000.00,2000.00),(30,22,3,2.000,1000.00,2000.00),(31,23,3,1.000,1000.00,1000.00),(32,23,1,2.000,500.00,1000.00),(33,23,2,3.000,1000.00,3000.00),(34,24,3,3.000,1000.00,3000.00),(35,25,3,3.000,1000.00,3000.00),(36,25,1,7.000,500.00,3500.00),(37,25,2,4.000,1200.00,4800.00),(38,25,4,5.000,6000.00,30000.00),(39,25,5,20.000,1000.00,20000.00),(40,26,1,1.000,500.00,500.00),(41,27,3,3.000,1000.00,3000.00),(42,27,1,4.000,600.00,2400.00),(43,28,3,1.000,1000.00,1000.00),(44,28,1,2.000,600.00,1200.00),(45,28,2,3.000,1000.00,3000.00);
+/*!40000 ALTER TABLE `detalle_venta` ENABLE KEYS */;
+UNLOCK TABLES;
+/*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
+
+/*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
+/*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;
+/*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;
+/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
+/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
+/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
+/*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
+
+-- Dump completed on 2026-10-25 22:43:43

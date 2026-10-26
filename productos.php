@@ -6,6 +6,7 @@ $pagina_actual = 'productos';
 session_start();
 require_once 'conexion.php';
 require_once 'auth.php';
+require_once 'PHP/utilidades.php';
 ?>
 
 <!DOCTYPE html>
@@ -18,9 +19,10 @@ require_once 'auth.php';
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Nunito:wght@300;400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="Framework/bootstrap-5.1.3/css/bootstrap.min.css"/>
-  <link rel="stylesheet" href="CSS/styles.css"/>
   <link rel="stylesheet" href="Libreria/DataTables/datatables.min.css"/>
+  <link rel="stylesheet" href="CSS/styles.css"/>
   <script src="Libreria/DataTables/datatables.min.js" defer></script>
+  <script src="JS/app.js" defer></script>
 </head>
 
 <body>
@@ -60,7 +62,7 @@ require_once 'auth.php';
       <a href="nueva_receta.php" class="btn-primary">Añadir Receta</a>
     </div>
 
-    <section class="card insumos-reporte" aria-label="Productos Registrados">
+    <section class="card" aria-label="Productos Registrados">
       <header class="card-header"><h2>Productos</h2></header>
 
       <div class="lista-productos">
@@ -75,7 +77,7 @@ require_once 'auth.php';
         if (mysqli_num_rows($lista_productos) === 0): ?>
           <p class="sin-datos">No hay productos registrados.</p>
         <?php else: ?>
-          <table id="tabla-productos" class="display" style="width:100%">
+          <table id="tabla-productos" class="display">
             <thead>
               <tr>
                 <th>Producto</th>
@@ -95,7 +97,7 @@ require_once 'auth.php';
 
                 $partes_receta = [];
                 while ($fila_receta = mysqli_fetch_assoc($receta_del_producto)) {
-                    $partes_receta[] = htmlspecialchars($fila_receta['nombre_insumo']) . ' : ' . htmlspecialchars($fila_receta['cantidad']) . ' ' . htmlspecialchars($fila_receta['abreviatura']);
+                    $partes_receta[] = htmlspecialchars($fila_receta['nombre_insumo']) . ' : ' . formatear_cantidad($fila_receta['cantidad']) . ' ' . htmlspecialchars($fila_receta['abreviatura']);
                 }
                 ?>
                 <tr>
@@ -115,21 +117,8 @@ require_once 'auth.php';
 
   <script>
     document.addEventListener('DOMContentLoaded', function () {
-    if (window.DataTable) {
-      new DataTable('#tabla-productos', {
-        paging: true,
-        searching: true,
-        ordering: true,
-        info: true,
-        lengthChange: true,
-        pageLength: 10,
-        language: {
-          url: 'https://cdn.datatables.net/plug-ins/2.1.8/i18n/es-ES.json'
-        }
-      });
-    }
+      window.iniciarTabla('#tabla-productos');
     });
-
   </script>
   <script src="Framework/bootstrap-5.1.3/js/bootstrap.bundle.min.js"></script>
 </body>

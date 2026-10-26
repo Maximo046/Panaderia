@@ -18,6 +18,7 @@ require_once 'auth.php';
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Nunito:wght@300;400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="Framework/bootstrap-5.1.3/css/bootstrap.min.css"/>
   <link rel="stylesheet" href="CSS/styles.css"/>
+  <script src="JS/app.js" defer></script>
 </head>
 <body>
 
@@ -52,6 +53,8 @@ require_once 'auth.php';
     <section class="card form-card">
       <div class="card-header"><h2>Agregar Insumo a Receta</h2></div>
 
+      <div id="notif-receta" class="notif" role="status"></div>
+
       <form id="form-receta" method="POST">
         <div class="form-group">
           <label>Producto</label>
@@ -61,7 +64,7 @@ require_once 'auth.php';
             $lista_productos = mysqli_query($conexion, "SELECT idproductos, nombre FROM productos ORDER BY nombre");
             while ($producto = mysqli_fetch_assoc($lista_productos)):
             ?>
-              <option value="<?= $producto['idproductos'] ?>"><?= $producto['nombre'] ?></option>
+              <option value="<?= (int) $producto['idproductos'] ?>"><?= htmlspecialchars($producto['nombre']) ?></option>
             <?php endwhile; ?>
           </select>
         </div>
@@ -73,7 +76,7 @@ require_once 'auth.php';
             $lista_insumos = mysqli_query($conexion, "SELECT idinsumos, nombre FROM insumos ORDER BY nombre");
             while ($insumo = mysqli_fetch_assoc($lista_insumos)):
             ?>
-              <option value="<?= $insumo['idinsumos'] ?>"><?= $insumo['nombre'] ?></option>
+              <option value="<?= (int) $insumo['idinsumos'] ?>"><?= htmlspecialchars($insumo['nombre']) ?></option>
             <?php endwhile; ?>
           </select>
         </div>
@@ -87,19 +90,14 @@ require_once 'auth.php';
   </main>
 
   <script>
-  document.getElementById('form-receta').addEventListener('submit', function(evento) {
-      evento.preventDefault();
-      var peticion = new XMLHttpRequest();
-      peticion.open('POST', 'PHP/registrar_receta.php', true);
-      peticion.onreadystatechange = function() {
-          if (peticion.readyState == 4) {
-              var respuesta = JSON.parse(peticion.responseText);
-              alert(respuesta.mensaje);
-              if (respuesta.ok) document.getElementById('form-receta').querySelector('[name="cantidad"]').value = '';
-          }
-      };
-      peticion.send(new FormData(document.getElementById('form-receta')));
-  });
+    document.addEventListener('DOMContentLoaded', function () {
+      window.enviarFormulario(document.getElementById('form-receta'), 'PHP/registrar_receta.php', {
+        notificacion: 'notif-receta',
+        onSuccess: function (datos, formulario) {
+          formulario.querySelector('[name="cantidad"]').value = '';
+        }
+      });
+    });
   </script>
 
   <script src="Framework/bootstrap-5.1.3/js/bootstrap.bundle.min.js"></script>

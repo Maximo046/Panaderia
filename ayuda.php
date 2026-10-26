@@ -18,6 +18,7 @@ require_once 'auth.php';
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Nunito:wght@300;400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="Framework/bootstrap-5.1.3/css/bootstrap.min.css"/>
   <link rel="stylesheet" href="CSS/styles.css"/>
+  <script src="JS/app.js" defer></script>
 </head>
 <body>
   <aside class="sidebar">
@@ -51,12 +52,12 @@ require_once 'auth.php';
         <ul class="guia-list">
           <?php
           $items_guia = [
-              ['Stock', 'Consultá en tiempo real el stock disponible de insumos y productos. También muestra alertas cuando algún insumo está por debajo del mínimo establecido.'],
+              ['Stock', 'Consultá en tiempo real el stock disponible de insumos y productos. También muestra alertas cuando algún artículo está por debajo del mínimo establecido.'],
               ['Insumos', 'Registrá la compra de materias primas indicando el insumo, cantidad, precio, proveedor y método de pago. También podés dar de alta nuevos insumos con su unidad de medida.'],
               ['Producción', 'Registrá la producción de cada producto ingresando la cantidad fabricada. El sistema descuenta automáticamente los insumos usados según la receta y suma el stock de productos disponibles.'],
               ['Productos', 'Administrá los productos de la panadería y sus recetas. Podés agregar nuevos productos, asignarles una unidad de medida y definir qué insumos y en qué cantidad requiere cada uno.'],
-              ['Ventas', 'Registrá las ventas del día seleccionando los productos, ingresando cantidad y precio unitario de cada uno, y eligiendo el método de pago. El sistema descuenta el stock automáticamente.'],
-              ['Reportes', 'Visualizá el historial completo de consumos de insumos, ingresos de materias primas, producción y ventas. Podés filtrar por mes para analizar el movimiento en un período específico.'],
+              ['Salidas', 'Registrá la salida de productos del depósito indicando cantidad y motivo (venta mostrador, consumo interno, merma, rotura, donación u otro). El sistema descuenta el stock automáticamente, sin registrar precios ni facturación.'],
+              ['Reportes', 'Visualizá el historial completo de consumos de insumos, ingresos de materias primas, producción y salidas de productos. Podés filtrar por mes para analizar el movimiento en un período específico y descargar el reporte en PDF.'],
               ['Ayuda', 'Encontrás esta guía de uso, las preguntas frecuentes y un formulario de contacto para comunicarte con el administrador del sistema ante cualquier duda o inconveniente.'],
           ];
           foreach ($items_guia as [$titulo_seccion, $descripcion_seccion]):
@@ -76,10 +77,10 @@ require_once 'auth.php';
         <div class="faq-list">
           <?php
           $preguntas_frecuentes = [
-              ['¿Cómo registro una entrada de insumo?', 'Ingresá a <strong>Materias Primas</strong>, seleccioná el insumo, completá la cantidad y fecha, y luego enviá el formulario.'],
+              ['¿Cómo registro una entrada de insumo?', 'Ingresá a <strong>Insumos</strong>, seleccioná el insumo, completá la cantidad y fecha, y luego enviá el formulario.'],
               ['¿Cómo produzo un producto?', 'En <strong>Producción</strong>, elegí el producto, ingresá la cantidad a producir y el sistema ajustará el stock de insumos automáticamente.'],
-              ['¿Dónde registro una venta?', 'Usá la pestaña <strong>Ventas</strong> para ingresar el producto, la cantidad y el precio. El sistema guardará el movimiento para los reportes.'],
-              ['¿Cómo veo los reportes por mes?', 'Ingresá a <strong>Reportes</strong>, seleccioná el mes deseado y verás consumos de insumos, producción e ingresos registrados.'],
+              ['¿Cómo registro la salida de un producto?', 'Usá la pestaña <strong>Salidas</strong>, ingresá la cantidad de cada producto que sale del depósito, elegí el motivo y confirmá. El sistema descuenta el stock automáticamente.'],
+              ['¿Cómo veo los reportes por mes?', 'Ingresá a <strong>Reportes</strong>, seleccioná el mes deseado y verás los ingresos de insumos, consumos, producción y salidas de productos. Desde allí también podés descargar el PDF.'],
           ];
           foreach ($preguntas_frecuentes as [$pregunta, $respuesta]):
           ?>
@@ -96,6 +97,8 @@ require_once 'auth.php';
 
     <section class="card contacto-card" aria-label="Formulario de contacto">
       <header class="card-header"><h2>Contacto:</h2></header>
+
+      <div id="notif-contacto" class="notif" role="status"></div>
 
       <form id="form-contacto" action="PHP/formulario_ayuda.php" method="post" class="contacto-form">
         <div class="form-group">
@@ -115,7 +118,7 @@ require_once 'auth.php';
               $lista_asuntos = mysqli_query($conexion, "SELECT idasunto, nombre FROM asunto");
               while ($asunto = mysqli_fetch_assoc($lista_asuntos)):
               ?>
-                <option value="<?= $asunto['idasunto'] ?>"><?= $asunto['nombre'] ?></option>
+                <option value="<?= (int) $asunto['idasunto'] ?>"><?= htmlspecialchars($asunto['nombre']) ?></option>
               <?php endwhile; ?>
             </select>
           </div>
@@ -147,19 +150,13 @@ require_once 'auth.php';
   </main>
 
   <script>
-  document.getElementById('form-contacto').addEventListener('submit', function(evento) {
-      evento.preventDefault();
-      var peticion = new XMLHttpRequest();
-      peticion.open('POST', 'PHP/formulario_ayuda.php', true);
-      peticion.onreadystatechange = function() {
-          if (peticion.readyState == 4) {
-              var respuesta = JSON.parse(peticion.responseText);
-              alert(respuesta.mensaje);
-              if (respuesta.ok) document.getElementById('form-contacto').reset();
-          }
-      };
-      peticion.send(new FormData(document.getElementById('form-contacto')));
-  });
+    document.addEventListener('DOMContentLoaded', function () {
+      window.enviarFormulario(
+        document.getElementById('form-contacto'),
+        'PHP/formulario_ayuda.php',
+        { notificacion: 'notif-contacto', reset: true }
+      );
+    });
   </script>
   <script src="Framework/bootstrap-5.1.3/js/bootstrap.bundle.min.js"></script>
 </body>

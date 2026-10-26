@@ -10,15 +10,14 @@ $mensaje_error = '';
 
 // Redirigir destinos según el rol
 $pagina_por_rol = [
-    'Vendedor'      => 'ventas.php',
-    'Panadero'      => 'insumos.php',
+    'Panadero'      => 'stock.php',
     'Administrador' => 'stock.php',
 ];
 
 // Si ya hay sesión activa, redirigir directamente
 if (isset($_SESSION['usuario_id'])) {
     $rol_actual = $_SESSION['usuario_rol'] ?? '';
-    header('Location: ' . ($pagina_por_rol[$rol_actual] ?? 'ventas.php'));
+    header('Location: ' . ($pagina_por_rol[$rol_actual] ?? 'stock.php'));
     exit;
 }
 
@@ -56,7 +55,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $_SESSION['usuario_correo'] = $usuario_encontrado['correo'];
             $_SESSION['usuario_rol']    = $usuario_encontrado['rol'];
 
-            $redireccion = $pagina_por_rol[$usuario_encontrado['rol']] ?? 'ventas.php';
+            $redireccion = $pagina_por_rol[$usuario_encontrado['rol']] ?? 'stock.php';
             header('Location: ' . $redireccion);
             exit;
         }

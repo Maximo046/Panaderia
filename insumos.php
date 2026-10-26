@@ -20,6 +20,7 @@ require_once 'auth.php';
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Nunito:wght@300;400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="Framework/bootstrap-5.1.3/css/bootstrap.min.css"/>
   <link rel="stylesheet" href="CSS/styles.css"/>
+  <script src="JS/app.js" defer></script>
 </head>
 
 <body>
@@ -57,7 +58,9 @@ require_once 'auth.php';
 <!-- Formulario para añadir insumos  -->
       <section class="card form-card" aria-label="Registrar entrada de insumo">
         <header class="card-header"><h2>Registrar Entrada de Insumo:</h2></header>
-        
+
+        <div id="notif-compra" class="notif" role="status"></div>
+
         <form id="form-compra" method="POST">
           <div class="form-grid">
 
@@ -70,7 +73,7 @@ require_once 'auth.php';
                   $lista_insumos = mysqli_query($conexion, "SELECT idinsumos, nombre FROM insumos ORDER BY nombre");
                   while ($insumo = mysqli_fetch_assoc($lista_insumos)):
                   ?>
-                    <option value="<?= $insumo['idinsumos'] ?>"><?= $insumo['nombre'] ?></option>
+                    <option value="<?= (int) $insumo['idinsumos'] ?>"><?= htmlspecialchars($insumo['nombre']) ?></option>
                   <?php endwhile; ?>
                 </select>
               </div>
@@ -100,7 +103,7 @@ require_once 'auth.php';
                   $lista_proveedores = mysqli_query($conexion, "SELECT idproveedores, nombre FROM proveedores ORDER BY nombre");
                   while ($proveedor = mysqli_fetch_assoc($lista_proveedores)):
                   ?>
-                    <option value="<?= $proveedor['idproveedores'] ?>"><?= $proveedor['nombre'] ?></option>
+                    <option value="<?= (int) $proveedor['idproveedores'] ?>"><?= htmlspecialchars($proveedor['nombre']) ?></option>
                   <?php endwhile; ?>
                 </select>
               </div>
@@ -116,7 +119,7 @@ require_once 'auth.php';
                   $lista_metodos_pago = mysqli_query($conexion, "SELECT idmetodos_pago, nombre FROM metodos_pago");
                   while ($metodo = mysqli_fetch_assoc($lista_metodos_pago)):
                   ?>
-                    <option value="<?= $metodo['idmetodos_pago'] ?>"><?= $metodo['nombre'] ?></option>
+                    <option value="<?= (int) $metodo['idmetodos_pago'] ?>"><?= htmlspecialchars($metodo['nombre']) ?></option>
                   <?php endwhile; ?>
                 </select>
 
@@ -139,6 +142,8 @@ require_once 'auth.php';
       <section class="card form-card" aria-label="Añadir nuevo insumo">
         <header class="card-header"><h2>Añadir Nuevo Insumo:</h2></header>
 
+        <div id="notif-insumo" class="notif" role="status"></div>
+
         <form id="form-insumo" method="POST">
 
           <div class="form-grid">
@@ -158,7 +163,7 @@ require_once 'auth.php';
                   $lista_unidades = mysqli_query($conexion, "SELECT idunidad_de_medida, nombre FROM unidad_de_medida");
                   while ($unidad = mysqli_fetch_assoc($lista_unidades)):
                   ?>
-                    <option value="<?= $unidad['idunidad_de_medida'] ?>"><?= $unidad['nombre'] ?></option>
+                    <option value="<?= (int) $unidad['idunidad_de_medida'] ?>"><?= htmlspecialchars($unidad['nombre']) ?></option>
                   <?php endwhile; ?>
                 </select>
 
@@ -175,38 +180,20 @@ require_once 'auth.php';
     </div>
   </main>
 
-<!-- Scripts del metodo AJAX  -->
-
   <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      window.enviarFormulario(
+        document.getElementById('form-compra'),
+        'PHP/registrar_compra.php',
+        { notificacion: 'notif-compra', reset: true }
+      );
 
-  document.getElementById('form-compra').addEventListener('submit', function(evento) {
-      evento.preventDefault();
-      var peticion = new XMLHttpRequest();
-      peticion.open('POST', 'PHP/registrar_compra.php', true);
-      peticion.onreadystatechange = function() {
-          if (peticion.readyState == 4) {
-              var respuesta = JSON.parse(peticion.responseText);
-              alert(respuesta.mensaje);
-              if (respuesta.ok) document.getElementById('form-compra').reset();
-          }
-      };
-      peticion.send(new FormData(document.getElementById('form-compra')));
-  });
-
-  document.getElementById('form-insumo').addEventListener('submit', function(evento) {
-      evento.preventDefault();
-      var peticion = new XMLHttpRequest();
-      peticion.open('POST', 'PHP/registrar_insumo.php', true);
-      peticion.onreadystatechange = function() {
-          if (peticion.readyState == 4) {
-              var respuesta = JSON.parse(peticion.responseText);
-              alert(respuesta.mensaje);
-              if (respuesta.ok) document.getElementById('form-insumo').reset();
-          }
-      };
-      peticion.send(new FormData(document.getElementById('form-insumo')));
-  });
-  
+      window.enviarFormulario(
+        document.getElementById('form-insumo'),
+        'PHP/registrar_insumo.php',
+        { notificacion: 'notif-insumo', reset: true }
+      );
+    });
   </script>
   <script src="Framework/bootstrap-5.1.3/js/bootstrap.bundle.min.js"></script>
 </body>

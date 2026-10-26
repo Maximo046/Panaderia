@@ -8,29 +8,30 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
+// Permite que los archivos dentro de subcarpetas indiquen cómo volver a la raíz.
+$prefijo_redireccion = $prefijo_redireccion ?? '';
+
 if (!isset($_SESSION['usuario_rol'])) {
-    header('Location: index.php');
+    header('Location: ' . $prefijo_redireccion . 'index.php');
     exit;
 }
 
 $rol_del_usuario = $_SESSION['usuario_rol'];
 
 $permisos_por_rol = [
-    'Vendedor'      => ['ventas', 'ayuda'],
-    'Panadero'      => ['stock', 'insumos', 'produccion', 'productos', 'nuevo_producto', 'nueva_receta', 'ayuda'],
-    'Administrador' => ['stock', 'insumos', 'produccion', 'productos', 'nuevo_producto', 'nueva_receta', 'ventas', 'reportes', 'ayuda', 'registro'],
+    'Panadero'      => ['stock', 'insumos', 'produccion', 'productos', 'nuevo_producto', 'nueva_receta', 'salidas', 'ayuda'],
+    'Administrador' => ['stock', 'insumos', 'produccion', 'productos', 'nuevo_producto', 'nueva_receta', 'salidas', 'reportes', 'ayuda', 'registro'],
 ];
 
 $paginas_del_rol = $permisos_por_rol[$rol_del_usuario] ?? [];
 
 if (!in_array($pagina_actual, $paginas_del_rol, true)) {
     $pagina_principal_por_rol = [
-        'Vendedor'      => 'ventas.php',
         'Panadero'      => 'stock.php',
         'Administrador' => 'stock.php',
     ];
 
     $redireccion = $pagina_principal_por_rol[$rol_del_usuario] ?? 'index.php';
-    header("Location: $redireccion");
+    header('Location: ' . $prefijo_redireccion . $redireccion);
     exit;
 }

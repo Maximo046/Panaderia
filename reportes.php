@@ -1,30 +1,29 @@
 <?php
 // ============================================================
-// reportes.php — Historial de consumos, ingresos, producción y ventas
+// reportes.php — Historial de consumos, ingresos, producción y salidas
 // ============================================================
 
 $pagina_actual = 'reportes';
 session_start();
 require_once 'conexion.php';
 require_once 'auth.php';
+require_once 'PHP/utilidades.php';
 
 // Filtro por mes (formato YYYY-MM)
 $mes_seleccionado = '';
 $filtro_produccion = '';
 $filtro_compras    = '';
-$filtro_ventas     = '';
+$filtro_salidas    = '';
 
-if (!empty($_GET['mes']) && preg_match('/^\d{4}-\d{2}$/', $_GET['mes'])) {
-    $mes_seleccionado  = $_GET['mes'];
+$mes_solicitado = $_GET['mes'] ?? '';
+
+if (is_string($mes_solicitado) && preg_match('/^\d{4}-(0[1-9]|1[0-2])$/', $mes_solicitado)) {
+    $mes_seleccionado  = $mes_solicitado;
     $filtro_produccion = "WHERE DATE_FORMAT(p.fecha, '%Y-%m') = '$mes_seleccionado'";
     $filtro_compras    = "WHERE DATE_FORMAT(c.fecha, '%Y-%m') = '$mes_seleccionado'";
-    $filtro_ventas     = "WHERE DATE_FORMAT(v.fecha, '%Y-%m') = '$mes_seleccionado'";
+    $filtro_salidas    = "WHERE DATE_FORMAT(s.fecha, '%Y-%m') = '$mes_seleccionado'";
 }
 
-// Función auxiliar para formatear cantidades (limpia ceros y usa coma decimal)
-function formatearCantidad($numero) {
-    return str_replace('.', ',', rtrim(rtrim($numero, '0'), '.')) ?: '0';
-}
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -35,9 +34,10 @@ function formatearCantidad($numero) {
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Nunito:wght@300;400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="Framework/bootstrap-5.1.3/css/bootstrap.min.css"/>
-  <link rel="stylesheet" href="CSS/styles.css"/>
   <link rel="stylesheet" href="Libreria/DataTables/datatables.min.css"/>
+  <link rel="stylesheet" href="CSS/styles.css"/>
   <script src="Libreria/DataTables/datatables.min.js" defer></script>
+  <script src="JS/app.js" defer></script>
 </head>
 <body>
   <aside class="sidebar">
@@ -61,7 +61,7 @@ function formatearCantidad($numero) {
   <main class="main-content">
     <header class="page-header">
       <div>
-        <h1 class="page-title">Reportes de <em>Consumo</em></h1>
+        <h1 class="page-title">Reportes de <em>Movimientos</em></h1>
       </div>
       <form method="GET" action="reportes.php" class="filtro-top">
         <label>Mes del reporte:</label>
@@ -73,7 +73,8 @@ function formatearCantidad($numero) {
       </form>
       
       <div>
-        <a href="PHP/PDF/reportes_pdf.php" class="btn-pdf"  target="_blank">Imprimir Reportes</a>
+        <a href="PHP/PDF/reportes_pdf.php<?= $mes_seleccionado ? '?mes=' . urlencode($mes_seleccionado) : '' ?>"
+           class="btn-pdf" target="_blank">Imprimir Reportes</a>
       </div>
     </header>
 
@@ -92,14 +93,14 @@ function formatearCantidad($numero) {
     ");
     ?>
 
-    <section class="card insumos-reporte" aria-label="Consumos de insumos">
+    <section class="card" aria-label="Consumos de insumos">
       <header class="card-header"><h2>Insumos: Consumos</h2></header>
 
       <?php if (mysqli_num_rows($consumos_insumos) === 0): ?>
         <p class="sin-datos">No hay consumos registrados<?= $sufijo_vacio ?>.</p>
       <?php else: ?>
 
-        <table id="tabla-consumos" class="display" style="width:100%">
+        <table id="tabla-consumos" class="display">
 
           <thead>
             <tr>
@@ -116,7 +117,7 @@ function formatearCantidad($numero) {
               <tr>
                 <td><?= date('d/m/Y', strtotime($fila['fecha'])) ?></td>
                 <td><?= htmlspecialchars($fila['nombre_insumo']) ?></td>
-                <td><?= formatearCantidad($fila['cantidad_consumida']) ?> <?= htmlspecialchars($fila['abreviatura']) ?></td>
+                <td><?= formatear_cantidad($fila['cantidad_consumida']) ?> <?= htmlspecialchars($fila['abreviatura']) ?></td>
               </tr>
 
             <?php endwhile; ?>
@@ -139,7 +140,7 @@ function formatearCantidad($numero) {
     ");
     ?>
 
-    <section class="card insumos-reporte" aria-label="Ingresos de insumos">
+    <section class="card" aria-label="Ingresos de insumos">
       <header class="card-header"><h2>Insumos: Ingresos</h2></header>
 
 
@@ -147,7 +148,7 @@ function formatearCantidad($numero) {
         <p class="sin-datos">No hay ingresos registrados<?= $sufijo_vacio ?>.</p>
       <?php else: ?>
 
-        <table id="tabla-ingresos" class="display" style="width:100%">
+        <table id="tabla-ingresos" class="display">
 
           <thead>
             <tr>
@@ -163,7 +164,7 @@ function formatearCantidad($numero) {
               <tr>
                 <td><?= date('d/m/Y', strtotime($fila['fecha'])) ?></td>
                 <td><?= htmlspecialchars($fila['nombre_insumo']) ?></td>
-                <td><?= formatearCantidad($fila['cantidad']) ?> <?= htmlspecialchars($fila['abreviatura']) ?></td>
+                <td><?= formatear_cantidad($fila['cantidad']) ?> <?= htmlspecialchars($fila['abreviatura']) ?></td>
               </tr>
 
             <?php endwhile; ?>
@@ -186,14 +187,14 @@ function formatearCantidad($numero) {
     ");
     ?>
 
-    <section class="card insumos-reporte" aria-label="Producción registrada">
+    <section class="card" aria-label="Producción registrada">
       <header class="card-header"><h2>Productos: Producción</h2></header>
 
       <?php if (mysqli_num_rows($produccion_registrada) === 0): ?>
         <p class="sin-datos">No hay producciones registradas<?= $sufijo_vacio ?>.</p>
       <?php else: ?>
 
-        <table id="tabla-produccion" class="display" style="width:100%">
+        <table id="tabla-produccion" class="display">
 
           <thead>
             <tr>
@@ -209,7 +210,7 @@ function formatearCantidad($numero) {
               <tr>
                 <td><?= date('d/m/Y', strtotime($fila['fecha'])) ?></td>
                 <td><?= htmlspecialchars($fila['nombre_producto']) ?></td>
-                <td><?= formatearCantidad($fila['cantidad']) ?> <?= htmlspecialchars($fila['abreviatura']) ?></td>
+                <td><?= formatear_cantidad($fila['cantidad']) ?> <?= htmlspecialchars($fila['abreviatura']) ?></td>
               </tr>
             <?php endwhile; ?>
 
@@ -221,44 +222,47 @@ function formatearCantidad($numero) {
     </section>
 
     <?php
-    $ventas_registradas = mysqli_query($conexion, "
-        SELECT v.fecha, pr.nombre AS nombre_producto,
-               dv.cantidad, dv.precio_unitario, dv.subtotal, u.abreviatura
-        FROM detalle_venta dv
-        INNER JOIN ventas v            ON dv.id_venta = v.idventas
-        INNER JOIN productos pr        ON dv.id_producto = pr.idproductos
+    $salidas_registradas = mysqli_query($conexion, "
+        SELECT s.fecha, pr.nombre AS nombre_producto, s.cantidad,
+               s.motivo, s.observacion, u.abreviatura,
+               CONCAT_WS(' ', us.nombre, us.apellido) AS nombre_usuario
+        FROM salidas_productos s
+        INNER JOIN productos pr        ON s.id_producto = pr.idproductos
         INNER JOIN unidad_de_medida u  ON pr.idunidad_de_medida = u.idunidad_de_medida
-        $filtro_ventas
-        ORDER BY v.fecha DESC
+        LEFT  JOIN usuarios us         ON s.id_usuario = us.idusuarios
+        $filtro_salidas
+        ORDER BY s.fecha DESC
     ");
     ?>
 
-    <section class="card insumos-reporte" aria-label="Ventas registradas">
-      <header class="card-header"><h2>Productos: Ventas</h2></header>
+    <section class="card" aria-label="Salidas registradas">
+      <header class="card-header"><h2>Productos: Salidas</h2></header>
 
-      <?php if (mysqli_num_rows($ventas_registradas) === 0): ?>
-        <p class="sin-datos">No hay producciones registradas<?= $sufijo_vacio ?>.</p>
+      <?php if (mysqli_num_rows($salidas_registradas) === 0): ?>
+        <p class="sin-datos">No hay salidas registradas<?= $sufijo_vacio ?>.</p>
       <?php else: ?>
 
-        <table id="tabla-ventas" class="display" style="width:100%">
+        <table id="tabla-salidas" class="display">
           <thead>
             <tr>
               <th>Fecha</th>
               <th>Producto</th>
-              <th>Cantidad vendida</th>
-              <th>Precio Unitario</th>
-              <th>Subtotal</th>
+              <th>Cantidad</th>
+              <th>Motivo</th>
+              <th>Observación</th>
+              <th>Registró</th>
             </tr>
           </thead>
 
           <tbody>
-            <?php while ($fila = mysqli_fetch_assoc($ventas_registradas)): ?>
+            <?php while ($fila = mysqli_fetch_assoc($salidas_registradas)): ?>
               <tr>
                 <td><?= date('d/m/Y', strtotime($fila['fecha'])) ?></td>
                 <td><?= htmlspecialchars($fila['nombre_producto']) ?></td>
-                <td><?= formatearCantidad($fila['cantidad']) ?> <?= htmlspecialchars($fila['abreviatura']) ?></td>
-                <td>$<?= number_format($fila['precio_unitario'], 2, ',', '.') ?></td>
-                <td>$<?= number_format($fila['subtotal'], 2, ',', '.') ?></td>
+                <td><?= formatear_cantidad($fila['cantidad']) ?> <?= htmlspecialchars($fila['abreviatura']) ?></td>
+                <td><?= htmlspecialchars($fila['motivo']) ?></td>
+                <td><?= $fila['observacion'] !== null && $fila['observacion'] !== '' ? htmlspecialchars($fila['observacion']) : '—' ?></td>
+                <td><?= htmlspecialchars($fila['nombre_usuario'] ?: '—') ?></td>
               </tr>
             <?php endwhile; ?>
           </tbody>
@@ -269,69 +273,11 @@ function formatearCantidad($numero) {
 
   <script>
     document.addEventListener('DOMContentLoaded', function () {
-      if (window.DataTable) {
-        new DataTable('#tabla-consumos', {
-          paging: true,
-          searching: true,
-          ordering: true,
-          info: true,
-          lengthChange: true,
-          pageLength: 10,
-          language: {
-            url: 'https://cdn.datatables.net/plug-ins/2.1.8/i18n/es-ES.json'
-          }
-        });
-      }
+      window.iniciarTabla('#tabla-consumos');
+      window.iniciarTabla('#tabla-ingresos');
+      window.iniciarTabla('#tabla-produccion');
+      window.iniciarTabla('#tabla-salidas');
     });
-
-    document.addEventListener('DOMContentLoaded', function () {
-      if (window.DataTable) {
-        new DataTable('#tabla-ingresos', {
-          paging: true,
-          searching: true,
-          ordering: true,
-          info: true,
-          lengthChange: true,
-          pageLength: 10,
-          language: {
-            url: 'https://cdn.datatables.net/plug-ins/2.1.8/i18n/es-ES.json'
-          }
-        });
-      }
-    });
-
-    document.addEventListener('DOMContentLoaded', function () {
-      if (window.DataTable) {
-        new DataTable('#tabla-produccion', {
-          paging: true,
-          searching: true,
-          ordering: true,
-          info: true,
-          lengthChange: true,
-          pageLength: 10,
-          language: {
-            url: 'https://cdn.datatables.net/plug-ins/2.1.8/i18n/es-ES.json'
-          }
-        });
-      }
-    });
-
-    document.addEventListener('DOMContentLoaded', function () {
-      if (window.DataTable) {
-        new DataTable('#tabla-ventas', {
-          paging: true,
-          searching: true,
-          ordering: true,
-          info: true,
-          lengthChange: true,
-          pageLength: 10,
-          language: {
-            url: 'https://cdn.datatables.net/plug-ins/2.1.8/i18n/es-ES.json'
-          }
-        });
-      }
-    });
-
   </script>
   <script src="Framework/bootstrap-5.1.3/js/bootstrap.bundle.min.js"></script>
 </body>

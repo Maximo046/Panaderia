@@ -6,6 +6,7 @@
 header('Content-Type: application/json');
 require_once '../conexion.php';
 require_once __DIR__ . '/alerta_stock.php';
+require_once __DIR__ . '/utilidades.php';
 
 if (empty($_POST['id_producto']) || empty($_POST['cantidad'])) {
     echo json_encode(['ok' => false, 'mensaje' => 'Completá todos los campos.']);
@@ -52,8 +53,8 @@ foreach ($lineas_receta as $linea_receta) {
 
     $fila_stock = mysqli_fetch_assoc($stock_insumo);
     if ($fila_stock['stock_actual'] < $cantidad_a_consumir) {
-        $disponible = rtrim(rtrim($fila_stock['stock_actual'], '0'), '.');
-        $necesario  = rtrim(rtrim($cantidad_a_consumir,         '0'), '.');
+        $disponible = formatear_cantidad($fila_stock['stock_actual']);
+        $necesario  = formatear_cantidad($cantidad_a_consumir);
         echo json_encode([
             'ok'      => false,
             'mensaje' => "Stock insuficiente de \"{$fila_stock['nombre_insumo']}\": necesitás {$necesario}, tenés {$disponible}.",

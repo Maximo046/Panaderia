@@ -11,9 +11,9 @@ $items_del_menu = [
     'insumos'    => ['etiqueta' => 'Insumos',    'enlace' => 'insumos.php',    'roles' => ['Administrador', 'Panadero']],
     'produccion' => ['etiqueta' => 'Producción', 'enlace' => 'produccion.php', 'roles' => ['Administrador', 'Panadero']],
     'productos'  => ['etiqueta' => 'Productos',  'enlace' => 'productos.php',  'roles' => ['Administrador', 'Panadero']],
-    'ventas'     => ['etiqueta' => 'Ventas',     'enlace' => 'ventas.php',     'roles' => ['Administrador', 'Vendedor']],
+    'salidas'    => ['etiqueta' => 'Salidas',    'enlace' => 'salidas.php',    'roles' => ['Administrador', 'Panadero']],
     'reportes'   => ['etiqueta' => 'Reportes',   'enlace' => 'reportes.php',   'roles' => ['Administrador']],
-    'ayuda'      => ['etiqueta' => 'Ayuda',      'enlace' => 'ayuda.php',      'roles' => ['Administrador', 'Vendedor', 'Panadero']],
+    'ayuda'      => ['etiqueta' => 'Ayuda',      'enlace' => 'ayuda.php',      'roles' => ['Administrador', 'Panadero']],
 ];
 
 foreach ($items_del_menu as $clave => $item) {

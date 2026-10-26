@@ -25,6 +25,7 @@ $lista_roles = mysqli_query($conexion, "
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Nunito:wght@300;400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="Framework/bootstrap-5.1.3/css/bootstrap.min.css"/>
   <link rel="stylesheet" href="CSS/styles.css"/>
+  <script src="JS/app.js" defer></script>
 </head>
 <body class="pagina-auth">
   <main class="auth-wrapper">
@@ -63,7 +64,7 @@ $lista_roles = mysqli_query($conexion, "
             <select id="id_rol" name="id_rol" required>
               <option value="">Seleccionar rol</option>
               <?php while ($rol = mysqli_fetch_assoc($lista_roles)): ?>
-                <option value="<?= $rol['idroles'] ?>"><?= htmlspecialchars($rol['nombre']) ?></option>
+                <option value="<?= (int) $rol['idroles'] ?>"><?= htmlspecialchars($rol['nombre']) ?></option>
               <?php endwhile; ?>
             </select>
           </div>
@@ -93,19 +94,16 @@ $lista_roles = mysqli_query($conexion, "
   </main>
 
   <script>
-  document.getElementById('form-registro').addEventListener('submit', function(evento) {
-      evento.preventDefault();
-      var peticion = new XMLHttpRequest();
-      peticion.open('POST', 'PHP/envio_registro.php', true);
-      peticion.onreadystatechange = function() {
-          if (peticion.readyState == 4) {
-              var respuesta = JSON.parse(peticion.responseText);
-              alert(respuesta.mensaje);
-              if (respuesta.ok) window.location.href = 'index.php';
-          }
-      };
-      peticion.send(new FormData(document.getElementById('form-registro')));
-  });
+    document.addEventListener('DOMContentLoaded', function () {
+      window.enviarFormulario(document.getElementById('form-registro'), 'PHP/envio_registro.php', {
+        notificacion: 'notificacion-registro',
+        onSuccess: function () {
+          window.setTimeout(function () {
+            window.location.href = 'index.php';
+          }, 600);
+        }
+      });
+    });
   </script>
   <script src="Framework/bootstrap-5.1.3/js/bootstrap.bundle.min.js"></script>
 </body>
