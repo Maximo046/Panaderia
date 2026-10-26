@@ -53,7 +53,6 @@ if (is_string($mes_solicitado) && preg_match('/^\d{4}-(0[1-9]|1[0-2])$/', $mes_s
     </ul>
     <div class="sidebar-footer">
       <span>Escuela Normal N°10 · 2026</span>
-      <?php include 'admin_registro_link.php'; ?>
       <a href="logout.php" class="btn-logout">Cerrar sesión</a>
     </div>
   </aside>

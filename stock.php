@@ -43,7 +43,6 @@ enviar_alerta_stock($conexion);
     </ul>
     <div class="sidebar-footer">
       <span>Escuela Normal N°10 · 2026</span>
-      <?php include 'admin_registro_link.php'; ?>
       <a href="logout.php" class="btn-logout">Cerrar sesión</a>
     </div>
   </aside>
