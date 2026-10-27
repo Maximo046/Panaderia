@@ -6,6 +6,7 @@
 header('Content-Type: application/json');
 require_once '../conexion.php';
 
+// ==================== Validación del formulario ====================
 if (empty($_POST['nombre']) || empty($_POST['idunidad_de_medida'])) {
     echo json_encode(['ok' => false, 'mensaje' => 'Completá todos los campos.']);
     exit;
@@ -14,6 +15,7 @@ if (empty($_POST['nombre']) || empty($_POST['idunidad_de_medida'])) {
 $nombre_producto  = mysqli_real_escape_string($conexion, $_POST['nombre']);
 $id_unidad_medida = mysqli_real_escape_string($conexion, $_POST['idunidad_de_medida']);
 
+// ==================== Alta del producto y su stock inicial ====================
 mysqli_begin_transaction($conexion);
 
 $producto_creado = mysqli_query($conexion, "
@@ -44,6 +46,7 @@ if (!$stock_inicial) {
 mysqli_commit($conexion);
 mysqli_close($conexion);
 
+// ==================== Respuesta para la interfaz ====================
 echo json_encode([
     'ok'      => true,
     'mensaje' => "Producto \"$nombre_producto\" registrado correctamente.",

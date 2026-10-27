@@ -663,6 +663,206 @@ body.pagina-auth {
   gap: 22px;
 }
 
+.content-grid > .historial-compras {
+  grid-column: 1 / -1;
+}
+
+.fila-compra-cabecera {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.encabezado-entrada {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr 0.6fr;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 14px;
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 700;
+  background: var(--amber);
+}
+
+.fila-entrada {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr 0.6fr;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--cream-dark);
+}
+
+.fila-entrada:nth-child(even) {
+  background: #f9f9f9;
+}
+
+.fila-entrada:hover {
+  background: var(--cream);
+}
+
+.entrada-insumo {
+  display: flex;
+  flex-direction: column;
+}
+
+.entrada-nombre {
+  color: var(--brown-dark);
+  font-weight: 700;
+}
+
+.entrada-stock {
+  color: var(--text-muted);
+  font-weight: 600;
+  text-align: center;
+}
+
+.entrada-stock.stock-bajo {
+  color: var(--red-accent);
+}
+
+.entrada-campo .input-entrada {
+  width: 100%;
+  padding: 8px 10px;
+  color: var(--text-main);
+  background: #fff;
+  border: 1px solid var(--cream-dark);
+}
+
+.entrada-unidad {
+  color: var(--text-muted);
+  text-align: center;
+  font-weight: 700;
+}
+
+.fila-entrada-acciones {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 2px dashed var(--cream-dark);
+}
+
+.entrada-total {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  color: var(--text-muted);
+}
+
+.entrada-total strong {
+  color: var(--brown-dark);
+  font-size: 1.1rem;
+}
+
+.compra-info {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+  padding: 14px;
+  background: var(--cream);
+  border: 1px solid var(--cream-dark);
+}
+
+.compra-info[hidden],
+.compra-calculo[hidden] {
+  display: none;
+}
+
+.compra-info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.compra-info-label {
+  color: var(--text-muted);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+}
+
+.compra-info-value {
+  color: var(--brown-dark);
+  font-size: 0.92rem;
+}
+
+.compra-info-value.stock-bajo {
+  color: var(--red-accent);
+}
+
+.compra-info-fecha,
+.compra-alerta {
+  color: var(--text-muted);
+  font-size: 0.72rem;
+}
+
+.compra-alerta {
+  color: var(--red-accent);
+  font-weight: 700;
+}
+
+.compra-calculo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px;
+  padding: 10px 14px;
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  background: #fff;
+  border-left: 3px solid var(--amber);
+}
+
+.compra-calculo strong {
+  color: var(--brown-dark);
+}
+
+.form-help {
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  line-height: 1.35;
+}
+
+.purchase-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.summary-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px;
+  background: var(--cream);
+  border: 1px solid var(--cream-dark);
+}
+
+.summary-card span {
+  color: var(--text-muted);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+}
+
+.summary-card strong {
+  color: var(--brown-dark);
+  font-family: 'Playfair Display', serif;
+  font-size: 1.2rem;
+}
+
+.table-scroll {
+  overflow-x: auto;
+}
+
 /* ============================================================
    11. PRODUCCIÓN
    ============================================================ */

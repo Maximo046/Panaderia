@@ -11,6 +11,7 @@ require_once 'auth.php';
 <!DOCTYPE html>
 <html lang="es">
 <head>
+  <!-- ==================== Metadatos y recursos ==================== -->
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Panadería - Producción</title>
@@ -39,10 +40,12 @@ require_once 'auth.php';
   </aside>
 
   <main class="main-content">
+    <!-- ==================== Encabezado de producción ==================== -->
     <header class="page-header">
       <h1 class="page-title">Producción</h1>
     </header>
 
+    <!-- ==================== Formularios por producto ==================== -->
     <section class="card" aria-label="Registro de producción">
       <header class="card-header"><h2>Producción</h2></header>
 
@@ -68,6 +71,7 @@ require_once 'auth.php';
     </section>
   </main>
 
+  <!-- ==================== Envío AJAX de la producción ==================== -->
   <script>
     document.addEventListener('DOMContentLoaded', function () {
       document.querySelectorAll('.form-produccion').forEach(function (formulario) {

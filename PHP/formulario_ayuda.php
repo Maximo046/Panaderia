@@ -12,6 +12,7 @@ require_once '../Libreria/PHPMailer/src/SMTP.php';
 use PHPMailer\PHPMailer\Exception;
 use PHPMailer\PHPMailer\PHPMailer;
 
+// ==================== Validación y almacenamiento del mensaje ====================
 if (empty($_POST['nombre']) || empty($_POST['correo']) || empty($_POST['asunto'])) {
     echo json_encode(['ok' => false, 'mensaje' => 'Completá nombre, correo y asunto.']);
     exit;
@@ -38,6 +39,7 @@ if (!$mensaje_guardado) {
     exit;
 }
 
+// ==================== Búsqueda del destinatario administrador ====================
 $consulta_administrador = mysqli_query($conexion, "
     SELECT u.correo
     FROM usuarios u
@@ -57,6 +59,7 @@ if (!filter_var($correo_administrador, FILTER_VALIDATE_EMAIL)) {
     exit;
 }
 
+// ==================== Carga de configuración SMTP ====================
 $config_smtp = require __DIR__ . '/config_panaderia.php';
 $smtp_usuario = $config_smtp['smtp_user'] ?? '';
 $smtp_contrasena = $config_smtp['smtp_password'] ?? '';
@@ -71,6 +74,7 @@ if (!$smtp_usuario || !$smtp_contrasena) {
     exit;
 }
 
+// ==================== Preparación y envío del correo ====================
 try {
     $correo = new PHPMailer(true);
     $correo->isSMTP();

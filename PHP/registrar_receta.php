@@ -6,6 +6,7 @@
 header('Content-Type: application/json');
 require_once '../conexion.php';
 
+// ==================== Validación de datos de la receta ====================
 if (empty($_POST['id_producto']) || empty($_POST['id_insumo']) || empty($_POST['cantidad'])) {
     echo json_encode(['ok' => false, 'mensaje' => 'Completá todos los campos.']);
     exit;
@@ -15,6 +16,7 @@ $id_producto_receta = mysqli_real_escape_string($conexion, $_POST['id_producto']
 $id_insumo_receta   = mysqli_real_escape_string($conexion, $_POST['id_insumo']);
 $cantidad_en_receta = mysqli_real_escape_string($conexion, $_POST['cantidad']);
 
+// ==================== Guardado o actualización de la receta ====================
 // Si ya existe la combinación producto-insumo, actualiza la cantidad
 $receta_guardada = mysqli_query($conexion, "
     INSERT INTO receta (id_producto, id_insumo, cantidad)
@@ -27,6 +29,7 @@ if (!$receta_guardada) {
     exit;
 }
 
+// ==================== Datos de respuesta para la interfaz ====================
 // Obtener los nombres para mostrar en la interfaz sin recargar la página
 $datos_receta = mysqli_fetch_assoc(mysqli_query($conexion, "
     SELECT p.nombre AS nombre_producto, i.nombre AS nombre_insumo, u.abreviatura

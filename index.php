@@ -6,22 +6,23 @@
 session_start();
 require_once 'conexion.php';
 
+// ==================== Mensaje de autenticación ====================
 $mensaje_error = '';
 
-// Redirigir destinos según el rol
+// ==================== Destinos por rol ====================
 $pagina_por_rol = [
     'Panadero'      => 'stock.php',
     'Administrador' => 'stock.php',
 ];
 
-// Si ya hay sesión activa, redirigir directamente
+// ==================== Redirección de sesión activa ====================
 if (isset($_SESSION['usuario_id'])) {
     $rol_actual = $_SESSION['usuario_rol'] ?? '';
     header('Location: ' . ($pagina_por_rol[$rol_actual] ?? 'stock.php'));
     exit;
 }
 
-// Procesar el formulario de login
+// ==================== Procesamiento del inicio de sesión ====================
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $correo_ingresado    = trim($_POST['correo']    ?? '');
     $contrasena_ingresada = $_POST['contrasena'] ?? '';
@@ -64,7 +65,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 ?>
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
+  <!-- ==================== Metadatos y recursos ==================== -->
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Panadería - Iniciar Sesión</title>
@@ -75,12 +78,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </head>
 <body class="pagina-auth">
   <main class="auth-wrapper">
+    <!-- ==================== Identidad del sistema ==================== -->
     <header class="auth-brand" aria-label="Branding de la panadería">
       <img src="CSS/Imagenes/Logo.png" alt="Logo panadería">
       <h1>Panadería Normal <em>10</em></h1>
       <p>Sistema de gestión de panadería</p>
     </header>
 
+    <!-- ==================== Formulario de acceso ==================== -->
     <section class="auth-card" aria-label="Formulario de acceso">
       <header class="auth-card-header">
         <h2>Iniciar sesión</h2>

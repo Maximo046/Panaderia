@@ -6,6 +6,7 @@
 header('Content-Type: application/json');
 require_once '../conexion.php';
 
+// ==================== Validación del formulario ====================
 if (empty($_POST['nombre_insumo']) || empty($_POST['idunidad'])) {
     echo json_encode(['ok' => false, 'mensaje' => 'Completá todos los campos.']);
     exit;
@@ -14,6 +15,7 @@ if (empty($_POST['nombre_insumo']) || empty($_POST['idunidad'])) {
 $nombre_insumo    = mysqli_real_escape_string($conexion, $_POST['nombre_insumo']);
 $id_unidad_medida = mysqli_real_escape_string($conexion, $_POST['idunidad']);
 
+// ==================== Alta del insumo y su stock inicial ====================
 mysqli_begin_transaction($conexion);
 
 $insumo_creado = mysqli_query($conexion, "
@@ -44,6 +46,7 @@ if (!$stock_inicial) {
 mysqli_commit($conexion);
 mysqli_close($conexion);
 
+// ==================== Respuesta para la interfaz ====================
 echo json_encode([
     'ok'      => true,
     'mensaje' => "Insumo \"$nombre_insumo\" agregado correctamente.",

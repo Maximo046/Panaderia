@@ -8,6 +8,7 @@ $pagina_actual = 'registro';
 require_once 'conexion.php';
 require_once 'auth.php';
 
+// ==================== Consulta de roles disponibles ====================
 $lista_roles = mysqli_query($conexion, "
   SELECT idroles, nombre
   FROM roles
@@ -18,6 +19,7 @@ $lista_roles = mysqli_query($conexion, "
 <!DOCTYPE html>
 <html lang="es">
 <head>
+  <!-- ==================== Metadatos y recursos ==================== -->
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Panadería - Registro</title>
@@ -29,12 +31,14 @@ $lista_roles = mysqli_query($conexion, "
 </head>
 <body class="pagina-auth">
   <main class="auth-wrapper">
+    <!-- ==================== Identidad del sistema ==================== -->
     <header class="auth-brand" aria-label="Branding de la panadería">
       <img src="CSS/Imagenes/Logo.png" alt="Logo panadería">
       <h1>Panadería Normal <em>10</em></h1>
       <p>Alta de usuarios del sistema</p>
     </header>
 
+    <!-- ==================== Formulario de registro ==================== -->
     <section class="auth-card" aria-label="Formulario de registro">
       <header class="auth-card-header">
         <h2>Registro de usuario</h2>
@@ -93,6 +97,7 @@ $lista_roles = mysqli_query($conexion, "
     <footer class="auth-school">Escuela Normal N°10 · 2026</footer>
   </main>
 
+  <!-- ==================== Envío AJAX del registro ==================== -->
   <script>
     document.addEventListener('DOMContentLoaded', function () {
       window.enviarFormulario(document.getElementById('form-registro'), 'PHP/envio_registro.php', {

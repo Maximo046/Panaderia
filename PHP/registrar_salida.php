@@ -11,12 +11,14 @@ require_once '../conexion.php';
 require_once __DIR__ . '/alerta_stock.php';
 require_once __DIR__ . '/utilidades.php';
 
+// ==================== Autorización del usuario ====================
 if (!isset($_SESSION['usuario_rol']) || !in_array($_SESSION['usuario_rol'], ['Administrador', 'Panadero'], true)) {
     http_response_code(403);
     echo json_encode(['ok' => false, 'mensaje' => 'No tenés permiso para registrar salidas.']);
     exit;
 }
 
+// ==================== Validación del motivo y la observación ====================
 $motivos_validos = ['Venta mostrador', 'Consumo interno', 'Merma/vencido', 'Rotura', 'Donación', 'Otro'];
 
 $motivo_salida    = trim($_POST['motivo'] ?? '');
@@ -34,6 +36,7 @@ if (mb_strlen($observacion) > 255) {
     exit;
 }
 
+// ==================== Preparación de productos y cantidades ====================
 $lineas_salida = [];
 foreach ($ids_productos as $indice => $id_producto) {
     $cantidad = isset($cantidades[$indice]) ? (float) str_replace(',', '.', $cantidades[$indice]) : 0;
@@ -53,6 +56,7 @@ if (empty($lineas_salida)) {
 
 $id_usuario = (int) ($_SESSION['usuario_id'] ?? 0) ?: null;
 
+// ==================== Registro de salidas y actualización de stock ====================
 mysqli_begin_transaction($conexion);
 
 try {
@@ -133,6 +137,7 @@ try {
     exit;
 }
 
+// ==================== Alerta de stock y respuesta ====================
 enviar_alerta_stock($conexion);
 
 $cantidad_productos = count($lineas_salida);

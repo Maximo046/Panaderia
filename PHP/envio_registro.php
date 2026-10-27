@@ -7,12 +7,13 @@ header('Content-Type: application/json');
 session_start();
 require_once '../conexion.php';
 
+// ==================== Autorización del administrador ====================
 if (($_SESSION['usuario_rol'] ?? '') !== 'Administrador') {
     echo json_encode(['ok' => false, 'mensaje' => 'Solo el administrador puede registrar usuarios.']);
     exit;
 }
 
-// Verificar que todos los campos estén presentes
+// ==================== Validación de campos requeridos ====================
 $campos_requeridos = ['nombre', 'apellido', 'correo', 'id_rol', 'contrasena', 'confirmar_contrasena'];
 foreach ($campos_requeridos as $campo) {
     if (empty($_POST[$campo])) {
@@ -28,7 +29,7 @@ $id_rol_seleccionado  = (int) $_POST['id_rol'];
 $contrasena_nueva     = $_POST['contrasena'];
 $contrasena_repetida  = $_POST['confirmar_contrasena'];
 
-// Validar formato de correo
+// ==================== Validaciones de datos de cuenta ====================
 if (!filter_var($correo_usuario, FILTER_VALIDATE_EMAIL)) {
     echo json_encode(['ok' => false, 'mensaje' => 'El correo electrónico no es válido.']);
     exit;
@@ -46,7 +47,7 @@ if ($contrasena_nueva !== $contrasena_repetida) {
     exit;
 }
 
-// Verificar que el rol existe y evitar crear otro administrador
+// ==================== Validación del rol ====================
 $rol_encontrado = mysqli_query($conexion, "SELECT nombre FROM roles WHERE idroles = $id_rol_seleccionado LIMIT 1");
 $datos_rol = $rol_encontrado ? mysqli_fetch_assoc($rol_encontrado) : null;
 if (!$datos_rol) {
@@ -59,7 +60,7 @@ if ($datos_rol['nombre'] === 'Administrador') {
     exit;
 }
 
-// Escapar datos para la consulta
+// ==================== Verificación de correo duplicado ====================
 $nombre_seguro   = mysqli_real_escape_string($conexion, $nombre_usuario);
 $apellido_seguro = mysqli_real_escape_string($conexion, $apellido_usuario);
 $correo_seguro   = mysqli_real_escape_string($conexion, $correo_usuario);
@@ -71,10 +72,9 @@ if ($correo_duplicado && mysqli_num_rows($correo_duplicado) > 0) {
     exit;
 }
 
-// Hashear la contraseña de forma segura
+// ==================== Alta de usuario y respuesta ====================
 $contrasena_hasheada = password_hash($contrasena_nueva, PASSWORD_DEFAULT);
 
-// Insertar el nuevo usuario
 $registro_exitoso = mysqli_query($conexion, "
     INSERT INTO usuarios (id_rol, nombre, apellido, correo, contrasena)
     VALUES ($id_rol_seleccionado, '$nombre_seguro', '$apellido_seguro', '$correo_seguro', '$contrasena_hasheada')

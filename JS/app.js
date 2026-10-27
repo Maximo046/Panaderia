@@ -5,6 +5,7 @@
 (function () {
   'use strict';
 
+  // ==================== Traducciones de DataTables ====================
   var idiomaEspanol = {
     emptyTable: 'Sin datos disponibles',
     info: 'Mostrando _START_ a _END_ de _TOTAL_ registros',
@@ -27,6 +28,7 @@
     }
   };
 
+  // ==================== Inicialización de tablas ====================
   /**
    * Inicializa una tabla con DataTables usando la traducción local.
    * @param {string} selector Selector de la tabla.
@@ -50,6 +52,7 @@
     return new window.DataTable(selector, configuracion);
   };
 
+  // ==================== Notificaciones de interfaz ====================
   /**
    * Muestra un mensaje en un contenedor con la clase .notif.
    * @param {string|HTMLElement} contenedor Id del contenedor o elemento.
@@ -76,6 +79,7 @@
     }, 6000);
   };
 
+  // ==================== Envío AJAX de formularios ====================
   /**
    * Envía un formulario por fetch y muestra la respuesta del servidor.
    * @param {HTMLFormElement} formulario Formulario a enviar.

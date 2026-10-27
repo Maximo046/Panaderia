@@ -11,6 +11,7 @@ require_once 'auth.php';
 <!DOCTYPE html>
 <html lang="es">
 <head>
+  <!-- ==================== Metadatos y recursos ==================== -->
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Panadería - Ayuda e Información</title>
@@ -21,6 +22,7 @@ require_once 'auth.php';
   <script src="JS/app.js" defer></script>
 </head>
 <body>
+  <!-- ==================== Navegación principal ==================== -->
   <aside class="sidebar">
     <div class="sidebar-brand">
       <div class="brand-icon"><img src="CSS/Imagenes/Logo.png" alt="Logo panadería"></div>
@@ -39,12 +41,14 @@ require_once 'auth.php';
   </aside>
 
   <main class="main-content">
+    <!-- ==================== Encabezado de ayuda ==================== -->
     <header class="page-header">
       <div>
         <h1 class="page-title">Ayuda e <em>Información</em></h1>
       </div>
     </header>
 
+    <!-- ==================== Guía rápida y preguntas frecuentes ==================== -->
     <div class="help-grid">
       <section class="card guia-card" aria-label="Guía rápida de uso">
         <header class="card-header"><h2>Guía Rápida de Uso:</h2></header>
@@ -94,6 +98,7 @@ require_once 'auth.php';
       </section>
     </div>
 
+    <!-- ==================== Formulario e información de contacto ==================== -->
     <section class="card contacto-card" aria-label="Formulario de contacto">
       <header class="card-header"><h2>Contacto:</h2></header>
 
@@ -148,6 +153,7 @@ require_once 'auth.php';
     </section>
   </main>
 
+  <!-- ==================== Envío AJAX del formulario de contacto ==================== -->
   <script>
     document.addEventListener('DOMContentLoaded', function () {
       window.enviarFormulario(

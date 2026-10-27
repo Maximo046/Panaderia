@@ -21,19 +21,19 @@ $motivos_salida = [
 <!DOCTYPE html>
 <html lang="es">
 <head>
+  <!-- ==================== Metadatos y recursos ==================== -->
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Panadería - Salidas de Productos</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Nunito:wght@300;400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="Framework/bootstrap-5.1.3/css/bootstrap.min.css"/>
-  <link rel="stylesheet" href="Libreria/DataTables/datatables.min.css"/>
   <link rel="stylesheet" href="CSS/styles.css"/>
-  <script src="Libreria/DataTables/datatables.min.js" defer></script>
   <script src="JS/app.js" defer></script>
 </head>
 
 <body>
+  <!-- ==================== Navegación principal ==================== -->
   <aside class="sidebar">
     <div class="sidebar-brand">
       <div class="brand-icon"><img src="CSS/Imagenes/Logo.png" alt="Logo panadería"></div>
@@ -54,13 +54,14 @@ $motivos_salida = [
   </aside>
 
   <main class="main-content">
+    <!-- ==================== Encabezado de la página ==================== -->
     <header class="page-header">
       <div>
         <h1 class="page-title">Salidas de <em>Productos</em></h1>
-        <p class="page-subtitle">Registrá la mercadería que sale del depósito. El stock se descuenta automáticamente.</p>
       </div>
     </header>
 
+    <!-- ==================== Formulario de salida de productos ==================== -->
     <section class="card" aria-label="Registrar salida de productos">
       <header class="card-header">
         <h2>Nueva Salida</h2>
@@ -75,6 +76,7 @@ $motivos_salida = [
           <span>Cantidad a retirar</span>
         </div>
 
+        <!-- ==================== Tabla de productos y stock disponible ==================== -->
         <?php
         $lista_productos = mysqli_query($conexion, "
             SELECT p.idproductos, p.nombre AS nombre_producto, u.abreviatura,
@@ -132,61 +134,12 @@ $motivos_salida = [
       </form>
     </section>
 
-    <section class="card" aria-label="Salidas del día">
-      <header class="card-header">
-        <h2>Salidas del Día</h2>
-      </header>
 
-      <?php
-      $salidas_hoy = mysqli_query($conexion, "
-          SELECT s.idsalida, s.fecha, s.cantidad, s.motivo, s.observacion,
-                 p.nombre AS nombre_producto, u.abreviatura,
-                 CONCAT_WS(' ', us.nombre, us.apellido) AS nombre_usuario
-          FROM salidas_productos s
-          INNER JOIN productos p          ON s.id_producto = p.idproductos
-          INNER JOIN unidad_de_medida u   ON p.idunidad_de_medida = u.idunidad_de_medida
-          LEFT  JOIN usuarios us          ON s.id_usuario = us.idusuarios
-          WHERE DATE(s.fecha) = CURDATE()
-          ORDER BY s.fecha DESC
-      ");
-
-      if (mysqli_num_rows($salidas_hoy) === 0): ?>
-        <p class="sin-datos">No hay salidas registradas hoy.</p>
-      <?php else: ?>
-        <table id="tabla-salidas" class="display">
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Hora</th>
-              <th>Producto</th>
-              <th>Cantidad</th>
-              <th>Motivo</th>
-              <th>Observación</th>
-              <th>Registró</th>
-            </tr>
-          </thead>
-          <tbody>
-            <?php while ($salida = mysqli_fetch_assoc($salidas_hoy)): ?>
-              <tr>
-                <td><?= (int) $salida['idsalida'] ?></td>
-                <td><?= date('H:i', strtotime($salida['fecha'])) ?></td>
-                <td><?= htmlspecialchars($salida['nombre_producto']) ?></td>
-                <td><?= htmlspecialchars(formatear_cantidad($salida['cantidad'])) ?> <?= htmlspecialchars($salida['abreviatura']) ?></td>
-                <td><?= htmlspecialchars($salida['motivo']) ?></td>
-                <td><?= $salida['observacion'] !== null && $salida['observacion'] !== '' ? htmlspecialchars($salida['observacion']) : '—' ?></td>
-                <td><?= htmlspecialchars($salida['nombre_usuario'] ?: '—') ?></td>
-              </tr>
-            <?php endwhile; ?>
-          </tbody>
-        </table>
-      <?php endif; ?>
-    </section>
   </main>
 
+  <!-- ==================== Envío AJAX de la salida ==================== -->
   <script>
     document.addEventListener('DOMContentLoaded', function () {
-      window.iniciarTabla('#tabla-salidas');
-
       window.enviarFormulario(
         document.getElementById('form-salida'),
         'PHP/registrar_salida.php',

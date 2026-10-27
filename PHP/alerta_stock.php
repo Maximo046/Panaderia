@@ -4,6 +4,7 @@
 use PHPMailer\PHPMailer\Exception;
 use PHPMailer\PHPMailer\PHPMailer;
 
+// ==================== Dependencias de correo y formato ====================
 require_once __DIR__ . '/../Libreria/PHPMailer/src/Exception.php';
 require_once __DIR__ . '/../Libreria/PHPMailer/src/PHPMailer.php';
 require_once __DIR__ . '/../Libreria/PHPMailer/src/SMTP.php';
@@ -11,6 +12,7 @@ require_once __DIR__ . '/utilidades.php';
 
 function enviar_alerta_stock(mysqli $conexion): bool
 {
+    // ==================== Destinatario de la alerta ====================
     if (session_status() === PHP_SESSION_NONE) {
         session_start();
     }
@@ -23,6 +25,7 @@ function enviar_alerta_stock(mysqli $conexion): bool
 
     $alertas = [];
 
+    // ==================== Consulta de insumos bajo el mínimo ====================
     $insumos = mysqli_query($conexion, "
         SELECT i.nombre,
                COALESCE(s.cantidad, 0) AS cantidad,
@@ -47,6 +50,7 @@ function enviar_alerta_stock(mysqli $conexion): bool
         }
     }
 
+    // ==================== Consulta de productos bajo el mínimo ====================
     $productos = mysqli_query($conexion, "
         SELECT p.nombre,
                COALESCE(s.cantidad, 0) AS cantidad,
@@ -74,6 +78,7 @@ function enviar_alerta_stock(mysqli $conexion): bool
         ];
     }
 
+    // ==================== Comparación del estado de alertas ====================
     $archivo_estado = 'C:/xampp/stock_alerta_estado.json';
     if (empty($alertas)) {
         if (is_file($archivo_estado)) {
@@ -91,6 +96,7 @@ function enviar_alerta_stock(mysqli $conexion): bool
         return true;
     }
 
+    // ==================== Configuración SMTP ====================
     $config_smtp = require __DIR__ . '/config_panaderia.php';
     $smtp_usuario = $config_smtp['smtp_user'] ?? '';
     $smtp_contrasena = $config_smtp['smtp_password'] ?? '';
@@ -99,6 +105,7 @@ function enviar_alerta_stock(mysqli $conexion): bool
         return false;
     }
 
+    // ==================== Preparación y envío del correo ====================
     $filas_html = '';
     $filas_texto = '';
     foreach ($alertas as $alerta) {

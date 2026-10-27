@@ -13,6 +13,7 @@ require_once 'PHP/utilidades.php';
 <html lang="es">
 
 <head>
+  <!-- ==================== Metadatos y recursos ==================== -->
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Panadería - Productos</title>
@@ -27,6 +28,7 @@ require_once 'PHP/utilidades.php';
 
 <body>
 
+  <!-- ==================== Navegación principal ==================== -->
   <aside class="sidebar">
     <div class="sidebar-brand">
 
@@ -52,6 +54,7 @@ require_once 'PHP/utilidades.php';
 
   <main class="main-content">
 
+    <!-- ==================== Encabezado y accesos de productos ==================== -->
     <header class="page-header">
       <h1 class="page-title">Productos</h1>
     </header>
@@ -61,6 +64,7 @@ require_once 'PHP/utilidades.php';
       <a href="nueva_receta.php" class="btn-primary">Añadir Receta</a>
     </div>
 
+    <!-- ==================== Tabla de productos y sus recetas ==================== -->
     <section class="card" aria-label="Productos Registrados">
       <header class="card-header"><h2>Productos</h2></header>
 
@@ -114,6 +118,7 @@ require_once 'PHP/utilidades.php';
   </main>
 
 
+  <!-- ==================== Inicialización de la tabla ==================== -->
   <script>
     document.addEventListener('DOMContentLoaded', function () {
       window.iniciarTabla('#tabla-productos');

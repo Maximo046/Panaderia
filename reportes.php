@@ -9,7 +9,7 @@ require_once 'conexion.php';
 require_once 'auth.php';
 require_once 'PHP/utilidades.php';
 
-// Filtro por mes (formato YYYY-MM)
+// ==================== Estado del filtro por período ====================
 $mes_seleccionado = '';
 $filtro_produccion = '';
 $filtro_compras    = '';
@@ -28,6 +28,7 @@ if (is_string($mes_solicitado) && preg_match('/^\d{4}-(0[1-9]|1[0-2])$/', $mes_s
 <!DOCTYPE html>
 <html lang="es">
 <head>
+  <!-- ==================== Metadatos y recursos ==================== -->
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Panadería - Reportes</title>
@@ -58,6 +59,7 @@ if (is_string($mes_solicitado) && preg_match('/^\d{4}-(0[1-9]|1[0-2])$/', $mes_s
   </aside>
 
   <main class="main-content">
+    <!-- ==================== Encabezado, filtro y exportación PDF ==================== -->
     <header class="page-header">
       <div>
         <h1 class="page-title">Reportes de <em>Movimientos</em></h1>
@@ -77,6 +79,7 @@ if (is_string($mes_solicitado) && preg_match('/^\d{4}-(0[1-9]|1[0-2])$/', $mes_s
       </div>
     </header>
 
+    <!-- ==================== Consumos de insumos ==================== -->
     <?php
     $sufijo_vacio = $mes_seleccionado ? ' para este mes' : '';
 
@@ -128,6 +131,7 @@ if (is_string($mes_solicitado) && preg_match('/^\d{4}-(0[1-9]|1[0-2])$/', $mes_s
 
     </section>
 
+    <!-- ==================== Ingresos de insumos ==================== -->
     <?php
     $ingresos_insumos = mysqli_query($conexion, "
         SELECT c.fecha, i.nombre AS nombre_insumo, c.cantidad, u.abreviatura
@@ -175,6 +179,7 @@ if (is_string($mes_solicitado) && preg_match('/^\d{4}-(0[1-9]|1[0-2])$/', $mes_s
 
     </section>
 
+    <!-- ==================== Producción registrada ==================== -->
     <?php
     $produccion_registrada = mysqli_query($conexion, "
         SELECT p.fecha, pr.nombre AS nombre_producto, p.cantidad, u.abreviatura
@@ -220,6 +225,7 @@ if (is_string($mes_solicitado) && preg_match('/^\d{4}-(0[1-9]|1[0-2])$/', $mes_s
 
     </section>
 
+    <!-- ==================== Salidas de productos ==================== -->
     <?php
     $salidas_registradas = mysqli_query($conexion, "
         SELECT s.fecha, pr.nombre AS nombre_producto, s.cantidad,
@@ -270,6 +276,7 @@ if (is_string($mes_solicitado) && preg_match('/^\d{4}-(0[1-9]|1[0-2])$/', $mes_s
     </section>
   </main>
 
+  <!-- ==================== Inicialización de tablas del reporte ==================== -->
   <script>
     document.addEventListener('DOMContentLoaded', function () {
       window.iniciarTabla('#tabla-consumos');

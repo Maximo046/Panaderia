@@ -8,6 +8,7 @@ require_once '../conexion.php';
 require_once __DIR__ . '/alerta_stock.php';
 require_once __DIR__ . '/utilidades.php';
 
+// ==================== Validación de la solicitud ====================
 if (empty($_POST['id_producto']) || empty($_POST['cantidad'])) {
     echo json_encode(['ok' => false, 'mensaje' => 'Completá todos los campos.']);
     exit;
@@ -16,6 +17,7 @@ if (empty($_POST['id_producto']) || empty($_POST['cantidad'])) {
 $id_producto_a_producir = mysqli_real_escape_string($conexion, $_POST['id_producto']);
 $cantidad_producida      = mysqli_real_escape_string($conexion, $_POST['cantidad']);
 
+// ==================== Lectura de la receta del producto ====================
 // Verificar que el producto tiene receta definida
 $receta_del_producto = mysqli_query($conexion, "
     SELECT id_insumo, cantidad AS cantidad_por_unidad
@@ -34,6 +36,7 @@ while ($linea = mysqli_fetch_assoc($receta_del_producto)) {
     $lineas_receta[] = $linea;
 }
 
+// ==================== Verificación del stock de insumos ====================
 // Verificar que hay suficiente stock de cada insumo antes de producir
 foreach ($lineas_receta as $linea_receta) {
     $id_insumo_necesario   = $linea_receta['id_insumo'];
@@ -63,6 +66,7 @@ foreach ($lineas_receta as $linea_receta) {
     }
 }
 
+// ==================== Registro de producción y descuento de insumos ====================
 // Registrar la producción en la tabla
 $produccion_guardada = mysqli_query($conexion, "
     INSERT INTO produccion (id_producto, cantidad)
@@ -86,6 +90,7 @@ foreach ($lineas_receta as $linea_receta) {
     ");
 }
 
+// ==================== Actualización del stock de productos ====================
 // Sumar al stock de productos lo que se produjo
 mysqli_query($conexion, "
     INSERT INTO stock_productos (id_producto, cantidad)
@@ -95,6 +100,7 @@ mysqli_query($conexion, "
 
 enviar_alerta_stock($conexion);
 
+// ==================== Respuesta de producción para la interfaz ====================
 // Obtener nombre del producto para la respuesta
 $datos_producto = mysqli_fetch_assoc(mysqli_query($conexion, "
     SELECT p.nombre AS nombre_producto, u.abreviatura

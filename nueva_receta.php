@@ -11,6 +11,7 @@ require_once 'auth.php';
 <!DOCTYPE html>
 <html lang="es">
 <head>
+  <!-- ==================== Metadatos y recursos ==================== -->
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Panadería - Añadir Receta</title>
@@ -40,6 +41,7 @@ require_once 'auth.php';
   </nav>
 
   <main class="main-content">
+    <!-- ==================== Encabezado y navegación de regreso ==================== -->
     <header class="page-header">
       <h1 class="page-title">Nueva Receta</h1>
       <div class="acciones-productos">
@@ -48,7 +50,7 @@ require_once 'auth.php';
     </header>
 
 
-
+    <!-- ==================== Formulario de receta ==================== -->
     <section class="card form-card">
       <div class="card-header"><h2>Agregar Insumo a Receta</h2></div>
 
@@ -88,6 +90,7 @@ require_once 'auth.php';
     </section>
   </main>
 
+  <!-- ==================== Envío AJAX de la receta ==================== -->
   <script>
     document.addEventListener('DOMContentLoaded', function () {
       window.enviarFormulario(document.getElementById('form-receta'), 'PHP/registrar_receta.php', {

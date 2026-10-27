@@ -6,6 +6,7 @@
 
 $rol_del_usuario = $_SESSION['usuario_rol'] ?? '';
 
+// ==================== Opciones de navegación y permisos ====================
 $items_del_menu = [
     'stock'      => ['etiqueta' => 'Stock',             'enlace' => 'stock.php',      'roles' => ['Administrador', 'Panadero']],
     'insumos'    => ['etiqueta' => 'Insumos',           'enlace' => 'insumos.php',    'roles' => ['Administrador', 'Panadero']],
@@ -17,6 +18,7 @@ $items_del_menu = [
     'ayuda'      => ['etiqueta' => 'Ayuda',             'enlace' => 'ayuda.php',      'roles' => ['Administrador', 'Panadero']],
 ];
 
+// ==================== Renderizado del menú visible ====================
 foreach ($items_del_menu as $clave => $item) {
     if (!in_array($rol_del_usuario, $item['roles'])) {
         continue;

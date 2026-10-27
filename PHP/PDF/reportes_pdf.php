@@ -13,6 +13,7 @@ require_once '../../conexion.php';
 require_once '../../auth.php';
 require_once '../utilidades.php';
 
+// ==================== Filtro del período y etiquetas ====================
 $mes_seleccionado = '';
 $filtro_produccion = '';
 $filtro_compras    = '';
@@ -42,7 +43,7 @@ if ($mes_seleccionado !== '') {
 
 $sufijo_vacio = $mes_seleccionado ? ' para este mes' : '';
 
-// ---- Consultas ----
+// ==================== Consultas de movimientos ====================
 $consumos_insumos = mysqli_query($conexion, "
     SELECT p.fecha, i.nombre AS nombre_insumo,
            p.cantidad * r.cantidad AS cantidad_consumida, u.abreviatura
@@ -92,9 +93,11 @@ $total_salidas = $salidas_registradas ? mysqli_num_rows($salidas_registradas) : 
 <!DOCTYPE html>
 <html lang="es">
 <head>
+    <!-- ==================== Metadatos del documento PDF ==================== -->
     <meta charset="UTF-8"/>
     <title>Reporte de movimientos - Panadería Normal 10</title>
     <style>
+        /* ==================== Estilos de impresión del reporte ==================== */
         @page {
             size: A4 portrait;
             margin: 18mm 16mm;
@@ -249,6 +252,7 @@ $total_salidas = $salidas_registradas ? mysqli_num_rows($salidas_registradas) : 
 </head>
 <body>
     <div>
+        <!-- ==================== Encabezado y período del reporte ==================== -->
         <header class="encabezado">
             <div class="negocio">Panadería Normal 10</div>
             <div class="subtitulo">Reporte de movimientos</div>
@@ -268,6 +272,7 @@ $total_salidas = $salidas_registradas ? mysqli_num_rows($salidas_registradas) : 
             </tr>
         </table>
 
+        <!-- ==================== Tabla de ingresos de insumos ==================== -->
         <section class="seccion">
             <div class="seccion-titulo">
                 <span>Insumos: Ingresos</span>
@@ -298,6 +303,7 @@ $total_salidas = $salidas_registradas ? mysqli_num_rows($salidas_registradas) : 
             <?php endif; ?>
         </section>
 
+        <!-- ==================== Tabla de consumos de insumos ==================== -->
         <section class="seccion">
             <div class="seccion-titulo">
                 <span>Insumos: Consumos</span>
@@ -328,6 +334,7 @@ $total_salidas = $salidas_registradas ? mysqli_num_rows($salidas_registradas) : 
             <?php endif; ?>
         </section>
 
+        <!-- ==================== Tabla de producción ==================== -->
         <section class="seccion">
             <div class="seccion-titulo">
                 <span>Productos: Producción</span>
@@ -358,6 +365,7 @@ $total_salidas = $salidas_registradas ? mysqli_num_rows($salidas_registradas) : 
             <?php endif; ?>
         </section>
 
+        <!-- ==================== Tabla de salidas de productos ==================== -->
         <section class="seccion">
             <div class="seccion-titulo">
                 <span>Productos: Salidas</span>
@@ -394,6 +402,7 @@ $total_salidas = $salidas_registradas ? mysqli_num_rows($salidas_registradas) : 
             <?php endif; ?>
         </section>
 
+        <!-- ==================== Pie del documento ==================== -->
         <footer class="pie">
             Documento generado automáticamente por el sistema de gestión · Escuela Normal N°10 · 2026
         </footer>
@@ -401,6 +410,7 @@ $total_salidas = $salidas_registradas ? mysqli_num_rows($salidas_registradas) : 
 </body>
 </html>
 <?php
+// ==================== Renderizado y descarga del PDF ====================
 $html = ob_get_clean();
 
 require_once '../../Libreria/dompdf/autoload.inc.php';

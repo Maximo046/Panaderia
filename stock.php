@@ -18,6 +18,7 @@ enviar_alerta_stock($conexion);
 <!DOCTYPE html>
 <html lang="es">
 <head>
+  <!-- ==================== Metadatos y recursos ==================== -->
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Panadería - Panel Principal</title>
@@ -30,6 +31,7 @@ enviar_alerta_stock($conexion);
   <script src="JS/app.js" defer></script>
 </head>
 <body>
+  <!-- ==================== Navegación principal ==================== -->
   <aside class="sidebar">
     <div class="sidebar-brand">
       <div class="brand-icon"><img src="CSS/Imagenes/Logo.png" alt="Logo panadería"></div>
@@ -48,6 +50,7 @@ enviar_alerta_stock($conexion);
   </aside>
 
   <main class="main-content">
+    <!-- ==================== Saludo y estado del sistema ==================== -->
     <header class="page-header page-header-stock">
       <div>
         <?php
@@ -65,6 +68,7 @@ enviar_alerta_stock($conexion);
 
 
     <div class="bottom-grid">
+      <!-- ==================== Tablas de stock de insumos y productos ==================== -->
       <section class="stock-panel" aria-label="Stock de insumos y productos">
           <?php
           $stock_insumos = mysqli_query($conexion, "
@@ -161,6 +165,7 @@ enviar_alerta_stock($conexion);
 
       </section>
 
+      <!-- ==================== Alertas de stock bajo ==================== -->
       <aside class="side-panel" aria-label="Alertas de stock">
         <section class="card">
           <header class="card-header"><h2>Alertas de Stock de Insumos</h2></header>
@@ -219,6 +224,7 @@ enviar_alerta_stock($conexion);
 
 
 
+  <!-- ==================== Inicialización de tablas de stock ==================== -->
   <script>
     document.addEventListener('DOMContentLoaded', function () {
       window.iniciarTabla('#tabla-stock-insumos');
