@@ -48,7 +48,8 @@ $lista_insumos = mysqli_query($conexion, "
   <link rel="stylesheet" href="Framework/bootstrap-5.1.3/css/bootstrap.min.css"/>
   <link rel="stylesheet" href="Libreria/DataTables/datatables.min.css"/>
   <link rel="stylesheet" href="CSS/styles.css"/>
-  <script src="JS/app.js" defer></script>
+  <script src="JS/datatables_config.js" defer></script>
+  <script src="JS/AJAX.js"></script>
 </head>
 
 <body>
@@ -98,12 +99,12 @@ $lista_insumos = mysqli_query($conexion, "
         <?php while ($insumo = mysqli_fetch_assoc($lista_insumos)): ?>
           <?php
           $stock = (float) $insumo['stock_actual'];
-          $clase_fila = $stock < (float)$insumo['stock_minimo'] ? 'fila-salida fila-sin-stock' : 'fila-salida';
+          $clase_fila = 'fila-salida';
           ?>
           <div class="<?= $clase_fila ?>">
             <span class="nombre-producto"><?= htmlspecialchars($insumo['nombre'], ENT_QUOTES, 'UTF-8') ?></span>
 
-            <span class="stock-disponible <?= $stock < (float)$insumo['stock_minimo'] ? 'stock-bajo' : '' ?>">
+            <span class="stock-disponible">
               <?= formatear_cantidad($stock) ?> <?= htmlspecialchars($insumo['abreviatura'], ENT_QUOTES, 'UTF-8') ?>
             </span>
 
@@ -159,17 +160,10 @@ $lista_insumos = mysqli_query($conexion, "
   <!-- ==================== Envío AJAX de entradas y altas ==================== -->
   <script>
     document.addEventListener('DOMContentLoaded', function () {
-      var formularioCompra = document.getElementById('form-compra');
-
-      window.enviarFormulario(formularioCompra, 'PHP/registrar_compra.php', {
-        notificacion: 'notif-compra',
-        onSuccess: function () {
-          window.location.reload();
-        }
+      enviarFormularioAjax(document.getElementById('form-compra'), 'PHP/registrar_compra.php', {
+        recargar: true
       });
-
-      window.enviarFormulario(document.getElementById('form-insumo'), 'PHP/registrar_insumo.php', {
-        notificacion: 'notif-insumo',
+      enviarFormularioAjax(document.getElementById('form-insumo'), 'PHP/registrar_insumo.php', {
         reset: true
       });
     });

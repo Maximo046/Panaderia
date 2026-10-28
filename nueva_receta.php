@@ -19,7 +19,8 @@ require_once 'auth.php';
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Nunito:wght@300;400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="Framework/bootstrap-5.1.3/css/bootstrap.min.css"/>
   <link rel="stylesheet" href="CSS/styles.css"/>
-  <script src="JS/app.js" defer></script>
+  <script src="JS/datatables_config.js" defer></script>
+  <script src="JS/AJAX.js"></script>
 </head>
 <body>
 
@@ -52,7 +53,7 @@ require_once 'auth.php';
 
     <!-- ==================== Formulario de receta ==================== -->
     <section class="card form-card">
-      <div class="card-header"><h2>Agregar Insumo a Receta</h2></div>
+      <div class="card-header"><h2>Agregar Insumos a Receta</h2></div>
 
       <div id="notif-receta" class="notif" role="status"></div>
 
@@ -60,7 +61,7 @@ require_once 'auth.php';
         <div class="form-group">
           <label>Producto</label>
           <select name="id_producto" required>
-            <option value="">Seleccionar</option>
+            <option value="">Seleccionar producto</option>
             <?php
             $lista_productos = mysqli_query($conexion, "SELECT idproductos, nombre FROM productos ORDER BY nombre");
             while ($producto = mysqli_fetch_assoc($lista_productos)):
@@ -69,23 +70,20 @@ require_once 'auth.php';
             <?php endwhile; ?>
           </select>
         </div>
+
         <div class="form-group">
-          <label>Insumo</label>
-          <select name="id_insumo" required>
-            <option value="">Seleccionar</option>
-            <?php
-            $lista_insumos = mysqli_query($conexion, "SELECT idinsumos, nombre FROM insumos ORDER BY nombre");
-            while ($insumo = mysqli_fetch_assoc($lista_insumos)):
-            ?>
-              <option value="<?= (int) $insumo['idinsumos'] ?>"><?= htmlspecialchars($insumo['nombre']) ?></option>
-            <?php endwhile; ?>
-          </select>
+          <label>¿Cuántos ingredientes lleva esta receta?</label>
+          <div class="generador-receta">
+            <input type="number" id="cantidad-ingredientes" min="1" max="30" value="1" class="input-cantidad">
+            <button type="button" class="btn-primary" id="generar-filas">Generar filas</button>
+          </div>
         </div>
-        <div class="form-group">
-          <label>Cantidad necesaria</label>
-          <input type="number" name="cantidad" step="0.0001" min="0.0001" required>
+
+        <div id="contenedor-ingredientes" class="lista-receta"></div>
+
+        <div class="form-full" style="margin-top: 20px;">
+          <button type="submit" class="btn-primary" id="guardar-receta" style="display: none;">Guardar receta completa</button>
         </div>
-        <button type="submit" class="btn-primary">Agregar a la Receta</button>
       </form>
     </section>
   </main>
@@ -93,10 +91,54 @@ require_once 'auth.php';
   <!-- ==================== Envío AJAX de la receta ==================== -->
   <script>
     document.addEventListener('DOMContentLoaded', function () {
-      window.enviarFormulario(document.getElementById('form-receta'), 'PHP/registrar_receta.php', {
-        notificacion: 'notif-receta',
+      const btnGenerar = document.getElementById('generar-filas');
+      const inputCantidad = document.getElementById('cantidad-ingredientes');
+      const contenedor = document.getElementById('contenedor-ingredientes');
+      const btnGuardar = document.getElementById('guardar-receta');
+
+      btnGenerar.addEventListener('click', function () {
+        contenedor.innerHTML = '';
+        const cantidad = parseInt(inputCantidad.value);
+
+        if (isNaN(cantidad) || cantidad < 1) {
+          alert('Ingresá una cantidad válida.');
+          return;
+        }
+
+        for (let i = 0; i < cantidad; i++) {
+          const fila = document.createElement('div');
+          fila.className = 'fila-receta';
+
+          fila.innerHTML = `
+            <div class="form-group">
+              <select name="id_insumo[]" required>
+                <option value="">Seleccionar insumo</option>
+                <?php
+                $lista_insumos = mysqli_query($conexion, "SELECT idinsumos, nombre FROM insumos ORDER BY nombre");
+                while ($insumo = mysqli_fetch_assoc($lista_insumos)):
+                ?>
+                  <option value="<?= (int) $insumo['idinsumos'] ?>"><?= htmlspecialchars($insumo['nombre']) ?></option>
+                <?php endwhile; ?>
+              </select>
+            </div>
+            <div class="form-group">
+              <input type="number" name="cantidad[]" step="0.0001" min="0.0001" placeholder="Cantidad" class="input-cantidad" required>
+            </div>
+          `;
+          contenedor.appendChild(fila);
+        }
+
+        if (cantidad > 0) {
+          btnGuardar.style.display = 'inline-block';
+        }
+      });
+
+      enviarFormularioAjax(document.getElementById('form-receta'), 'PHP/registrar_receta.php', {
         onSuccess: function (datos, formulario) {
-          formulario.querySelector('[name="cantidad"]').value = '';
+          formulario.reset();
+          contenedor.innerHTML = '';
+          btnGuardar.style.display = 'none';
+          inputCantidad.value = 1;
         }
       });
     });

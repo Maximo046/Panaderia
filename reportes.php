@@ -38,7 +38,7 @@ if (is_string($mes_solicitado) && preg_match('/^\d{4}-(0[1-9]|1[0-2])$/', $mes_s
   <link rel="stylesheet" href="Libreria/DataTables/datatables.min.css"/>
   <link rel="stylesheet" href="CSS/styles.css"/>
   <script src="Libreria/DataTables/datatables.min.js" defer></script>
-  <script src="JS/app.js" defer></script>
+  <script src="JS/datatables_config.js" defer></script>
 </head>
 <body>
   <aside class="sidebar">

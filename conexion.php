@@ -7,7 +7,7 @@ date_default_timezone_set('America/Argentina/Buenos_Aires');
 $servidor    = "localhost";
 $usuario     = "root";
 $contrasena  = "";
-$base_datos  = "panaderia_normal10";
+$base_datos  = "panaderia";
 
 // ==================== Apertura de conexión ====================
 $conexion = new mysqli($servidor, $usuario, $contrasena, $base_datos);

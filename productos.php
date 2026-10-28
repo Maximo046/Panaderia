@@ -23,7 +23,7 @@ require_once 'PHP/utilidades.php';
   <link rel="stylesheet" href="Libreria/DataTables/datatables.min.css"/>
   <link rel="stylesheet" href="CSS/styles.css"/>
   <script src="Libreria/DataTables/datatables.min.js" defer></script>
-  <script src="JS/app.js" defer></script>
+  <script src="JS/datatables_config.js" defer></script>
 </head>
 
 <body>
@@ -121,7 +121,9 @@ require_once 'PHP/utilidades.php';
   <!-- ==================== Inicialización de la tabla ==================== -->
   <script>
     document.addEventListener('DOMContentLoaded', function () {
-      window.iniciarTabla('#tabla-productos');
+      if (typeof window.iniciarTabla === 'function') {
+        window.iniciarTabla('#tabla-productos');
+      }
     });
   </script>
   <script src="Framework/bootstrap-5.1.3/js/bootstrap.bundle.min.js"></script>

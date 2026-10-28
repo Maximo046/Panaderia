@@ -986,6 +986,48 @@ body.pagina-auth {
    14. REPORTES
    ============================================================ */
 
+/* ============================================================
+   15. RECETAS
+   ============================================================ */
+
+.lista-receta {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.fila-receta {
+  display: grid;
+  grid-template-columns: minmax(200px, 2fr) minmax(140px, 1fr);
+  gap: 12px;
+  align-items: center;
+  padding: 12px;
+  background: var(--cream);
+  border: 1px solid var(--cream-dark);
+}
+
+.fila-receta .form-group {
+  margin: 0;
+}
+
+.fila-receta input,
+.fila-receta select {
+  width: 100%;
+}
+
+.generador-receta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  max-width: 320px;
+}
+
+.generador-receta .input-cantidad {
+  flex: 1;
+}
+
 .filtro-top {
   display: flex;
   flex-wrap: wrap;

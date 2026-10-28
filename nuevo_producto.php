@@ -19,7 +19,8 @@ require_once 'auth.php';
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Nunito:wght@300;400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="Framework/bootstrap-5.1.3/css/bootstrap.min.css"/>
   <link rel="stylesheet" href="CSS/styles.css"/>
-  <script src="JS/app.js" defer></script>
+  <script src="JS/datatables_config.js" defer></script>
+  <script src="JS/AJAX.js"></script>
 </head>
 <body>
 
@@ -80,11 +81,9 @@ require_once 'auth.php';
   <!-- ==================== Envío AJAX del producto ==================== -->
   <script>
     document.addEventListener('DOMContentLoaded', function () {
-      window.enviarFormulario(
-        document.getElementById('form-nuevo-producto'),
-        'PHP/registrar_producto.php',
-        { notificacion: 'notif-producto', reset: true }
-      );
+      enviarFormularioAjax(document.getElementById('form-nuevo-producto'), 'PHP/registrar_producto.php', {
+        reset: true
+      });
     });
   </script>
 

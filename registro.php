@@ -27,7 +27,8 @@ $lista_roles = mysqli_query($conexion, "
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Nunito:wght@300;400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="Framework/bootstrap-5.1.3/css/bootstrap.min.css"/>
   <link rel="stylesheet" href="CSS/styles.css"/>
-  <script src="JS/app.js" defer></script>
+  <script src="JS/datatables_config.js" defer></script>
+  <script src="JS/AJAX.js"></script>
 </head>
 <body class="pagina-auth">
   <main class="auth-wrapper">
@@ -97,13 +98,11 @@ $lista_roles = mysqli_query($conexion, "
     <footer class="auth-school">Escuela Normal N°10 · 2026</footer>
   </main>
 
-  <!-- ==================== Envío AJAX del registro ==================== -->
   <script>
     document.addEventListener('DOMContentLoaded', function () {
-      window.enviarFormulario(document.getElementById('form-registro'), 'PHP/envio_registro.php', {
-        notificacion: 'notificacion-registro',
-        onSuccess: function () {
-          window.setTimeout(function () {
+      enviarFormularioAjax(document.getElementById('form-registro'), 'PHP/envio_registro.php', {
+        onSuccess: function (datos, formulario) {
+          setTimeout(function () {
             window.location.href = 'index.php';
           }, 600);
         }

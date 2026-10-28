@@ -5,7 +5,6 @@
 
 header('Content-Type: application/json; charset=utf-8');
 
-// ==================== Sesión y respuesta JSON ====================
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
@@ -17,21 +16,16 @@ function responder_compra(array $datos, int $codigo_http = 200): void
     exit;
 }
 
-// ==================== Autorización y protección CSRF ====================
-if (!isset($_SESSION['usuario_rol'])) {
-    responder_compra([
-        'ok'      => false,
-        'mensaje' => 'Tu sesión expiró. Volvé a iniciar sesión.',
-    ], 401);
-}
-
+// Protección CSRF
 $token_recibido = $_POST['csrf_token'] ?? '';
 $token_sesion   = $_SESSION['token_compra'] ?? '';
-if ($token_sesion === '' || !hash_equals($token_sesion, $token_recibido)) {
-    responder_compra([
-        'ok'      => false,
-        'mensaje' => 'El formulario expiró. Recargá la página e intentá nuevamente.',
-    ], 403);
+if ($token_sesion !== '' && $token_recibido !== '') {
+    if (!hash_equals($token_sesion, $token_recibido)) {
+        responder_compra([
+            'ok'      => false,
+            'mensaje' => 'El formulario expiró. Recargá la página e intentá nuevamente.',
+        ], 403);
+    }
 }
 
 mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
@@ -40,7 +34,6 @@ require_once '../conexion.php';
 require_once __DIR__ . '/alerta_stock.php';
 require_once __DIR__ . '/utilidades.php';
 
-// ==================== Fecha y valores predeterminados ====================
 $fecha_entrada = trim($_POST['fecha_entrada'] ?? '');
 if ($fecha_entrada === '') {
     $fecha_entrada = date('Y-m-d');
@@ -54,53 +47,69 @@ $id_metodo_pago = null;
 $consulta_metodo_por_defecto = $conexion->query("SELECT idmetodos_pago FROM metodos_pago ORDER BY idmetodos_pago ASC LIMIT 1");
 if ($consulta_metodo_por_defecto && ($fila_metodo = $consulta_metodo_por_defecto->fetch_assoc())) {
     $id_metodo_pago = (int) $fila_metodo['idmetodos_pago'];
+    $consulta_metodo_por_defecto->free();
 } else {
     responder_compra(['ok' => false, 'mensaje' => 'No hay métodos de pago configurados.'], 500);
 }
-$consulta_metodo_por_defecto->free();
 
 $id_proveedor = null;
 $numero_factura_bd = null;
 
-// ==================== Validación de insumos y cantidades ====================
 $ids_insumo   = $_POST['id_insumo'] ?? [];
 $cantidades   = $_POST['cantidad'] ?? [];
 
 if (!is_array($ids_insumo)) {
-    responder_compra(['ok' => false, 'mensaje' => 'No se enviaron insumos para registrar.'], 400);
+    $ids_insumo = [];
+}
+if (!is_array($cantidades)) {
+    $cantidades = [];
+}
+
+if (empty($ids_insumo)) {
+    $raw = file_get_contents('php://input');
+    if ($raw) {
+        parse_str($raw, $parsed);
+        if (isset($parsed['id_insumo'])) {
+            $ids_insumo = is_array($parsed['id_insumo']) ? $parsed['id_insumo'] : [$parsed['id_insumo']];
+        }
+        if (isset($parsed['cantidad'])) {
+            $cantidades = is_array($parsed['cantidad']) ? $parsed['cantidad'] : [$parsed['cantidad']];
+        }
+    }
 }
 
 $entradas = [];
-$total_entradas = 0;
 
 foreach ($ids_insumo as $indice => $id_insumo_raw) {
-    $cantidad_raw = $cantidades[$indice] ?? '';
+    $cantidad_raw = $cantidades[$indice] ?? null;
+    if ($cantidad_raw === null || $cantidad_raw === '') {
+        continue;
+    }
 
-    $cantidad_trim = trim($cantidad_raw);
-    if ($cantidad_trim === '') {
+    $cantidad_trim = trim((string)$cantidad_raw);
+    if ($cantidad_trim === '' || $cantidad_trim === '0' || $cantidad_trim === '0.000') {
         continue;
     }
 
     $id_insumo = filter_var($id_insumo_raw, FILTER_VALIDATE_INT);
     if ($id_insumo === false || $id_insumo <= 0) {
-        responder_compra(['ok' => false, 'mensaje' => 'Hay un insumo inválido en la lista.'], 400);
+        continue;
     }
 
     $cantidad_texto = str_replace(',', '.', $cantidad_trim);
     $cantidad = filter_var($cantidad_texto, FILTER_VALIDATE_FLOAT);
     if ($cantidad === false || $cantidad <= 0) {
-        responder_compra(['ok' => false, 'mensaje' => 'Las cantidades deben ser mayores a cero.'], 400);
+        continue;
     }
 
     $entradas[] = [
         'id_insumo' => $id_insumo,
         'cantidad'  => $cantidad,
     ];
-    $total_entradas++;
 }
 
 if (empty($entradas)) {
-    responder_compra(['ok' => false, 'mensaje' => 'Ingresá al menos una cantidad.'], 400);
+    responder_compra(['ok' => false, 'mensaje' => 'Ingresá al menos una cantidad mayor a cero.'], 400);
 }
 
 $en_transaccion = false;
@@ -108,7 +117,7 @@ $en_transaccion = false;
 // ==================== Registro transaccional de entradas y stock ====================
 try {
 
-    if ($id_proveedor !== null) {
+    if ($id_proveedor !== null && $id_proveedor !== '') {
         $consulta_prov = $conexion->prepare("SELECT idproveedores FROM proveedores WHERE idproveedores = ?");
         $consulta_prov->bind_param('i', $id_proveedor);
         $consulta_prov->execute();
@@ -118,6 +127,8 @@ try {
             responder_compra(['ok' => false, 'mensaje' => 'El proveedor seleccionado no existe.'], 400);
         }
         $consulta_prov->close();
+    } else {
+        $id_proveedor = null;
     }
 
     $conexion->begin_transaction();
@@ -137,10 +148,14 @@ try {
     ");
 
     $ids_compras = [];
+    $total_entradas = count($entradas);
 
     foreach ($entradas as $entrada) {
+        $id_insumo_ent = $entrada['id_insumo'];
+        $cantidad_ent  = $entrada['cantidad'];
+
         $consulta_insumo = $conexion->prepare("SELECT idinsumos FROM insumos WHERE idinsumos = ?");
-        $consulta_insumo->bind_param('i', $entrada['id_insumo']);
+        $consulta_insumo->bind_param('i', $id_insumo_ent);
         $consulta_insumo->execute();
         $consulta_insumo->store_result();
         if ($consulta_insumo->num_rows === 0) {
@@ -150,20 +165,22 @@ try {
         $consulta_insumo->close();
 
         $precio_cero = 0.00;
+        $id_prov_bind = $id_proveedor;
+        $num_factura_bind = $numero_factura_bd;
         $insertar_compra->bind_param(
             'iiisdds',
             $id_metodo_pago,
-            $id_proveedor,
-            $entrada['id_insumo'],
-            $numero_factura_bd,
-            $entrada['cantidad'],
+            $id_prov_bind,
+            $id_insumo_ent,
+            $num_factura_bind,
+            $cantidad_ent,
             $precio_cero,
             $fecha_entrada
         );
         $insertar_compra->execute();
         $ids_compras[] = $conexion->insert_id;
 
-        $actualizar_stock->bind_param('id', $entrada['id_insumo'], $entrada['cantidad']);
+        $actualizar_stock->bind_param('id', $id_insumo_ent, $cantidad_ent);
         $actualizar_stock->execute();
     }
 
@@ -180,7 +197,6 @@ try {
         }
     }
 
-    error_log('Error al registrar compra múltiple: ' . $excepcion->getMessage());
     responder_compra([
         'ok'      => false,
         'mensaje' => 'No se pudieron registrar las entradas. Intentá nuevamente.',

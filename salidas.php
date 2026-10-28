@@ -29,7 +29,8 @@ $motivos_salida = [
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Nunito:wght@300;400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="Framework/bootstrap-5.1.3/css/bootstrap.min.css"/>
   <link rel="stylesheet" href="CSS/styles.css"/>
-  <script src="JS/app.js" defer></script>
+  <script src="JS/datatables_config.js" defer></script>
+  <script src="JS/AJAX.js"></script>
 </head>
 
 <body>
@@ -140,18 +141,9 @@ $motivos_salida = [
   <!-- ==================== Envío AJAX de la salida ==================== -->
   <script>
     document.addEventListener('DOMContentLoaded', function () {
-      window.enviarFormulario(
-        document.getElementById('form-salida'),
-        'PHP/registrar_salida.php',
-        {
-          notificacion: 'notif-salida',
-          onSuccess: function (datos, formulario) {
-            window.setTimeout(function () {
-              window.location.reload();
-            }, 700);
-          }
-        }
-      );
+      enviarFormularioAjax(document.getElementById('form-salida'), 'PHP/registrar_salida.php', {
+        recargar: true
+      });
     });
   </script>
   <script src="Framework/bootstrap-5.1.3/js/bootstrap.bundle.min.js"></script>

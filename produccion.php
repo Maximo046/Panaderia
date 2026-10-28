@@ -7,6 +7,7 @@ $pagina_actual = 'produccion';
 session_start();
 require_once 'conexion.php';
 require_once 'auth.php';
+require_once 'PHP/utilidades.php';
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -19,7 +20,8 @@ require_once 'auth.php';
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Nunito:wght@300;400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="Framework/bootstrap-5.1.3/css/bootstrap.min.css"/>
   <link rel="stylesheet" href="CSS/styles.css"/>
-  <script src="JS/app.js" defer></script>
+  <script src="JS/datatables_config.js" defer></script>
+  <script src="JS/AJAX.js"></script>
 </head>
 <body>
   <aside class="sidebar">
@@ -53,15 +55,18 @@ require_once 'auth.php';
 
       <?php
       $lista_productos = mysqli_query($conexion, "
-          SELECT p.idproductos, p.nombre AS nombre_producto, u.abreviatura
+          SELECT p.idproductos, p.nombre AS nombre_producto, u.abreviatura,
+                 COALESCE(sp.cantidad, 0) AS stock_actual
           FROM productos p
           INNER JOIN unidad_de_medida u ON p.idunidad_de_medida = u.idunidad_de_medida
+          LEFT JOIN stock_productos sp ON sp.id_producto = p.idproductos
           ORDER BY p.nombre
       ");
       while ($producto = mysqli_fetch_assoc($lista_productos)):
       ?>
         <form class="fila-produccion form-produccion" method="POST">
           <span class="nombre-producto"><?= htmlspecialchars($producto['nombre_producto']) ?>:</span>
+          <span class="stock-disponible" style="margin: 0 10px;">Stock: <?= formatear_cantidad($producto['stock_actual']) ?> <?= htmlspecialchars($producto['abreviatura']) ?></span>
           <input type="hidden" name="id_producto" value="<?= (int) $producto['idproductos'] ?>">
           <input type="number" step="0.001" min="0.001" name="cantidad" class="input-cantidad" required>
           <span class="unidad"><?= htmlspecialchars($producto['abreviatura']) ?></span>
@@ -75,10 +80,11 @@ require_once 'auth.php';
   <script>
     document.addEventListener('DOMContentLoaded', function () {
       document.querySelectorAll('.form-produccion').forEach(function (formulario) {
-        window.enviarFormulario(formulario, 'PHP/registrar_produccion.php', {
-          notificacion: 'notif-produccion',
+        enviarFormularioAjax(formulario, 'PHP/registrar_produccion.php', {
           onSuccess: function (datos, form) {
-            form.querySelector('[name="cantidad"]').value = '';
+            var cant = form.querySelector('[name="cantidad"]');
+            if (cant) cant.value = '';
+            setTimeout(function() { window.location.reload(); }, 500);
           }
         });
       });

@@ -28,7 +28,7 @@ enviar_alerta_stock($conexion);
   <link rel="stylesheet" href="Libreria/DataTables/datatables.min.css"/>
   <link rel="stylesheet" href="CSS/styles.css"/>
   <script src="Libreria/DataTables/datatables.min.js" defer></script>
-  <script src="JS/app.js" defer></script>
+  <script src="JS/datatables_config.js" defer></script>
 </head>
 <body>
   <!-- ==================== Navegación principal ==================== -->
@@ -227,8 +227,10 @@ enviar_alerta_stock($conexion);
   <!-- ==================== Inicialización de tablas de stock ==================== -->
   <script>
     document.addEventListener('DOMContentLoaded', function () {
-      window.iniciarTabla('#tabla-stock-insumos');
-      window.iniciarTabla('#tabla-stock-productos');
+      if (typeof window.iniciarTabla === 'function') {
+        window.iniciarTabla('#tabla-stock-insumos');
+        window.iniciarTabla('#tabla-stock-productos');
+      }
     });
   </script>
   <script src="Framework/bootstrap-5.1.3/js/bootstrap.bundle.min.js"></script>
