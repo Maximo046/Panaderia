@@ -43,18 +43,6 @@ if (!$fecha_valida || $fecha_valida->format('Y-m-d') !== $fecha_entrada) {
     $fecha_entrada = date('Y-m-d');
 }
 
-$id_metodo_pago = null;
-$consulta_metodo_por_defecto = $conexion->query("SELECT idmetodos_pago FROM metodos_pago ORDER BY idmetodos_pago ASC LIMIT 1");
-if ($consulta_metodo_por_defecto && ($fila_metodo = $consulta_metodo_por_defecto->fetch_assoc())) {
-    $id_metodo_pago = (int) $fila_metodo['idmetodos_pago'];
-    $consulta_metodo_por_defecto->free();
-} else {
-    responder_compra(['ok' => false, 'mensaje' => 'No hay métodos de pago configurados.'], 500);
-}
-
-$id_proveedor = null;
-$numero_factura_bd = null;
-
 $ids_insumo   = $_POST['id_insumo'] ?? [];
 $cantidades   = $_POST['cantidad'] ?? [];
 
@@ -117,28 +105,14 @@ $en_transaccion = false;
 // ==================== Registro transaccional de entradas y stock ====================
 try {
 
-    if ($id_proveedor !== null && $id_proveedor !== '') {
-        $consulta_prov = $conexion->prepare("SELECT idproveedores FROM proveedores WHERE idproveedores = ?");
-        $consulta_prov->bind_param('i', $id_proveedor);
-        $consulta_prov->execute();
-        $consulta_prov->store_result();
-        if ($consulta_prov->num_rows === 0) {
-            $consulta_prov->close();
-            responder_compra(['ok' => false, 'mensaje' => 'El proveedor seleccionado no existe.'], 400);
-        }
-        $consulta_prov->close();
-    } else {
-        $id_proveedor = null;
-    }
-
     $conexion->begin_transaction();
     $en_transaccion = true;
 
     $insertar_compra = $conexion->prepare("
-        INSERT INTO compras_insumos
-            (id_metodopago, id_proveedor, id_insumos, numero_factura, cantidad, precio, fecha)
+        INSERT INTO entrada_insumos
+            (id_insumos, cantidad, fecha)
         VALUES
-            (?, ?, ?, ?, ?, ?, ?)
+            (?, ?, ?)
     ");
 
     $actualizar_stock = $conexion->prepare("
@@ -164,17 +138,10 @@ try {
         }
         $consulta_insumo->close();
 
-        $precio_cero = 0.00;
-        $id_prov_bind = $id_proveedor;
-        $num_factura_bind = $numero_factura_bd;
         $insertar_compra->bind_param(
-            'iiisdds',
-            $id_metodo_pago,
-            $id_prov_bind,
+            'ids',
             $id_insumo_ent,
-            $num_factura_bind,
             $cantidad_ent,
-            $precio_cero,
             $fecha_entrada
         );
         $insertar_compra->execute();

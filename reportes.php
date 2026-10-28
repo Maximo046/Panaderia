@@ -135,11 +135,11 @@ if (is_string($mes_solicitado) && preg_match('/^\d{4}-(0[1-9]|1[0-2])$/', $mes_s
     <?php
     $ingresos_insumos = mysqli_query($conexion, "
         SELECT c.fecha, i.nombre AS nombre_insumo, c.cantidad, u.abreviatura
-        FROM compras_insumos c
+        FROM entrada_insumos c
         INNER JOIN insumos i          ON c.id_insumos = i.idinsumos
         INNER JOIN unidad_de_medida u ON i.idunidad_de_medida = u.idunidad_de_medida
         $filtro_compras
-        ORDER BY c.fecha DESC
+        ORDER BY c.fecha DESC, c.idcompras_insumos DESC
     ");
     ?>
 

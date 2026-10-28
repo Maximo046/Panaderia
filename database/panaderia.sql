@@ -2,10 +2,10 @@
 -- version 5.2.1
 -- https://www.phpmyadmin.net/
 --
--- Servidor: 127.0.0.1
--- Tiempo de generación: 28-10-2026 a las 18:27:47
--- Versión del servidor: 10.4.32-MariaDB
--- Versión de PHP: 8.2.12
+-- Host: 127.0.0.1
+-- Generation Time: Oct 28, 2026 at 08:11 PM
+-- Server version: 10.4.32-MariaDB
+-- PHP Version: 8.2.12
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -18,13 +18,13 @@ SET time_zone = "+00:00";
 /*!40101 SET NAMES utf8mb4 */;
 
 --
--- Base de datos: `panaderia_normal10`
+-- Database: `panaderia`
 --
 
 -- --------------------------------------------------------
 
 --
--- Estructura de tabla para la tabla `asunto`
+-- Table structure for table `asunto`
 --
 
 CREATE TABLE `asunto` (
@@ -33,7 +33,7 @@ CREATE TABLE `asunto` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Volcado de datos para la tabla `asunto`
+-- Dumping data for table `asunto`
 --
 
 INSERT INTO `asunto` (`idasunto`, `nombre`) VALUES
@@ -46,57 +46,7 @@ INSERT INTO `asunto` (`idasunto`, `nombre`) VALUES
 -- --------------------------------------------------------
 
 --
--- Estructura de tabla para la tabla `compras_insumos`
---
-
-CREATE TABLE `compras_insumos` (
-  `idcompras_insumos` int(11) NOT NULL,
-  `id_insumos` int(11) NOT NULL,
-  `numero_factura` varchar(20) DEFAULT NULL,
-  `cantidad` decimal(10,3) NOT NULL,
-  `precio` decimal(10,2) DEFAULT 0.00,
-  `fecha` date NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Volcado de datos para la tabla `compras_insumos`
---
-
-INSERT INTO `compras_insumos` (`idcompras_insumos`, `id_insumos`, `numero_factura`, `cantidad`, `precio`, `fecha`) VALUES
-(1, 1, '0001', 100.000, 80000.00, '2026-05-23'),
-(2, 1, '0001', 50.000, 40000.00, '2026-05-22'),
-(3, 2, '0001', 5.000, 5000.00, '2026-05-21'),
-(4, 8, '0001', 5.000, 7000.00, '2026-05-20'),
-(5, 16, '0004', 50.000, 50000.00, '2026-05-17'),
-(6, 8, '0002', 20.000, 25000.00, '2026-05-18'),
-(7, 4, '0003', 15.000, 20000.00, '2026-05-11'),
-(8, 3, '0005', 30.000, 30000.00, '2026-05-14'),
-(9, 7, '0001', 50.000, 30000.00, '2026-01-16'),
-(10, 18, '0006', 20.000, 35000.00, '2026-05-24'),
-(11, 16, '0005', 15000.000, 10000.00, '2025-12-18'),
-(12, 2, '0007', 15.000, 10000.00, '2025-11-06'),
-(13, 5, '0007', 50.000, 60000.00, '2026-02-10'),
-(14, 6, '0012', 50.000, 65000.00, '2026-06-09'),
-(15, 20, '0010', 50.000, 74299.00, '2026-06-11'),
-(16, 21, '0010', 50.000, 70644.00, '2026-06-12'),
-(17, 7, '0012', 100.000, 0.00, '2026-06-14'),
-(18, 18, '0008', 40.000, 50000.00, '2026-06-14'),
-(19, 6, '0029', 50.000, 50000.00, '2026-08-15'),
-(20, 22, '0026', 60.000, 125000.00, '2026-08-16'),
-(21, 21, '0031', 50.000, 70000.00, '2026-08-18'),
-(22, 23, '0013', 70.000, 120000.00, '2026-08-28'),
-(23, 8, '0023', 90.000, 120000.00, '2026-09-12'),
-(24, 23, '0044', 30.000, 40000.00, '2026-09-20'),
-(25, 1, 'PRUEBA-VENTA-001', 1.500, 450.00, '2026-10-27'),
-(26, 2, 'PRUEBA-VENTA-001', 2.000, 600.00, '2026-10-27'),
-(27, 1, 'PRUEBA-SINMP-001', 1.000, 300.00, '2026-10-27'),
-(28, 2, NULL, 3.000, 900.00, '2026-10-27'),
-(29, 3, NULL, 5.000, 0.00, '2026-10-27');
-
--- --------------------------------------------------------
-
---
--- Estructura de tabla para la tabla `contacto`
+-- Table structure for table `contacto`
 --
 
 CREATE TABLE `contacto` (
@@ -108,7 +58,7 @@ CREATE TABLE `contacto` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Volcado de datos para la tabla `contacto`
+-- Dumping data for table `contacto`
 --
 
 INSERT INTO `contacto` (`idcontacto`, `id_asunto`, `nombre`, `correo`, `mensaje`) VALUES
@@ -152,7 +102,94 @@ INSERT INTO `contacto` (`idcontacto`, `id_asunto`, `nombre`, `correo`, `mensaje`
 -- --------------------------------------------------------
 
 --
--- Estructura de tabla para la tabla `insumos`
+-- Table structure for table `entrada_insumos`
+--
+
+CREATE TABLE `entrada_insumos` (
+  `idcompras_insumos` int(11) NOT NULL,
+  `id_insumos` int(11) NOT NULL,
+  `cantidad` decimal(10,3) NOT NULL,
+  `fecha` date NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `entrada_insumos`
+--
+
+INSERT INTO `entrada_insumos` (`idcompras_insumos`, `id_insumos`, `cantidad`, `fecha`) VALUES
+(1, 1, 100.000, '2026-05-23'),
+(2, 1, 50.000, '2026-05-22'),
+(3, 2, 5.000, '2026-05-21'),
+(4, 8, 5.000, '2026-05-20'),
+(5, 16, 50.000, '2026-05-17'),
+(6, 8, 20.000, '2026-05-18'),
+(7, 4, 15.000, '2026-05-11'),
+(8, 3, 30.000, '2026-05-14'),
+(9, 7, 50.000, '2026-01-16'),
+(10, 18, 20.000, '2026-05-24'),
+(11, 16, 15000.000, '2025-12-18'),
+(12, 2, 15.000, '2025-11-06'),
+(13, 5, 50.000, '2026-02-10'),
+(14, 6, 50.000, '2026-06-09'),
+(15, 20, 50.000, '2026-06-11'),
+(16, 21, 50.000, '2026-06-12'),
+(17, 7, 100.000, '2026-06-14'),
+(18, 18, 40.000, '2026-06-14'),
+(19, 6, 50.000, '2026-08-15'),
+(20, 22, 60.000, '2026-08-16'),
+(21, 21, 50.000, '2026-08-18'),
+(22, 23, 70.000, '2026-08-28'),
+(23, 8, 90.000, '2026-09-12'),
+(24, 23, 30.000, '2026-09-20'),
+(25, 1, 1.500, '2026-10-27'),
+(26, 2, 2.000, '2026-10-27'),
+(27, 1, 1.000, '2026-10-27'),
+(28, 2, 3.000, '2026-10-27'),
+(29, 3, 5.000, '2026-10-27'),
+(30, 1, 2.000, '2026-10-28'),
+(31, 1, 2.000, '2026-10-28'),
+(32, 9, 10.000, '2026-10-28'),
+(33, 24, 10.000, '2026-10-28'),
+(34, 15, 10.000, '2026-10-28'),
+(35, 11, 10.000, '2026-10-28'),
+(36, 13, 10.000, '2026-10-28'),
+(37, 10, 10.000, '2026-10-28'),
+(38, 19, 10.000, '2026-10-28'),
+(39, 14, 10.000, '2026-10-28'),
+(40, 12, 10.000, '2026-10-28'),
+(41, 17, 10.000, '2026-10-28'),
+(42, 1, 3.000, '2026-10-28'),
+(43, 1, 1.000, '2026-10-28'),
+(44, 9, 5.000, '2026-10-28'),
+(45, 24, 5.000, '2026-10-28'),
+(46, 7, 1.000, '2026-10-28'),
+(47, 23, 0.400, '2026-10-28'),
+(48, 5, 0.750, '2026-10-28'),
+(49, 16, 0.600, '2026-10-28'),
+(50, 2, 0.270, '2026-10-28'),
+(51, 1, 0.100, '2026-10-28'),
+(52, 20, 0.390, '2026-10-28'),
+(53, 6, 0.175, '2026-10-28'),
+(54, 4, 0.850, '2026-10-28'),
+(55, 8, 0.040, '2026-10-28'),
+(56, 3, 8.000, '2026-10-28'),
+(57, 7, 83.000, '2026-10-28'),
+(58, 2, 10.000, '2026-10-28'),
+(59, 25, 15.000, '2026-10-28'),
+(60, 14, 10.000, '2026-10-28'),
+(61, 17, 5.000, '2026-10-28'),
+(62, 7, 10.000, '2026-10-28'),
+(63, 23, 10.000, '2026-10-28'),
+(64, 5, 10.000, '2026-10-28'),
+(65, 21, 10.000, '2026-10-28'),
+(66, 11, 10.000, '2026-10-28'),
+(67, 13, 5.000, '2026-10-28'),
+(68, 5, 10.000, '2026-10-28');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `insumos`
 --
 
 CREATE TABLE `insumos` (
@@ -162,7 +199,7 @@ CREATE TABLE `insumos` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Volcado de datos para la tabla `insumos`
+-- Dumping data for table `insumos`
 --
 
 INSERT INTO `insumos` (`idinsumos`, `idunidad_de_medida`, `nombre`) VALUES
@@ -189,12 +226,13 @@ INSERT INTO `insumos` (`idinsumos`, `idunidad_de_medida`, `nombre`) VALUES
 (21, 1, 'Almidón de mandioca'),
 (22, 1, 'Queso Crema'),
 (23, 2, 'Aceite'),
-(24, 1, 'Oregano');
+(24, 1, 'Oregano'),
+(25, 1, 'Leche Condensada');
 
 -- --------------------------------------------------------
 
 --
--- Estructura de tabla para la tabla `produccion`
+-- Table structure for table `produccion`
 --
 
 CREATE TABLE `produccion` (
@@ -205,7 +243,7 @@ CREATE TABLE `produccion` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Volcado de datos para la tabla `produccion`
+-- Dumping data for table `produccion`
 --
 
 INSERT INTO `produccion` (`idproduccion`, `id_producto`, `cantidad`, `fecha`) VALUES
@@ -232,12 +270,23 @@ INSERT INTO `produccion` (`idproduccion`, `id_producto`, `cantidad`, `fecha`) VA
 (21, 1, 7.000, '2026-10-01 14:01:38'),
 (22, 2, 6.000, '2026-10-01 14:02:00'),
 (23, 4, 6.000, '2026-10-01 14:02:17'),
-(24, 6, 10.000, '2026-10-25 23:24:09');
+(24, 6, 10.000, '2026-10-25 23:24:09'),
+(25, 1, 9.000, '2026-10-28 15:13:11'),
+(26, 4, 5.000, '2026-10-28 15:13:31'),
+(27, 6, 10.000, '2026-10-28 15:22:13'),
+(28, 3, 10.000, '2026-10-28 15:22:21'),
+(29, 2, 10.000, '2026-10-28 15:22:33'),
+(30, 5, 10.000, '2026-10-28 15:22:42'),
+(31, 3, 10.000, '2026-10-28 15:23:12'),
+(32, 1, 10.000, '2026-10-28 15:23:17'),
+(33, 2, 10.000, '2026-10-28 15:23:21'),
+(34, 4, 10.000, '2026-10-28 15:23:24'),
+(35, 7, 10.000, '2026-10-28 15:34:06');
 
 -- --------------------------------------------------------
 
 --
--- Estructura de tabla para la tabla `productos`
+-- Table structure for table `productos`
 --
 
 CREATE TABLE `productos` (
@@ -247,7 +296,7 @@ CREATE TABLE `productos` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Volcado de datos para la tabla `productos`
+-- Dumping data for table `productos`
 --
 
 INSERT INTO `productos` (`idproductos`, `idunidad_de_medida`, `nombre`) VALUES
@@ -262,7 +311,7 @@ INSERT INTO `productos` (`idproductos`, `idunidad_de_medida`, `nombre`) VALUES
 -- --------------------------------------------------------
 
 --
--- Estructura de tabla para la tabla `receta`
+-- Table structure for table `receta`
 --
 
 CREATE TABLE `receta` (
@@ -273,7 +322,7 @@ CREATE TABLE `receta` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Volcado de datos para la tabla `receta`
+-- Dumping data for table `receta`
 --
 
 INSERT INTO `receta` (`idreceta`, `id_producto`, `id_insumo`, `cantidad`) VALUES
@@ -303,12 +352,25 @@ INSERT INTO `receta` (`idreceta`, `id_producto`, `id_insumo`, `cantidad`) VALUES
 (25, 5, 3, 0.005),
 (26, 5, 16, 0.010),
 (28, 5, 23, 0.005),
-(29, 6, 1, 0.500);
+(29, 6, 17, 0.042),
+(30, 7, 20, 0.200),
+(31, 7, 2, 0.150),
+(32, 7, 8, 0.100),
+(33, 7, 7, 2.000),
+(34, 7, 6, 0.050),
+(35, 7, 14, 0.005),
+(36, 6, 2, 0.008),
+(37, 6, 8, 0.004),
+(38, 6, 6, 0.020),
+(39, 6, 4, 0.001),
+(40, 6, 7, 1.000),
+(41, 6, 14, 0.001),
+(42, 6, 10, 0.033);
 
 -- --------------------------------------------------------
 
 --
--- Estructura de tabla para la tabla `roles`
+-- Table structure for table `roles`
 --
 
 CREATE TABLE `roles` (
@@ -317,7 +379,7 @@ CREATE TABLE `roles` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Volcado de datos para la tabla `roles`
+-- Dumping data for table `roles`
 --
 
 INSERT INTO `roles` (`idroles`, `nombre`) VALUES
@@ -327,7 +389,7 @@ INSERT INTO `roles` (`idroles`, `nombre`) VALUES
 -- --------------------------------------------------------
 
 --
--- Estructura de tabla para la tabla `salidas_productos`
+-- Table structure for table `salidas_productos`
 --
 
 CREATE TABLE `salidas_productos` (
@@ -341,18 +403,19 @@ CREATE TABLE `salidas_productos` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Volcado de datos para la tabla `salidas_productos`
+-- Dumping data for table `salidas_productos`
 --
 
 INSERT INTO `salidas_productos` (`idsalida`, `id_producto`, `id_usuario`, `cantidad`, `motivo`, `observacion`, `fecha`) VALUES
 (1, 5, 1, 10.000, 'Venta mostrador', 'Se vendió.', '2026-10-26 13:56:28'),
 (2, 6, 1, 5.000, 'Venta mostrador', 'Se vendió.', '2026-10-27 13:32:22'),
-(3, 1, 1, 2.000, 'Venta mostrador', 'Se vendió.', '2026-10-27 13:32:22');
+(3, 1, 1, 2.000, 'Venta mostrador', 'Se vendió.', '2026-10-27 13:32:22'),
+(4, 7, 1, 4.000, 'Venta mostrador', 'Se vendio.', '2026-10-28 15:58:14');
 
 -- --------------------------------------------------------
 
 --
--- Estructura de tabla para la tabla `stock_insumos`
+-- Table structure for table `stock_insumos`
 --
 
 CREATE TABLE `stock_insumos` (
@@ -363,39 +426,40 @@ CREATE TABLE `stock_insumos` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Volcado de datos para la tabla `stock_insumos`
+-- Dumping data for table `stock_insumos`
 --
 
 INSERT INTO `stock_insumos` (`idstock_insumos`, `id_insumo`, `cantidad`, `stock_minimo`) VALUES
-(1, 1, 69.900, 10.000),
-(3, 2, 15.730, 10.000),
-(4, 8, 94.960, 10.000),
-(5, 16, 15026.400, 10.000),
-(7, 4, 12.150, 10.000),
-(8, 3, 32.140, 10.000),
-(9, 7, 44.000, 10.000),
-(10, 18, 27.000, 10.000),
-(13, 5, 49.250, 10.000),
-(14, 6, 57.825, 10.000),
-(15, 20, 46.610, 10.000),
-(16, 21, 34.000, 10.000),
+(1, 1, 33.800, 10.000),
+(3, 2, 18.350, 10.000),
+(4, 8, 86.500, 10.000),
+(5, 16, 15014.900, 10.000),
+(7, 4, 11.550, 10.000),
+(8, 3, 39.090, 10.000),
+(9, 7, 50.000, 10.000),
+(10, 18, 17.000, 10.000),
+(13, 5, 69.250, 10.000),
+(14, 6, 38.625, 10.000),
+(15, 20, 41.610, 10.000),
+(16, 21, 24.000, 10.000),
 (20, 22, 60.000, 10.000),
-(22, 23, 99.600, 10.000),
-(25, 9, 0.000, 10.000),
-(26, 10, 0.000, 10.000),
-(27, 11, 0.000, 10.000),
-(28, 12, 0.000, 10.000),
-(29, 15, 0.000, 10.000),
-(30, 17, 0.000, 10.000),
-(31, 19, 0.000, 10.000),
-(32, 13, 0.000, 10.000),
-(33, 14, 0.000, 10.000),
-(34, 24, 0.000, 10.000);
+(22, 23, 109.950, 10.000),
+(25, 9, 15.000, 10.000),
+(26, 10, 10.000, 10.000),
+(27, 11, 20.000, 10.000),
+(28, 12, 10.000, 10.000),
+(29, 15, 10.000, 10.000),
+(30, 17, 15.000, 10.000),
+(31, 19, 10.000, 10.000),
+(32, 13, 15.000, 10.000),
+(33, 14, 19.950, 10.000),
+(34, 24, 15.000, 10.000),
+(67, 25, 15.000, 10.000);
 
 -- --------------------------------------------------------
 
 --
--- Estructura de tabla para la tabla `stock_productos`
+-- Table structure for table `stock_productos`
 --
 
 CREATE TABLE `stock_productos` (
@@ -406,22 +470,22 @@ CREATE TABLE `stock_productos` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Volcado de datos para la tabla `stock_productos`
+-- Dumping data for table `stock_productos`
 --
 
 INSERT INTO `stock_productos` (`idstock_productos`, `id_producto`, `cantidad`, `stock_minimo`) VALUES
-(1, 2, 9.000, 10.000),
-(2, 1, 1.000, 10.000),
-(3, 3, 0.000, 10.000),
-(4, 4, 5.000, 10.000),
-(22, 5, 42.000, 10.000),
-(29, 6, 5.000, 10.000),
-(30, 7, 0.000, 10.000);
+(1, 2, 29.000, 10.000),
+(2, 1, 20.000, 10.000),
+(3, 3, 20.000, 10.000),
+(4, 4, 20.000, 10.000),
+(22, 5, 52.000, 10.000),
+(29, 6, 15.000, 10.000),
+(30, 7, 6.000, 10.000);
 
 -- --------------------------------------------------------
 
 --
--- Estructura de tabla para la tabla `unidad_de_medida`
+-- Table structure for table `unidad_de_medida`
 --
 
 CREATE TABLE `unidad_de_medida` (
@@ -431,7 +495,7 @@ CREATE TABLE `unidad_de_medida` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Volcado de datos para la tabla `unidad_de_medida`
+-- Dumping data for table `unidad_de_medida`
 --
 
 INSERT INTO `unidad_de_medida` (`idunidad_de_medida`, `nombre`, `abreviatura`) VALUES
@@ -442,7 +506,7 @@ INSERT INTO `unidad_de_medida` (`idunidad_de_medida`, `nombre`, `abreviatura`) V
 -- --------------------------------------------------------
 
 --
--- Estructura de tabla para la tabla `usuarios`
+-- Table structure for table `usuarios`
 --
 
 CREATE TABLE `usuarios` (
@@ -457,7 +521,7 @@ CREATE TABLE `usuarios` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Volcado de datos para la tabla `usuarios`
+-- Dumping data for table `usuarios`
 --
 
 INSERT INTO `usuarios` (`idusuarios`, `id_rol`, `nombre`, `apellido`, `correo`, `contrasena`, `fecha_registro`, `activo`) VALUES
@@ -465,52 +529,52 @@ INSERT INTO `usuarios` (`idusuarios`, `id_rol`, `nombre`, `apellido`, `correo`, 
 (10, 2, 'Imanol', 'Balguenet', 'Imanolbalg@gmail.com', '$2y$10$LmAG8jThGFTEhZUGsRmv0eYWvc/QKuUL6Ohi9xzx7ZISGxIcQ8ZIi', '2026-10-26 14:06:01', 1);
 
 --
--- Índices para tablas volcadas
+-- Indexes for dumped tables
 --
 
 --
--- Indices de la tabla `asunto`
+-- Indexes for table `asunto`
 --
 ALTER TABLE `asunto`
   ADD PRIMARY KEY (`idasunto`);
 
 --
--- Indices de la tabla `compras_insumos`
---
-ALTER TABLE `compras_insumos`
-  ADD PRIMARY KEY (`idcompras_insumos`),
-  ADD KEY `fk_compra_insumo_idx` (`id_insumos`);
-
---
--- Indices de la tabla `contacto`
+-- Indexes for table `contacto`
 --
 ALTER TABLE `contacto`
   ADD PRIMARY KEY (`idcontacto`),
   ADD KEY `fk_asunto_idx` (`id_asunto`);
 
 --
--- Indices de la tabla `insumos`
+-- Indexes for table `entrada_insumos`
+--
+ALTER TABLE `entrada_insumos`
+  ADD PRIMARY KEY (`idcompras_insumos`),
+  ADD KEY `fk_compra_insumo_idx` (`id_insumos`);
+
+--
+-- Indexes for table `insumos`
 --
 ALTER TABLE `insumos`
   ADD PRIMARY KEY (`idinsumos`),
   ADD KEY `fk_insumo_unidad_idx` (`idunidad_de_medida`);
 
 --
--- Indices de la tabla `produccion`
+-- Indexes for table `produccion`
 --
 ALTER TABLE `produccion`
   ADD PRIMARY KEY (`idproduccion`),
   ADD KEY `fk_produccion_producto` (`id_producto`);
 
 --
--- Indices de la tabla `productos`
+-- Indexes for table `productos`
 --
 ALTER TABLE `productos`
   ADD PRIMARY KEY (`idproductos`),
   ADD KEY `fk_producto_unidad_idx` (`idunidad_de_medida`);
 
 --
--- Indices de la tabla `receta`
+-- Indexes for table `receta`
 --
 ALTER TABLE `receta`
   ADD PRIMARY KEY (`idreceta`),
@@ -519,13 +583,13 @@ ALTER TABLE `receta`
   ADD KEY `fk_receta_insumo_idx` (`id_insumo`);
 
 --
--- Indices de la tabla `roles`
+-- Indexes for table `roles`
 --
 ALTER TABLE `roles`
   ADD PRIMARY KEY (`idroles`);
 
 --
--- Indices de la tabla `salidas_productos`
+-- Indexes for table `salidas_productos`
 --
 ALTER TABLE `salidas_productos`
   ADD PRIMARY KEY (`idsalida`),
@@ -534,7 +598,7 @@ ALTER TABLE `salidas_productos`
   ADD KEY `idx_salidas_fecha` (`fecha`);
 
 --
--- Indices de la tabla `stock_insumos`
+-- Indexes for table `stock_insumos`
 --
 ALTER TABLE `stock_insumos`
   ADD PRIMARY KEY (`idstock_insumos`),
@@ -542,20 +606,20 @@ ALTER TABLE `stock_insumos`
   ADD KEY `fk_stock_ins_insumo_idx` (`id_insumo`);
 
 --
--- Indices de la tabla `stock_productos`
+-- Indexes for table `stock_productos`
 --
 ALTER TABLE `stock_productos`
   ADD PRIMARY KEY (`idstock_productos`),
   ADD UNIQUE KEY `uq_stock_producto` (`id_producto`);
 
 --
--- Indices de la tabla `unidad_de_medida`
+-- Indexes for table `unidad_de_medida`
 --
 ALTER TABLE `unidad_de_medida`
   ADD PRIMARY KEY (`idunidad_de_medida`);
 
 --
--- Indices de la tabla `usuarios`
+-- Indexes for table `usuarios`
 --
 ALTER TABLE `usuarios`
   ADD PRIMARY KEY (`idusuarios`),
@@ -563,149 +627,149 @@ ALTER TABLE `usuarios`
   ADD KEY `fk_usuario_rol_idx` (`id_rol`);
 
 --
--- AUTO_INCREMENT de las tablas volcadas
+-- AUTO_INCREMENT for dumped tables
 --
 
 --
--- AUTO_INCREMENT de la tabla `asunto`
+-- AUTO_INCREMENT for table `asunto`
 --
 ALTER TABLE `asunto`
   MODIFY `idasunto` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
--- AUTO_INCREMENT de la tabla `compras_insumos`
---
-ALTER TABLE `compras_insumos`
-  MODIFY `idcompras_insumos` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=30;
-
---
--- AUTO_INCREMENT de la tabla `contacto`
+-- AUTO_INCREMENT for table `contacto`
 --
 ALTER TABLE `contacto`
   MODIFY `idcontacto` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=39;
 
 --
--- AUTO_INCREMENT de la tabla `insumos`
+-- AUTO_INCREMENT for table `entrada_insumos`
+--
+ALTER TABLE `entrada_insumos`
+  MODIFY `idcompras_insumos` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=69;
+
+--
+-- AUTO_INCREMENT for table `insumos`
 --
 ALTER TABLE `insumos`
-  MODIFY `idinsumos` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=25;
+  MODIFY `idinsumos` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=26;
 
 --
--- AUTO_INCREMENT de la tabla `produccion`
+-- AUTO_INCREMENT for table `produccion`
 --
 ALTER TABLE `produccion`
-  MODIFY `idproduccion` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=25;
+  MODIFY `idproduccion` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=36;
 
 --
--- AUTO_INCREMENT de la tabla `productos`
+-- AUTO_INCREMENT for table `productos`
 --
 ALTER TABLE `productos`
   MODIFY `idproductos` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
--- AUTO_INCREMENT de la tabla `receta`
+-- AUTO_INCREMENT for table `receta`
 --
 ALTER TABLE `receta`
-  MODIFY `idreceta` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=30;
+  MODIFY `idreceta` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=43;
 
 --
--- AUTO_INCREMENT de la tabla `roles`
+-- AUTO_INCREMENT for table `roles`
 --
 ALTER TABLE `roles`
   MODIFY `idroles` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
--- AUTO_INCREMENT de la tabla `salidas_productos`
+-- AUTO_INCREMENT for table `salidas_productos`
 --
 ALTER TABLE `salidas_productos`
-  MODIFY `idsalida` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `idsalida` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
--- AUTO_INCREMENT de la tabla `stock_insumos`
+-- AUTO_INCREMENT for table `stock_insumos`
 --
 ALTER TABLE `stock_insumos`
-  MODIFY `idstock_insumos` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=40;
+  MODIFY `idstock_insumos` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=80;
 
 --
--- AUTO_INCREMENT de la tabla `stock_productos`
+-- AUTO_INCREMENT for table `stock_productos`
 --
 ALTER TABLE `stock_productos`
-  MODIFY `idstock_productos` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=31;
+  MODIFY `idstock_productos` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=42;
 
 --
--- AUTO_INCREMENT de la tabla `unidad_de_medida`
+-- AUTO_INCREMENT for table `unidad_de_medida`
 --
 ALTER TABLE `unidad_de_medida`
   MODIFY `idunidad_de_medida` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
--- AUTO_INCREMENT de la tabla `usuarios`
+-- AUTO_INCREMENT for table `usuarios`
 --
 ALTER TABLE `usuarios`
   MODIFY `idusuarios` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
--- Restricciones para tablas volcadas
+-- Constraints for dumped tables
 --
 
 --
--- Filtros para la tabla `compras_insumos`
---
-ALTER TABLE `compras_insumos`
-  ADD CONSTRAINT `fk_compra_insumo` FOREIGN KEY (`id_insumos`) REFERENCES `insumos` (`idinsumos`);
-
---
--- Filtros para la tabla `contacto`
+-- Constraints for table `contacto`
 --
 ALTER TABLE `contacto`
   ADD CONSTRAINT `fk_asunto` FOREIGN KEY (`id_asunto`) REFERENCES `asunto` (`idasunto`) ON DELETE NO ACTION ON UPDATE NO ACTION;
 
 --
--- Filtros para la tabla `insumos`
+-- Constraints for table `entrada_insumos`
+--
+ALTER TABLE `entrada_insumos`
+  ADD CONSTRAINT `fk_compra_insumo` FOREIGN KEY (`id_insumos`) REFERENCES `insumos` (`idinsumos`);
+
+--
+-- Constraints for table `insumos`
 --
 ALTER TABLE `insumos`
   ADD CONSTRAINT `fk_insumo_unidad` FOREIGN KEY (`idunidad_de_medida`) REFERENCES `unidad_de_medida` (`idunidad_de_medida`);
 
 --
--- Filtros para la tabla `produccion`
+-- Constraints for table `produccion`
 --
 ALTER TABLE `produccion`
   ADD CONSTRAINT `fk_produccion_producto` FOREIGN KEY (`id_producto`) REFERENCES `productos` (`idproductos`);
 
 --
--- Filtros para la tabla `productos`
+-- Constraints for table `productos`
 --
 ALTER TABLE `productos`
   ADD CONSTRAINT `fk_producto_unidad` FOREIGN KEY (`idunidad_de_medida`) REFERENCES `unidad_de_medida` (`idunidad_de_medida`);
 
 --
--- Filtros para la tabla `receta`
+-- Constraints for table `receta`
 --
 ALTER TABLE `receta`
   ADD CONSTRAINT `fk_receta_insumo` FOREIGN KEY (`id_insumo`) REFERENCES `insumos` (`idinsumos`),
   ADD CONSTRAINT `fk_receta_producto` FOREIGN KEY (`id_producto`) REFERENCES `productos` (`idproductos`);
 
 --
--- Filtros para la tabla `salidas_productos`
+-- Constraints for table `salidas_productos`
 --
 ALTER TABLE `salidas_productos`
   ADD CONSTRAINT `fk_salida_producto` FOREIGN KEY (`id_producto`) REFERENCES `productos` (`idproductos`),
   ADD CONSTRAINT `fk_salida_usuario` FOREIGN KEY (`id_usuario`) REFERENCES `usuarios` (`idusuarios`) ON DELETE SET NULL;
 
 --
--- Filtros para la tabla `stock_insumos`
+-- Constraints for table `stock_insumos`
 --
 ALTER TABLE `stock_insumos`
   ADD CONSTRAINT `fk_stock_ins_insumo` FOREIGN KEY (`id_insumo`) REFERENCES `insumos` (`idinsumos`);
 
 --
--- Filtros para la tabla `stock_productos`
+-- Constraints for table `stock_productos`
 --
 ALTER TABLE `stock_productos`
   ADD CONSTRAINT `fk_stock_prod_producto` FOREIGN KEY (`id_producto`) REFERENCES `productos` (`idproductos`);
 
 --
--- Filtros para la tabla `usuarios`
+-- Constraints for table `usuarios`
 --
 ALTER TABLE `usuarios`
   ADD CONSTRAINT `fk_usuario_rol` FOREIGN KEY (`id_rol`) REFERENCES `roles` (`idroles`);

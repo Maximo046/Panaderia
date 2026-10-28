@@ -57,11 +57,11 @@ $consumos_insumos = mysqli_query($conexion, "
 
 $ingresos_insumos = mysqli_query($conexion, "
     SELECT c.fecha, i.nombre AS nombre_insumo, c.cantidad, u.abreviatura
-    FROM compras_insumos c
+    FROM entrada_insumos c
     INNER JOIN insumos i          ON c.id_insumos = i.idinsumos
     INNER JOIN unidad_de_medida u ON i.idunidad_de_medida = u.idunidad_de_medida
     $filtro_compras
-    ORDER BY c.fecha DESC
+    ORDER BY c.fecha DESC, c.idcompras_insumos DESC
 ");
 
 $produccion_registrada = mysqli_query($conexion, "
