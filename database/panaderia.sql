@@ -526,6 +526,7 @@ CREATE TABLE `usuarios` (
 
 INSERT INTO `usuarios` (`idusuarios`, `id_rol`, `nombre`, `apellido`, `correo`, `contrasena`, `fecha_registro`, `activo`) VALUES
 (1, 1, 'Maximo', 'Pedrozo', 'pedrozomaximo973@gmail.com', '$2y$10$ftwWBIWaT51gZcka0A5WUOAu5C24ZyKs8VujaMo478IzE9UywnUNK', '2026-06-13 22:52:19', 1),
+(2, 1, 'Usuario', 'Demo', 'demo@panaderia.local', '$2y$10$me2SJcv3AJF0IsN2xVIIuOkHVfNTHyyhA1g627PYaGbOgttTOKNIm', '2026-11-02 00:00:00', 1),
 (10, 2, 'Imanol', 'Balguenet', 'Imanolbalg@gmail.com', '$2y$10$LmAG8jThGFTEhZUGsRmv0eYWvc/QKuUL6Ohi9xzx7ZISGxIcQ8ZIi', '2026-10-26 14:06:01', 1);
 
 --

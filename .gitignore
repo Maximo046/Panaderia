@@ -1,18 +1,25 @@
-# Build and Release Folders
-bin-debug/
-bin-release/
-[Oo]bj/
-[Bb]in/
+# ==================== Sistema ====================
+.DS_Store
+Thumbs.db
+desktop.ini
 
-# Other files and folders
-.settings/
+# ==================== Editores / IDE ====================
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
 
-# Executables
-*.swf
-*.air
-*.ipa
-*.apk
+# ==================== Archivos temporales y respaldos ====================
+*.bak
+*.tmp
+*.log
 
-# Project files, i.e. `.project`, `.actionScriptProperties` and `.flexProperties`
-# should NOT be excluded as they contain compiler settings and other important
-# information for Eclipse / Flash Builder.
+# En descartado/ se conservan los respaldos tal cual, sin filtrarlos.
+!descartado/**/*.bak
+
+# Script auxiliar generado por el vendor de Dompdf (no se usa en ejecución).
+Libreria/dompdf/vendor/masterminds/html5/bin/
+
+# ==================== Configuración local sensible ====================
+# Credenciales SMTP y otros datos que no deben subirse al repositorio.
+PHP/config_panaderia.local.php
