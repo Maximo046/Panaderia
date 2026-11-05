@@ -1,0 +1,2730 @@
+================================================================================
+PANADERIA NORMAL 10
+EXPLICACION TECNICA DEL CODIGO
+Documento de estudio para el parcial
+================================================================================
+
+Sistema........: Panaderia Normal 10 - Gestion de panaderia
+Tecnologias....: PHP 8.2, MySQL/MariaDB 10.4, HTML5, CSS3, JavaScript,
+                 Bootstrap 5.1.3, DataTables, PHPMailer y Dompdf.
+Servidor local.: XAMPP (Apache + MySQL/MariaDB)
+Base de datos..: panaderia
+Repositorio....: https://github.com/Maximo046/Panaderia
+
+Este documento explica EL CODIGO, no el manual de usuario. El manual de uso
+esta en README.md. Aca se describe la arquitectura, cada archivo, cada tabla,
+cada flujo, las funciones de PHP, la conexion a MySQL y los detalles tecnicos
+que pueden preguntarse en un parcial.
+
+IMPORTANTE: el documento describe el sistema TAL COMO ESTA IMPLEMENTADO. En la
+seccion 15 se explican las debilidades y en la 16 las observaciones tecnicas.
+No hay que confundir "como funciona hoy" con "como deberia funcionar en
+produccion".
+
+
+================================================================================
+INDICE
+================================================================================
+
+00. Como leer este documento
+01. Vision general del sistema
+02. Arquitectura y recorrido de una peticion
+03. Estructura de archivos y responsabilidades
+04. Conceptos de PHP que usa el proyecto
+05. Conexion a la base de datos
+06. Modelo de datos: tablas, campos y relaciones
+07. Autenticacion, sesiones y permisos
+08. Capa de presentacion: paginas PHP
+09. Capa de logica: endpoints PHP
+10. Correo electronico y alertas de stock
+11. Generacion del PDF
+12. JavaScript, AJAX y DataTables
+13. CSS y diseno visual
+14. Flujos completos de ejemplo
+15. Seguridad: protecciones actuales y debilidades
+16. Observaciones tecnicas y errores conceptuales
+17. Glosario
+18. Preguntas de parcial con respuestas
+19. Resumen para memorizar
+20. Mapa rapido de archivos
+
+
+================================================================================
+00. COMO LEER ESTE DOCUMENTO
+================================================================================
+
+El documento avanza de lo general a lo particular:
+
+  - Secciones 1 a 3: que es el sistema, como se organiza y como viaja una
+    peticion desde el navegador hasta la base de datos.
+  - Secciones 4 y 5: los conceptos de PHP y la conexion a MySQL. Si no se
+    entiende esta parte, el resto no se entiende.
+  - Seccion 6: el modelo de datos. Es la parte que mas se pregunta en un
+    parcial: claves primarias, claves foraneas y relaciones.
+  - Secciones 7 a 9: el codigo archivo por archivo (paginas y endpoints).
+  - Secciones 10 a 13: correo, PDF, JavaScript y CSS.
+  - Secciones 14 a 16: flujos completos, seguridad y criticas tecnicas.
+  - Secciones 17 a 20: glosario, preguntas de parcial, resumen y mapa.
+
+Convenciones:
+
+  - Los nombres de archivos y de tablas van en minuscula.
+  - "Pagina" = archivo PHP que devuelve HTML.
+  - "Endpoint" = archivo PHP que devuelve JSON y se llama por AJAX.
+  - "BD" = base de datos.
+  - Los comentarios entre parentesis explican el POR QUE, no solo el QUE.
+
+
+================================================================================
+01. VISION GENERAL DEL SISTEMA
+================================================================================
+
+Que es
+------
+Es una aplicacion web de gestion para una panaderia. Permite administrar
+materias primas (insumos), productos, recetas, produccion, salidas de deposito,
+stock, reportes y usuarios con dos roles.
+
+Problema que resuelve
+---------------------
+Llevar el control de existencias de insumos y productos sin planillas manuales:
+cuando se produce un producto se descuentan automaticamente los insumos que
+indica su receta y se suma el stock del producto terminado. Cuando sale un
+producto del deposito se descuenta su stock y se registra el motivo.
+
+Modulos funcionales
+-------------------
+  1. Login y sesiones.
+  2. Stock (panel principal): existencias y alertas de stock bajo.
+  3. Insumos: entradas de mercaderia y alta de insumos nuevos.
+  4. Produccion: fabricar productos y descontar insumos.
+  5. Productos: listado de productos y sus recetas; alta de ambos.
+  6. Salidas: retiro de productos del deposito con motivo.
+  7. Reportes: historial por mes y exportacion a PDF.
+  8. Ayuda: guia, preguntas frecuentes y formulario de contacto.
+  9. Registro de usuarios (solo Administrador).
+
+Roles
+-----
+  - Administrador: todo, incluido Reportes y Registrar usuario.
+  - Panadero: todo menos Reportes y Registrar usuario.
+
+Tipo de aplicacion
+------------------
+Aplicacion web "clasica" o de multiples paginas (MPA): cada accion navega o
+recarga una pagina. No es una SPA (Single Page Application). Usa AJAX solo
+para enviar formularios sin recargar, pero la respuesta siempre termina en un
+alert o en una recarga completa.
+
+
+================================================================================
+02. ARQUITECTURA Y RECORRIDO DE UNA PETICION
+================================================================================
+
+Modelo
+------
+Arquitectura cliente-servidor de tres capas:
+
+  1. Cliente (navegador): HTML, CSS, JavaScript, Bootstrap y DataTables.
+  2. Servidor de aplicacion (Apache + PHP): procesa la logica.
+  3. Servidor de datos (MySQL/MariaDB): guarda la informacion.
+
+No hay framework MVC (Laravel, Symfony, CodeIgniter). El proyecto es PHP
+"plano" (vanilla): cada archivo mezcla logica PHP arriba y HTML abajo. Aun asi
+se pueden distinguir tres responsabilidades:
+
+  - Presentacion: archivos de la raiz (stock.php, insumos.php, etc.).
+  - Logica/API: archivos de la carpeta PHP/ que devuelven JSON.
+  - Acceso a datos: se hace con mysqli dentro de cada archivo, no hay una
+    clase DAO ni un ORM.
+
+Recorrido de una peticion normal (pagina)
+-----------------------------------------
+  Navegador
+     | GET /stock.php
+     v
+  Apache (XAMPP) recibe la peticion y la deriva a PHP por la extension .php
+     |
+     v
+  PHP ejecuta stock.php de arriba hacia abajo:
+     - define $pagina_actual
+     - session_start()          -> recupera la sesion por la cookie PHPSESSID
+     - require conexion.php     -> abre la conexion mysqli
+     - require auth.php         -> valida sesion y permisos
+     - require alerta_stock.php -> define la funcion de alertas
+     - require utilidades.php   -> define formatear_cantidad()
+     - ejecuta enviar_alerta_stock($conexion)
+     - ejecuta consultas mysqli_query(...)
+     - imprime HTML con los datos (while + htmlspecialchars)
+     v
+  Apache devuelve el HTML al navegador
+     v
+  El navegador pide CSS, JS, imagenes y ejecuta DataTables
+
+Recorrido de una peticion AJAX (endpoint)
+-----------------------------------------
+  El usuario completa un formulario y lo envia.
+  JS/AJAX.js intercepta el evento submit con preventDefault().
+  Arma un XMLHttpRequest con method POST y un objeto FormData.
+     |
+     v
+  PHP ejecuta el endpoint (por ejemplo PHP/registrar_salida.php):
+     - header('Content-Type: application/json')
+     - session_start() y require conexion.php
+     - valida datos de $_POST
+     - abre transaccion (begin_transaction)
+     - ejecuta INSERT/UPDATE con sentencias preparadas
+     - commit o rollback
+     - echo json_encode([...])
+     v
+  El navegador recibe el JSON, hace JSON.parse y muestra el mensaje.
+  Si la operacion fue OK y la configuracion lo indica, recarga la pagina.
+
+Ventajas de esta arquitectura
+-----------------------------
+  - Facil de entender y de exponer en un parcial.
+  - No requiere instalar dependencias con Composer: las librerias estan
+    copiadas en Framework/ y Libreria/.
+  - Funciona en cualquier XAMPP sin configuracion especial.
+
+Desventajas
+-----------
+  - Logica, HTML y SQL mezclados en el mismo archivo.
+  - Duplicacion de codigo (los require se repiten en cada pagina).
+  - Sin separacion estricta de capas, es mas dificil testear.
+  - Sin framework de rutas: cada archivo es una URL.
+
+
+================================================================================
+03. ESTRUCTURA DE ARCHIVOS Y RESPONSABILIDADES
+================================================================================
+
+Arbol simplificado (sin Framework/, Libreria/ ni descartado/):
+
+  Panaderia/
+  |-- index.php              Login. Unico punto de entrada sin sesion.
+  |-- conexion.php           Abre la conexion mysqli y fija la zona horaria.
+  |-- auth.php               Valida sesion y permisos por rol.
+  |-- sidebar.php            Genera el menu lateral segun el rol.
+  |-- logout.php             Destruye la sesion y vuelve al login.
+  |-- stock.php              Panel principal: stock y alertas.
+  |-- insumos.php            Entrada de insumos y alta de insumos.
+  |-- produccion.php         Formulario de produccion por producto.
+  |-- productos.php          Listado de productos con su receta.
+  |-- nuevo_producto.php     Formulario de alta de producto.
+  |-- nueva_receta.php       Formulario de alta de receta.
+  |-- salidas.php            Formulario de salida de productos.
+  |-- reportes.php           Reportes por mes (solo Administrador).
+  |-- registro.php           Alta de usuarios (solo Administrador).
+  |-- ayuda.php              Guia, FAQ y contacto.
+  |-- PHP/
+  |   |-- registrar_compra.php      Endpoint: entradas multiples de insumos.
+  |   |-- registrar_insumo.php      Endpoint: alta de insumo.
+  |   |-- registrar_producto.php    Endpoint: alta de producto.
+  |   |-- registrar_receta.php      Endpoint: alta de receta (N:M).
+  |   |-- registrar_produccion.php  Endpoint: producir y descontar insumos.
+  |   |-- registrar_salida.php      Endpoint: salida y descuento de productos.
+  |   |-- envio_registro.php        Endpoint: alta de usuario.
+  |   |-- formulario_ayuda.php      Endpoint: contacto + correo.
+  |   |-- alerta_stock.php          Funcion de alertas por correo.
+  |   |-- utilidades.php            Funcion formatear_cantidad().
+  |   |-- config_panaderia.php      Credenciales SMTP (devuelve un array).
+  |   |-- PDF/
+  |   |   |-- reportes_pdf.php      Genera el PDF con Dompdf.
+  |   |-- JS/
+  |       |-- AJAX.js               Funcion enviarFormularioAjax().
+  |       |-- datatables_config.js  Funcion window.iniciarTabla().
+  |-- CSS/
+  |   |-- styles.css                Hoja de estilos propia.
+  |   |-- Imagenes/                 Logo.png, Pan.jpg, etc.
+  |-- database/
+  |   |-- panaderia.sql             Script de creacion e importacion.
+  |-- docs/
+  |   |-- DER.mwb / DER.pdf         Modelo entidad-relacion.
+  |   |-- capturas/                 Capturas para el README.
+  |-- Framework/
+  |   |-- bootstrap-5.1.3/          Bootstrap local (CSS y JS).
+  |-- Libreria/
+  |   |-- DataTables/               DataTables local.
+  |   |-- PHPMailer/                PHPMailer local.
+  |   |-- dompdf/                   Dompdf local.
+  |-- descartado/                   Material viejo. NO se elimina (pedido).
+
+Regla de oro de las rutas
+-------------------------
+  - Los archivos de la raiz usan rutas relativas simples: 'conexion.php',
+    'PHP/...', 'CSS/...'.
+  - Los archivos dentro de PHP/ suben un nivel con '../'.
+  - Los archivos dentro de PHP/PDF/ suben dos niveles con '../../'.
+  - auth.php permite cambiar el prefijo con $prefijo_redireccion para que
+    un archivo en subcarpeta redirija bien al login.
+
+Por que hay require_once y no include
+-------------------------------------
+  require_once incluye el archivo solo si no fue incluido antes. Evita
+  "Cannot redeclare function" y abre la conexion una sola vez por peticion.
+  Si el archivo no existe o falla, require produce un error fatal y detiene
+  la ejecucion (include solo emite una advertencia). Para codigo critico
+  (conexion, autenticacion) siempre require.
+
+
+================================================================================
+04. CONCEPTOS DE PHP QUE USA EL PROYECTO
+================================================================================
+
+Esta seccion explica solo lo que aparece en el codigo, con el ejemplo real.
+
+4.1 Etiquetas PHP y HTML embebido
+---------------------------------
+  <?php ... ?>        bloque de PHP.
+  <?= $variable ?>    atajo de <?php echo $variable; ?>.
+  El archivo empieza en PHP (logica) y sigue en HTML (vista). PHP se ejecuta
+  completo en el servidor; el navegador solo recibe HTML.
+
+4.2 Variables y tipos
+---------------------
+  PHP es de tipado dinamico. Ejemplos del proyecto:
+
+    $pagina_actual = 'stock';          // string
+    $hora_actual = (int) date('G');    // cast explicito a entero
+    $stock = (float) $insumo['stock_actual'];
+    $hay_alertas = false;              // boolean
+
+  Conversiones usadas:
+    (int)     -> entero, para IDs y cantidades contadas.
+    (float)   -> decimal, para cantidades con coma.
+    (string)  -> texto.
+
+4.3 Arrays
+----------
+  Indexado (lista):
+    $motivos_salida = ['Venta mostrador', 'Consumo interno', ...];
+
+  Asociativo (clave => valor):
+    $permisos_por_rol = [
+        'Panadero'      => ['stock', 'insumos', ...],
+        'Administrador' => ['stock', 'insumos', ...],
+    ];
+
+  Multidimensional:
+    $items_del_menu = [
+        'stock' => ['etiqueta' => 'Stock', 'enlace' => 'stock.php',
+                    'roles' => ['Administrador', 'Panadero']],
+    ];
+
+  Recorridos:
+    foreach ($items_del_menu as $clave => $item) { ... }
+    while ($fila = mysqli_fetch_assoc($resultado)) { ... }
+
+  Desestructuracion en foreach (PHP 7.1+):
+    foreach ($items_guia as [$titulo_seccion, $descripcion_seccion]) { ... }
+
+4.4 Operadores importantes
+--------------------------
+  ??    coalescencia nula: $x = $_POST['campo'] ?? ''; devuelve '' si no existe.
+  ?:    ternario abreviado: $valor ?: '0' devuelve '0' si $valor es falso.
+  ===   comparacion estricta (valor y tipo). Se usa en in_array(..., true).
+  <=    comparacion numerica.
+  .=    concatenacion acumulativa: $html .= '<li>...</li>';
+
+4.5 Superglobales
+-----------------
+  $_POST      datos enviados por method="POST" (formularios).
+  $_GET       datos enviados por la URL (?mes=2026-10).
+  $_SESSION   datos del usuario entre peticiones (guardados en el servidor).
+  $_SERVER    datos del servidor: $_SERVER['REQUEST_METHOD'].
+  $_FILES     subida de archivos (el proyecto no la usa).
+
+4.6 Funciones
+-------------
+  Definidas por el usuario:
+
+    function formatear_cantidad($numero) { ... }
+
+    function enviar_alerta_stock(mysqli $conexion): bool { ... }
+      - mysqli $conexion  -> type hint: exige un objeto mysqli.
+      - : bool            -> tipo de retorno declarado.
+
+    function responder_compra(array $datos, int $codigo_http = 200): void
+      - void = no devuelve valor; imprime JSON y hace exit.
+
+  Funciones internas usadas:
+    trim, empty, isset, count, in_array, implode, str_replace, rtrim,
+    number_format, htmlspecialchars, filter_var, json_encode, json_decode,
+    date, strtotime, password_hash, password_verify, hash_equals,
+    bin2hex, random_bytes, file_get_contents, file_put_contents, unlink,
+    is_file, error_log, header, http_response_code, ob_start, ob_get_clean.
+
+4.7 Namespaces y use
+--------------------
+  Las librerias externas usan namespaces:
+
+    use PHPMailer\PHPMailer\Exception;
+    use PHPMailer\PHPMailer\PHPMailer;
+    use Dompdf\Dompdf;
+
+  Luego se instancian con new PHPMailer(true) o new Dompdf(). El "use" es un
+  alias, no incluye el archivo: por eso ademas se hace require de los .php.
+
+4.8 Manejo de errores
+---------------------
+  - conexion.php: if ($conexion->connect_error) { die(...); }
+  - Endpoints con try/catch (Throwable) y rollback.
+  - mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT) en
+    registrar_compra.php hace que mysqli lance excepciones en vez de
+    devolver false. Es la forma moderna de manejar errores de mysqli.
+  - error_log() escribe en el log de Apache/PHP sin mostrar el error al
+    usuario. Se usa para fallos de correo.
+
+4.9 Fechas y zona horaria
+-------------------------
+  conexion.php fija America/Argentina/Buenos_Aires porque XAMPP viene con
+  Europe/Berlin. Sin eso, date() y los DEFAULT CURRENT_TIMESTAMP del servidor
+  pueden diferir.
+
+  date('Y-m-d')            -> 2026-11-02
+  date('d/m/Y')            -> 02/11/2026
+  date('G')                -> hora 0-23, para el saludo.
+  strtotime('2026-11-01')  -> marca de tiempo, para formatear el mes.
+  DateTime::createFromFormat('Y-m-d', $fecha) valida que la fecha exista.
+
+4.10 Strings y seguridad de salida
+----------------------------------
+  htmlspecialchars($texto) convierte <, >, &, " y ' en entidades HTML.
+  Se usa SIEMPRE al imprimir datos que vienen de la BD o del usuario, para
+  evitar XSS. Ejemplo:
+    <?= htmlspecialchars($fila['nombre_insumo']) ?>
+  Algunas llamadas agregan ENT_QUOTES y 'UTF-8' de forma explicita.
+
+  nl2br() convierte saltos de linea en <br> (se usa en el correo de ayuda).
+
+4.11 JSON
+---------
+  Los endpoints responden JSON:
+    header('Content-Type: application/json; charset=utf-8');
+    echo json_encode(['ok' => true, 'mensaje' => '...'], JSON_UNESCAPED_UNICODE);
+
+  JSON_UNESCAPED_UNICODE evita que los acentos se conviertan en \u00f1.
+  El cliente hace JSON.parse(responseText) en AJAX.js.
+
+4.12 Variables de sesion
+------------------------
+  session_start() crea o recupera la sesion. El servidor guarda los datos y
+  envia al navegador una cookie llamada PHPSESSID. Claves usadas:
+
+    $_SESSION['usuario_id']
+    $_SESSION['usuario_nombre']
+    $_SESSION['usuario_correo']
+    $_SESSION['usuario_rol']
+    $_SESSION['token_compra']    (token CSRF del formulario de insumos)
+    $_SESSION['compra_ok']       (mensaje flash de compra exitosa)
+
+4.13 Hashing de contrasenas
+---------------------------
+  password_hash($contrasena, PASSWORD_DEFAULT) genera un hash bcrypt
+  (empieza con $2y$). password_verify($plano, $hash) compara sin poder
+  revertir el hash. Nunca se guarda la contrasena en texto plano.
+
+4.14 Transacciones
+------------------
+  Permiten que varias operaciones se confirmen todas o ninguna:
+    $conexion->begin_transaction();
+    ... INSERT/UPDATE ...
+    $conexion->commit();      // confirma
+    $conexion->rollback();    // revierte si hubo error
+  Requiere tablas InnoDB (todas lo son). Se usan en registrar_compra,
+  registrar_insumo, registrar_producto, registrar_receta y registrar_salida.
+
+4.15 Sentencias preparadas (prepared statements)
+------------------------------------------------
+  Evitan inyeccion SQL separando la consulta de los datos:
+    $stmt = $conexion->prepare("INSERT INTO ... VALUES (?, ?, ?)");
+    $stmt->bind_param('iid', $entero, $entero, $decimal);
+    $stmt->execute();
+  Tipos de bind_param: i = integer, d = double/decimal, s = string.
+  Se usan en registrar_compra, registrar_receta y registrar_salida.
+  En otros archivos se usa mysqli_real_escape_string (menos robusto, pero
+  funcional si se aplica bien).
+
+4.16 Redirecciones y exit
+-------------------------
+  header('Location: stock.php'); seguido de exit; evita que se siga
+  ejecutando codigo y que se envie HTML antes del encabezado.
+  header() debe llamarse antes de cualquier salida (echo, HTML, espacio).
+
+4.17 Buffer de salida
+---------------------
+  ob_start() al inicio de reportes_pdf.php guarda todo el HTML en memoria.
+  ob_get_clean() lo recupera como string y lo entrega a Dompdf. Asi el HTML
+  no se envia al navegador: se convierte en PDF.
+
+4.18 Lectura del cuerpo crudo
+-----------------------------
+  file_get_contents('php://input') lee el cuerpo de la peticion tal cual.
+  parse_str($raw, $parsed) lo convierte en un array tipo $_POST.
+  Se usa como respaldo en registrar_compra.php cuando $_POST llega vacio.
+
+4.19 Variables de archivo
+-------------------------
+  __DIR__ es la carpeta del archivo actual. Se usa para require robustos:
+    require_once __DIR__ . '/alerta_stock.php';
+  Evita depender del directorio de trabajo actual.
+
+4.20 Alternativa a mysqli: PDO
+------------------------------
+  El proyecto usa mysqli (orientado a objetos). PDO seria otra opcion:
+    $pdo = new PDO('mysql:host=localhost;dbname=panaderia;charset=utf8mb4',
+                   'root', '');
+  PDO permite mas de un motor de BD y tiene una API mas uniforme. mysqli
+  solo funciona con MySQL/MariaDB. Para el parcial conviene saber que el
+  proyecto usa mysqli y por que.
+
+
+================================================================================
+05. CONEXION A LA BASE DE DATOS
+================================================================================
+
+Archivo: conexion.php (18 lineas)
+---------------------------------
+Este archivo es el unico lugar donde se definen las credenciales y se abre la
+conexion. Todas las paginas y endpoints lo incluyen con require_once.
+
+Codigo real comentado:
+
+  <?php
+  // Zona horaria
+  date_default_timezone_set('America/Argentina/Buenos_Aires');
+
+  // Credenciales
+  $servidor   = "localhost";
+  $usuario    = "root";
+  $contrasena = "";
+  $base_datos = "panaderia";
+
+  // Apertura de conexion (estilo orientado a objetos)
+  $conexion = new mysqli($servidor, $usuario, $contrasena, $base_datos);
+
+  // Control de error
+  if ($conexion->connect_error) {
+      die("Error de conexion: " . $conexion->connect_error);
+  }
+
+Que hace cada linea
+-------------------
+1) date_default_timezone_set()
+   Fija la zona horaria de PHP. XAMPP trae Europe/Berlin; sin esto las
+   fechas y horas del sistema quedarian corridas varias horas.
+
+2) $servidor = "localhost"
+   El servidor de BD esta en la misma maquina que Apache. En XAMPP,
+   "localhost" resuelve a 127.0.0.1 y usa el puerto 3306 por defecto.
+
+3) $usuario = "root" y $contrasena = ""
+   Credenciales por defecto de XAMPP. En un servidor real NUNCA se usa root
+   sin contrasena. Es una de las debilidades del proyecto.
+
+4) $base_datos = "panaderia"
+   Nombre exacto de la BD creada al importar database/panaderia.sql.
+
+5) new mysqli(...)
+   Crea el objeto de conexion. Recibe cuatro parametros:
+     host, usuario, contrasena, nombre_de_la_base.
+   El puerto es opcional (quinto parametro). No se configura charset aca;
+   MariaDB usa utf8mb4 por la definicion de las tablas y el cliente PHP 8.2
+   usa utf8mb4 por defecto.
+
+6) $conexion->connect_error
+   Propiedad que contiene el mensaje si fallo la conexion, o null si salio
+   bien. die() corta la ejecucion y muestra el error. En produccion no se
+   deberia mostrar el error tecnico al usuario.
+
+Como se usa la conexion en el resto del sistema
+-----------------------------------------------
+  - Estilo orientado a objetos: $conexion->prepare(), $conexion->query(),
+    $conexion->begin_transaction(), $conexion->commit(), $conexion->rollback(),
+    $conexion->close().
+  - Estilo por funciones: mysqli_query($conexion, "..."),
+    mysqli_fetch_assoc($resultado), mysqli_num_rows($resultado),
+    mysqli_real_escape_string($conexion, $texto),
+    mysqli_insert_id($conexion), mysqli_error($conexion),
+    mysqli_begin_transaction($conexion), mysqli_commit($conexion),
+    mysqli_rollback($conexion), mysqli_close($conexion).
+  Ambos estilos son equivalentes; el proyecto mezcla los dos.
+
+Ciclo de vida de la conexion
+----------------------------
+  Cada peticion HTTP abre una conexion nueva al incluir conexion.php y la
+  cierra al terminar el script (o con close()). No hay pool de conexiones ni
+  conexion persistente. Es lo normal en PHP tradicional: el proceso termina
+  al terminar la peticion.
+
+  En las paginas que solo leen (stock.php, productos.php, etc.) no se llama
+  a close(): PHP cierra la conexion automaticamente al finalizar.
+  En los endpoints que escriben si se llama a mysqli_close($conexion) o
+  $conexion->close().
+
+Por que require_once y no include
+---------------------------------
+  conexion.php declara variables ($conexion, $servidor, etc.) y abre una
+  conexion. Si se incluyera dos veces se abririan dos conexiones y se
+  pisarian las variables. require_once garantiza una sola inclusion.
+
+Como comprobar que la conexion funciona
+---------------------------------------
+  - Abrir http://localhost/phpmyadmin y ver la BD "panaderia".
+  - En PHP: var_dump($conexion->connect_error); debe dar NULL.
+  - Si aparece "Access denied", revisar usuario/contrasena.
+  - Si aparece "Unknown database", falta importar el .sql.
+  - Si aparece "Connection refused", MySQL no esta iniciado en XAMPP.
+
+Consulta de datos: el patron del proyecto
+-----------------------------------------
+  $resultado = mysqli_query($conexion, "SELECT ...");
+  while ($fila = mysqli_fetch_assoc($resultado)) {
+      // $fila es un array asociativo: $fila['nombre_columna']
+  }
+  mysqli_num_rows($resultado) devuelve la cantidad de filas.
+
+  mysqli_fetch_assoc devuelve NULL cuando no hay mas filas, por eso el while
+  termina solo. No hace falta contar.
+
+Diferencia entre query y prepare
+--------------------------------
+  - query() ejecuta SQL armado como string. Si se concatenan datos del
+    usuario hay riesgo de inyeccion.
+  - prepare() + bind_param() envia la plantilla y los datos por separado.
+    Es la forma segura y la que se usa en las operaciones criticas.
+
+
+================================================================================
+06. MODELO DE DATOS: TABLAS, CAMPOS Y RELACIONES
+================================================================================
+
+La BD se llama panaderia, usa InnoDB y charset utf8mb4. Tiene 13 tablas.
+
+Resumen de tablas
+-----------------
+   1. roles               Catalogos de roles.
+   2. usuarios            Cuentas de acceso.
+   3. unidad_de_medida    Kilogramo, Litros, Unidad.
+   4. insumos             Materias primas.
+   5. productos           Productos elaborados.
+   6. receta              Que insumos y en que cantidad lleva cada producto.
+   7. stock_insumos       Existencias actuales de insumos.
+   8. stock_productos     Existencias actuales de productos.
+   9. entrada_insumos     Historial de ingresos de insumos.
+  10. produccion          Historial de producciones.
+  11. salidas_productos   Historial de salidas de productos.
+  12. asunto              Categorias del formulario de contacto.
+  13. contacto            Mensajes enviados desde Ayuda.
+
+6.1 roles
+---------
+  Columnas:
+    idroles   INT, PK, AUTO_INCREMENT
+    nombre    VARCHAR(45), NOT NULL
+  Datos:
+    (1, 'Administrador')
+    (2, 'Panadero')
+
+6.2 usuarios
+------------
+  Columnas:
+    idusuarios      INT, PK, AUTO_INCREMENT
+    id_rol          INT, NOT NULL, FK -> roles.idroles
+    nombre          VARCHAR(45)
+    apellido        VARCHAR(45)
+    correo          VARCHAR(100), UNIQUE (uq_usuario_correo)
+    contrasena      VARCHAR(255)  (hash bcrypt, NO texto plano)
+    fecha_registro  DATETIME, DEFAULT CURRENT_TIMESTAMP
+    activo          TINYINT(1), DEFAULT 1
+  Relaciones:
+    - Muchos usuarios pertenecen a un rol (N:1).
+    - Un usuario puede registrar muchas salidas (1:N).
+  Nota: el campo activo permite desactivar cuentas sin borrarlas, pero el
+  sistema no tiene pantalla para cambiarlo.
+
+6.3 unidad_de_medida
+--------------------
+  Columnas:
+    idunidad_de_medida  INT, PK, AUTO_INCREMENT
+    nombre              VARCHAR(45)
+    abreviatura         VARCHAR(10)
+  Datos:
+    (1, 'Kilogramo', 'Kg')
+    (2, 'Litros', 'Lt')
+    (3, 'Unidad', 'Un')
+  Relaciones:
+    - Un insumo tiene una unidad (1:N).
+    - Un producto tiene una unidad (1:N).
+
+6.4 insumos
+-----------
+  Columnas:
+    idinsumos           INT, PK, AUTO_INCREMENT
+    idunidad_de_medida  INT, FK -> unidad_de_medida
+    nombre              VARCHAR(45)
+  Es la materia prima: harina, azucar, levadura, etc.
+  No guarda stock: el stock vive en stock_insumos.
+
+6.5 productos
+-------------
+  Columnas:
+    idproductos         INT, PK, AUTO_INCREMENT
+    idunidad_de_medida  INT, FK -> unidad_de_medida
+    nombre              VARCHAR(45)
+  Es el producto terminado: pan, factura, etc.
+  No guarda stock: el stock vive en stock_productos.
+
+6.6 receta
+----------
+  Columnas:
+    idreceta     INT, PK, AUTO_INCREMENT
+    id_producto  INT, FK -> productos.idproductos
+    id_insumo    INT, FK -> insumos.idinsumos
+    cantidad     DECIMAL(10,3)  (cantidad de insumo por 1 unidad de producto)
+  Restriccion:
+    UNIQUE (id_producto, id_insumo) -> un producto no puede repetir el mismo
+    insumo en su receta.
+  Es una tabla intermedia que resuelve una relacion N:M entre productos e
+  insumos, con un atributo extra: la cantidad.
+
+6.7 stock_insumos
+-----------------
+  Columnas:
+    idstock_insumos  INT, PK, AUTO_INCREMENT
+    id_insumo        INT, FK -> insumos, UNIQUE
+    cantidad         DECIMAL(10,3), NOT NULL
+    stock_minimo     DECIMAL(10,3), DEFAULT 10.000
+  Relacion 1:1 con insumos (un insumo tiene una sola fila de stock).
+  La unicidad de id_insumo es lo que permite usar INSERT ... ON DUPLICATE
+  KEY UPDATE en registrar_compra.php.
+
+6.8 stock_productos
+-------------------
+  Columnas:
+    idstock_productos  INT, PK, AUTO_INCREMENT
+    id_producto        INT, FK -> productos, UNIQUE
+    cantidad           DECIMAL(10,3), DEFAULT 0
+    stock_minimo       DECIMAL(10,3), DEFAULT 10
+  Relacion 1:1 con productos. Misma logica de upsert que stock_insumos.
+
+6.9 entrada_insumos
+-------------------
+  Columnas:
+    idcompras_insumos  INT, PK, AUTO_INCREMENT
+    id_insumos         INT, FK -> insumos
+    cantidad           DECIMAL(10,3)
+    fecha              DATE
+  Es el historial (log) de ingresos de materia prima. Cada fila es una
+  entrada. No guarda precio ni proveedor, aunque la guia de Ayuda lo
+  mencione (diferencia entre texto y modelo real).
+
+6.10 produccion
+---------------
+  Columnas:
+    idproduccion  INT, PK, AUTO_INCREMENT
+    id_producto   INT, FK -> productos
+    cantidad      DECIMAL(10,3)
+    fecha         DATETIME, DEFAULT CURRENT_TIMESTAMP
+  Historial de producciones. El consumo de insumos NO se guarda aca: se
+  calcula multiplicando produccion.cantidad por receta.cantidad. Por eso el
+  reporte de consumos se obtiene con un JOIN entre produccion, receta,
+  insumos y unidad_de_medida.
+
+6.11 salidas_productos
+----------------------
+  Columnas:
+    idsalida     INT, PK, AUTO_INCREMENT
+    id_producto  INT, FK -> productos
+    id_usuario   INT, FK -> usuarios, NULL, ON DELETE SET NULL
+    cantidad     DECIMAL(10,3)
+    motivo       VARCHAR(40)
+    observacion  VARCHAR(255), NULL
+    fecha        DATETIME, DEFAULT CURRENT_TIMESTAMP
+  Historial de salidas. Guarda quien la registro (id_usuario). Si se borra
+  el usuario, el campo queda NULL y la salida no se pierde.
+
+6.12 asunto
+-----------
+  Columnas:
+    idasunto  INT, PK, AUTO_INCREMENT
+    nombre    VARCHAR(45)
+  Datos: Consulta sobre el sistema, Reporte de error, Sugerencia de mejora,
+  Informacion del proyecto, Otro.
+
+6.13 contacto
+-------------
+  Columnas:
+    idcontacto  INT, PK, AUTO_INCREMENT
+    id_asunto   INT, FK -> asunto
+    nombre      VARCHAR(45)
+    correo      VARCHAR(100)
+    mensaje     LONGTEXT
+  Guarda los mensajes del formulario de Ayuda. No tiene fecha ni estado de
+  leido.
+
+Mapa de relaciones (texto)
+--------------------------
+  roles 1 ---- N usuarios
+  usuarios 1 ---- N salidas_productos (id_usuario)
+  unidad_de_medida 1 ---- N insumos
+  unidad_de_medida 1 ---- N productos
+  insumos 1 ---- N entrada_insumos
+  insumos 1 ---- 1 stock_insumos
+  insumos 1 ---- N receta
+  productos 1 ---- N receta
+  productos 1 ---- 1 stock_productos
+  productos 1 ---- N produccion
+  productos 1 ---- N salidas_productos
+  asunto 1 ---- N contacto
+
+  Dicho de otra forma: productos e insumos se relacionan N:M a traves de
+  receta; el resto son relaciones 1:N o 1:1.
+
+Claves y restricciones
+----------------------
+  PRIMARY KEY: identifica cada fila. Todas las tablas tienen una.
+  UNIQUE KEY:
+    - usuarios.correo
+    - receta (id_producto, id_insumo)
+    - stock_insumos.id_insumo
+    - stock_productos.id_producto
+  FOREIGN KEY: garantiza que el valor exista en la tabla referenciada.
+  ON DELETE SET NULL: solo en salidas_productos.id_usuario.
+  El resto de las FK no tienen accion en cascada: por defecto NO ACTION.
+
+Normalizacion
+-------------
+  El modelo esta en 3FN en su mayoria:
+    - Cada tabla tiene una PK simple.
+    - Los datos no se repiten: el nombre del insumo vive en insumos, no en
+      cada receta.
+    - Las relaciones N:M se resuelven con receta.
+  Excepcion deliberada: stock_insumos y stock_productos son datos derivados
+  (se podrian calcular sumando entradas y restando consumos/salidas). Se
+  materializan por rendimiento y comodidad, a costa de posible
+  desincronizacion si algo falla.
+
+Tipos de datos
+--------------
+  INT(11)         enteros para IDs y contadores.
+  VARCHAR(n)      texto de longitud variable.
+  DECIMAL(10,3)   numeros con 3 decimales exactos. Se usa para cantidades
+                  (0.001 kg = 1 gramo). Nunca FLOAT para dinero/cantidades,
+                  porque FLOAT redondea.
+  DATE            solo fecha (entrada_insumos).
+  DATETIME        fecha y hora (produccion, salidas, usuarios).
+  TINYINT(1)      booleano (activo).
+  LONGTEXT        texto largo (mensaje de contacto).
+
+
+================================================================================
+07. AUTENTICACION, SESIONES Y PERMISOS
+================================================================================
+
+7.1 Archivo index.php (login)
+-----------------------------
+Flujo completo:
+
+  1. session_start()
+     Inicia o recupera la sesion. Debe ejecutarse antes de cualquier salida.
+
+  2. require_once 'conexion.php'
+     Abre la BD para poder buscar el usuario.
+
+  3. Si ya hay sesion:
+       if (isset($_SESSION['usuario_id'])) { header('Location: stock.php'); exit; }
+     Evita mostrar el login a alguien ya autenticado.
+
+  4. Si el metodo es POST:
+       if ($_SERVER['REQUEST_METHOD'] === 'POST') { ... }
+     Solo procesa el formulario cuando se envio.
+
+  5. Toma los datos:
+       $correo_ingresado     = trim($_POST['correo'] ?? '');
+       $contrasena_ingresada = $_POST['contrasena'] ?? '';
+
+  6. Valida que no esten vacios.
+
+  7. Escapa el correo:
+       $correo_seguro = mysqli_real_escape_string($conexion, $correo_ingresado);
+     forma parte de la consulta SQL. La contrasena NO se escapa porque no
+     va a la consulta: se compara con password_verify.
+
+  8. Consulta:
+       SELECT u.idusuarios, u.nombre, u.apellido, u.correo,
+              u.contrasena, u.activo, r.nombre AS rol
+       FROM usuarios u
+       INNER JOIN roles r ON u.id_rol = r.idroles
+       WHERE u.correo = '$correo_seguro'
+       LIMIT 1
+     El INNER JOIN trae el nombre del rol. LIMIT 1 porque el correo es UNIQUE.
+
+  9. Verificaciones en orden:
+       - if (!$usuario_encontrado)              -> correo o contrasena incorrectos
+       - elseif (!$usuario_encontrado['activo']) -> cuenta desactivada
+       - elseif (!password_verify(...))          -> correo o contrasena incorrectos
+       - else                                    -> login correcto
+
+     Nota: se usa el mismo mensaje para correo inexistente y contrasena
+     incorrecta. Es una buena practica: no revela si el correo existe.
+
+ 10. Si el login es correcto, guarda en sesion:
+       $_SESSION['usuario_id']
+       $_SESSION['usuario_nombre']  (nombre + ' ' + apellido)
+       $_SESSION['usuario_correo']
+       $_SESSION['usuario_rol']     (nombre del rol)
+
+ 11. Redirige a stock.php y hace exit.
+
+ 12. Si no es POST (o hubo error), imprime el HTML del formulario.
+     El mensaje de error se muestra con htmlspecialchars.
+
+Por que password_verify y no comparar strings
+---------------------------------------------
+  La BD guarda un hash bcrypt, no la contrasena. password_verify vuelve a
+  aplicar el algoritmo con el "salt" incluido en el hash y compara. Nunca se
+  puede "desencriptar". Comparar $plano === $hash siempre daria falso.
+
+7.2 Archivo auth.php (control de acceso)
+----------------------------------------
+Se incluye en todas las paginas protegidas. Se ejecuta despues de
+session_start() y antes de imprimir HTML.
+
+Contenido y logica:
+
+  if (session_status() === PHP_SESSION_NONE) { session_start(); }
+    Arranca la sesion solo si no esta activa (evita el warning
+    "session already started").
+
+  $prefijo_redireccion = $prefijo_redireccion ?? '';
+    Permite que un archivo en subcarpeta (PHP/PDF/) defina '../../' antes de
+    incluir auth.php para que el redirect funcione.
+
+  if (!isset($_SESSION['usuario_rol'])) {
+      header('Location: ' . $prefijo_redireccion . 'index.php');
+      exit;
+  }
+    Si no hay sesion, vuelve al login.
+
+  $permisos_por_rol = [
+      'Panadero'      => ['stock','insumos','produccion','productos',
+                          'nuevo_producto','nueva_receta','salidas','ayuda'],
+      'Administrador' => ['stock','insumos','produccion','productos',
+                          'nuevo_producto','nueva_receta','salidas',
+                          'reportes','ayuda','registro'],
+  ];
+
+  $paginas_del_rol = $permisos_por_rol[$rol_del_usuario] ?? [];
+
+  if (!in_array($pagina_actual, $paginas_del_rol, true)) {
+      // redirige a stock.php segun el rol
+  }
+
+  Cada pagina define antes $pagina_actual = 'stock'; (o el modulo que sea).
+  auth.php compara ese string contra la lista permitida para el rol.
+  Si no esta permitido, redirige. Si esta permitido, no hace nada y la pagina
+  sigue ejecutandose.
+
+  El tercer parametro true de in_array exige comparacion estricta. Evita que
+  valores como 0 o '' coincidan por conversion de tipos.
+
+  Nota: la sesion se valida por el rol guardado en $_SESSION, no se consulta
+  la BD en cada pagina. Si a un usuario se le cambia el rol, el cambio se
+  aplica cuando vuelve a iniciar sesion.
+
+7.3 Archivo sidebar.php (menu por rol)
+--------------------------------------
+  - Toma el rol desde la sesion.
+  - Define $items_del_menu, un array asociativo con etiqueta, enlace y roles
+    permitidos.
+  - Recorre el array con foreach y, si el rol no esta en la lista, hace
+    continue (no imprime esa opcion).
+  - Compara $pagina_actual con la clave para agregar class="active".
+  - Imprime <li><a href="...">...</a></li>.
+
+  Resultado: el Panadero no ve Reportes ni Registrar usuario, y el
+  Administrador ve todo. Es una restriccion visual; la restriccion real la
+  hace auth.php.
+
+7.4 Archivo logout.php
+----------------------
+  session_start();
+  session_destroy();
+  header('Location: index.php');
+  exit;
+
+  Destruye los datos de la sesion en el servidor. No borra la cookie
+  PHPSESSID del navegador ni regenera el ID; es una mejora pendiente.
+
+7.5 Matriz de permisos
+----------------------
+  Modulo                Panadero   Administrador
+  -------------------------------------------------
+  stock                    si           si
+  insumos                  si           si
+  produccion               si           si
+  productos                si           si
+  nuevo_producto           si           si
+  nueva_receta             si           si
+  salidas                  si           si
+  reportes                 NO           si
+  registro (usuarios)      NO           si
+  ayuda                    si           si
+
+7.6 Seguridad de la sesion en este proyecto
+-------------------------------------------
+  - El ID de sesion viaja en una cookie (por defecto httponly no esta
+    configurado explicitamente).
+  - No se llama a session_regenerate_id() al iniciar sesion (previene
+    fijacion de sesion; es una mejora pendiente).
+  - No hay expiracion por inactividad.
+  - No hay "recordarme".
+
+
+================================================================================
+08. CAPA DE PRESENTACION: PAGINAS PHP
+================================================================================
+
+Todas las paginas de la raiz siguen el mismo esqueleto:
+
+  1. PHP inicial: $pagina_actual, session_start(), require conexion, auth,
+     utilidades.
+  2. <!DOCTYPE html>, <head> con fuentes, Bootstrap, DataTables y styles.css.
+  3. <aside class="sidebar"> con include 'sidebar.php'.
+  4. <main class="main-content"> con el contenido del modulo.
+  5. <script> de inicializacion y bootstrap.bundle.min.js.
+
+8.1 stock.php (panel principal)
+-------------------------------
+Proposito: mostrar existencias y alertas.
+
+  - Define $pagina_actual = 'stock'.
+  - Incluye alerta_stock.php y utilidades.php.
+  - Llama a enviar_alerta_stock($conexion) al cargar. Esto puede enviar un
+    correo si hay stock bajo y el estado cambio.
+  - Saludo dinamico:
+      $hora_actual = (int) date('G');
+      $saludo = $hora_actual < 12 ? 'Buenos dias'
+              : ($hora_actual < 20 ? 'Buenas tardes' : 'Buenas noches');
+  - Consulta 1 (insumos):
+      SELECT i.nombre, COALESCE(s.cantidad,0) AS cantidad, u.abreviatura
+      FROM insumos i
+      INNER JOIN unidad_de_medida u ON i.idunidad_de_medida = u.idunidad_de_medida
+      LEFT JOIN stock_insumos s ON s.id_insumo = i.idinsumos
+      ORDER BY i.nombre
+  - Consulta 2 (productos): equivalente con stock_productos.
+  - Consulta 3 y 4 (alertas): mismo JOIN pero con
+      WHERE COALESCE(s.cantidad,0) < COALESCE(s.stock_minimo,10)
+  - Renderiza dos tablas DataTables (#tabla-stock-insumos,
+    #tabla-stock-productos) y dos listas de alertas.
+  - Usa COALESCE para que un insumo sin fila de stock muestre 0 en vez de
+    NULL.
+  - Usa LEFT JOIN porque un insumo/producto puede no tener stock cargado.
+
+8.2 insumos.php
+---------------
+Proposito: registrar entradas de insumos y dar de alta insumos nuevos.
+
+  - Genera un token CSRF si no existe:
+      if (empty($_SESSION['token_compra'])) {
+          $_SESSION['token_compra'] = bin2hex(random_bytes(32));
+      }
+    bin2hex(random_bytes(32)) genera 64 caracteres hexadecimales aleatorios
+    criptograficamente seguros.
+  - Recupera el mensaje flash $_SESSION['compra_ok'] y lo borra con unset.
+  - Consulta insumos con stock actual y stock minimo (LEFT JOIN).
+  - Formulario 1 (#form-compra): una fila por insumo con id oculto
+    (id_insumo[]) y cantidad (cantidad[]). Los corchetes hacen que PHP reciba
+    arrays en $_POST. Envia a PHP/registrar_compra.php.
+  - Formulario 2 (#form-insumo): nombre y unidad. Envia a
+    PHP/registrar_insumo.php.
+  - Ambos formularios se envian por AJAX con enviarFormularioAjax.
+  - El formulario de compra incluye <input type="hidden" name="csrf_token">
+    y fecha_entrada con date('Y-m-d').
+
+8.3 produccion.php
+------------------
+Proposito: fabricar productos.
+
+  - Consulta productos con su stock actual y unidad.
+  - Genera un <form class="fila-produccion form-produccion"> por producto,
+    con id_producto oculto y cantidad.
+  - Cada formulario se envia por AJAX a PHP/registrar_produccion.php.
+  - onSuccess limpia la cantidad y recarga la pagina a los 500 ms.
+  - No usa DataTables (es una lista de formularios, no una tabla).
+
+8.4 productos.php
+-----------------
+Proposito: listar productos y su receta.
+
+  - Botones "Anadir Producto" y "Anadir Receta".
+  - Consulta todos los productos.
+  - Por cada producto ejecuta una segunda consulta (consulta N+1) para traer
+    su receta:
+      SELECT i.nombre, r.cantidad, u.abreviatura
+      FROM receta r
+      INNER JOIN insumos i ON r.id_insumo = i.idinsumos
+      INNER JOIN unidad_de_medida u ON i.idunidad_de_medida = u.idunidad_de_medida
+      WHERE r.id_producto = {id}
+  - Arma un array $partes_receta con "Insumo : cantidad unidad" y lo une con
+    implode('<br>', ...). Si no hay receta muestra "Sin receta definida".
+  - Inicializa DataTables en #tabla-productos.
+
+8.5 nuevo_producto.php
+----------------------
+  - Formulario simple: nombre y unidad de medida (select desde la BD).
+  - Envia por AJAX a PHP/registrar_producto.php con reset: true.
+
+8.6 nueva_receta.php
+--------------------
+  - Select de producto.
+  - Input "cantidad de ingredientes" + boton "Generar filas".
+  - JavaScript genera dinamicamente N filas con un select de insumo
+    (id_insumo[]) y un input de cantidad (cantidad[]).
+  - El boton "Guardar receta" aparece recien cuando se generaron filas.
+  - Envia por AJAX a PHP/registrar_receta.php.
+  - onSuccess resetea el formulario y limpia las filas generadas.
+
+  Detalle: el <select> de insumos se imprime con PHP dentro de una plantilla
+  literal de JavaScript (template string con backticks). Al ejecutarse en el
+  servidor, PHP ya dejo el HTML de las opciones; el navegador solo clona ese
+  HTML N veces.
+
+8.7 salidas.php
+---------------
+  - Lista de motivos validos en $motivos_salida.
+  - Consulta productos con stock disponible.
+  - Genera una fila por producto. Si el stock es <= 0:
+      - agrega la clase fila-sin-stock
+      - pone el input en readonly
+      - max = stock disponible
+  - Inputs id_producto[] y cantidad[].
+  - Select de motivo (obligatorio) y observacion (opcional, maxlength 255).
+  - Envia por AJAX a PHP/registrar_salida.php con recargar: true.
+
+8.8 reportes.php (solo Administrador)
+-------------------------------------
+  - Filtro por mes con <input type="month" name="mes"> y method GET.
+  - Valida el formato con preg_match('/^\d{4}-(0[1-9]|1[0-2])$/', ...).
+    Acepta solo YYYY-MM con mes 01-12. Si no cumple, no filtra.
+  - Construye fragmentos de WHERE:
+      $filtro_produccion = "WHERE DATE_FORMAT(p.fecha, '%Y-%m') = '...'";
+      $filtro_compras    = "WHERE DATE_FORMAT(c.fecha, '%Y-%m') = '...'";
+      $filtro_salidas    = "WHERE DATE_FORMAT(s.fecha, '%Y-%m') = '...'";
+    Son seguros porque el valor ya fue validado con regex.
+  - Cuatro consultas:
+      1. Consumos de insumos: produccion x receta x insumos x unidad.
+         Calcula p.cantidad * r.cantidad.
+      2. Ingresos: entrada_insumos x insumos x unidad.
+      3. Produccion: produccion x productos x unidad.
+      4. Salidas: salidas_productos x productos x unidad x usuarios
+         (LEFT JOIN para que si el usuario fue borrado igual aparezca).
+  - Muestra cuatro DataTables.
+  - Boton "Imprimir Reportes" que abre PHP/PDF/reportes_pdf.php en otra
+    pestana, pasando ?mes=... si hay filtro.
+
+8.9 registro.php (solo Administrador)
+-------------------------------------
+  - Reutiliza el diseno de autenticacion (body class="pagina-auth").
+  - Consulta los roles distintos de Administrador:
+      SELECT idroles, nombre FROM roles WHERE nombre <> 'Administrador'
+  - Formulario: nombre, apellido, correo, rol, contrasena y confirmacion.
+  - Envia por AJAX a PHP/envio_registro.php.
+  - onSuccess redirige a index.php a los 600 ms.
+
+8.10 ayuda.php
+--------------
+  - Guia rapida: array $items_guia con titulo y descripcion; se recorre con
+    foreach y desestructuracion.
+  - FAQ: array $preguntas_frecuentes; se imprimen con <details>/<summary>
+    (HTML nativo, sin JavaScript).
+  - Contacto: formulario con nombre, correo, asunto (select desde la tabla
+    asunto) y mensaje. Envia por AJAX a PHP/formulario_ayuda.php.
+  - Nota: las respuestas del FAQ contienen <strong>, por eso se imprimen sin
+    htmlspecialchars (son texto fijo del programador, no dato del usuario).
+
+
+================================================================================
+09. CAPA DE LOGICA: ENDPOINTS PHP
+================================================================================
+
+Todos los endpoints de la carpeta PHP/ comparten estas caracteristicas:
+
+  - Imprimen header('Content-Type: application/json').
+  - Reciben datos por $_POST.
+  - Devuelven un JSON con la forma { "ok": true|false, "mensaje": "..." }.
+  - No devuelven HTML.
+  - Se llaman desde JavaScript con XMLHttpRequest (JS/AJAX.js).
+
+9.1 PHP/registrar_compra.php (entradas de insumos)
+--------------------------------------------------
+Entrada: id_insumo[] (array), cantidad[] (array), fecha_entrada, csrf_token.
+Salida: JSON con ok, mensaje, total, compras (IDs insertados).
+
+Paso a paso:
+
+  1. header JSON y session_start().
+  2. Funcion responder_compra($datos, $codigo_http = 200): void
+     - http_response_code($codigo), echo json_encode(...), exit.
+     - Centraliza la respuesta para no repetir codigo.
+  3. Proteccion CSRF:
+       $token_recibido = $_POST['csrf_token'] ?? '';
+       $token_sesion   = $_SESSION['token_compra'] ?? '';
+       if ($token_sesion !== '' && $token_recibido !== '') {
+           if (!hash_equals($token_sesion, $token_recibido)) { ... 403 }
+       }
+     hash_equals compara en tiempo constante (evita ataques de timing).
+     Debilidad: si falta uno de los dos tokens, no valida.
+  4. mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT):
+     hace que los errores de mysqli se conviertan en excepciones, para que
+     el try/catch pueda revertir la transaccion.
+  5. require conexion, alerta_stock, utilidades.
+  6. Valida la fecha:
+       DateTime::createFromFormat('Y-m-d', $fecha);
+       if (!$fecha_valida || $fecha_valida->format('Y-m-d') !== $fecha) {
+           $fecha_entrada = date('Y-m-d');
+       }
+     Si la fecha es invalida, usa la de hoy.
+  7. Normaliza los arrays recibidos. Si $_POST['id_insumo'] no es array, lo
+     convierte en array vacio.
+  8. Respaldo: si no llego nada por $_POST, lee php://input y lo parsea con
+     parse_str. Util para cuerpos enviados de forma no estandar.
+  9. Recorre los pares id/cantidad:
+       - descarta cantidad vacia, '0' o '0.000'
+       - valida el id con filter_var(..., FILTER_VALIDATE_INT) y > 0
+       - cambia coma por punto y valida la cantidad con FILTER_VALIDATE_FLOAT
+       - descarta cantidad <= 0
+       - acumula en $entradas[]
+ 10. Si no quedo ninguna entrada valida: responde 400.
+ 11. Transaccion:
+       $conexion->begin_transaction();
+       $insertar_compra = $conexion->prepare(
+           "INSERT INTO entrada_insumos (id_insumos, cantidad, fecha)
+            VALUES (?, ?, ?)");
+       $actualizar_stock = $conexion->prepare(
+           "INSERT INTO stock_insumos (id_insumo, cantidad)
+            VALUES (?, ?)
+            ON DUPLICATE KEY UPDATE cantidad = cantidad + VALUES(cantidad)");
+ 12. Por cada entrada:
+       - verifica que el insumo exista (SELECT ... WHERE idinsumos = ?)
+       - inserta la entrada con bind_param('ids', ...)
+         i = id, d = cantidad decimal, s = fecha string
+       - guarda el ID con $conexion->insert_id
+       - actualiza stock con bind_param('id', ...)
+         El ON DUPLICATE KEY UPDATE funciona porque id_insumo es UNIQUE.
+ 13. commit y fin de transaccion.
+ 14. Si algo falla, catch (Throwable) hace rollback y responde 500.
+ 15. Guarda el mensaje flash en $_SESSION['compra_ok'].
+ 16. Llama a enviar_alerta_stock($conexion) dentro de otro try/catch: si el
+     correo falla, la compra ya esta guardada y no se revierte.
+ 17. close() y responde JSON de exito.
+
+Concepto clave: ON DUPLICATE KEY UPDATE
+  Es un "upsert": intenta insertar; si la clave unica ya existe, actualiza.
+  Evita tener que preguntar primero si la fila de stock existe.
+
+9.2 PHP/registrar_insumo.php (alta de insumo)
+---------------------------------------------
+Entrada: nombre_insumo, idunidad.
+Salida: JSON con ok, mensaje, id, nombre.
+
+  1. header JSON y require conexion.
+  2. Valida que no esten vacios.
+  3. Escapa con mysqli_real_escape_string.
+  4. begin_transaction.
+  5. INSERT INTO insumos (idunidad_de_medida, nombre).
+     Si falla: rollback y responde el error de MySQL.
+  6. Obtiene el ID con mysqli_insert_id.
+  7. INSERT INTO stock_insumos (id_insumo, cantidad, stock_minimo)
+     VALUES (id, 0, 10).
+     Es importante: todo insumo nuevo nace con stock 0 y minimo 10 para que
+     aparezca en las consultas con LEFT JOIN y en las alertas.
+  8. Si falla: rollback.
+  9. commit, close y respuesta.
+
+  Debilidad: no valida que idunidad exista (lo cubre la FK, que lanzaria
+  error) y no verifica sesion ni rol.
+
+9.3 PHP/registrar_producto.php (alta de producto)
+-------------------------------------------------
+Identico a registrar_insumo.php pero con la tabla productos y
+stock_productos. Inserta stock inicial 0 y minimo 10.
+
+9.4 PHP/registrar_receta.php (alta de receta)
+---------------------------------------------
+Entrada: id_producto, id_insumo[] (array), cantidad[] (array).
+Salida: JSON con ok y mensaje.
+
+  1. header JSON y require conexion.
+  2. Funcion responder_receta() igual a responder_compra().
+  3. Valida id_producto con (int).
+  4. Verifica que id_insumo y cantidad sean arrays.
+  5. Normaliza cada par:
+       - filter_var(id, FILTER_VALIDATE_INT) > 0
+       - str_replace(',', '.', cantidad) y FILTER_VALIDATE_FLOAT > 0
+       - descarta invalidos
+  6. Si no hay entradas validas: 400.
+  7. begin_transaction y try/catch.
+  8. Verifica que el producto exista con un SELECT preparado.
+  9. Prepara:
+       INSERT IGNORE INTO receta (id_producto, id_insumo, cantidad)
+       VALUES (?, ?, ?)
+     INSERT IGNORE evita el error de clave duplicada cuando el insumo ya
+     estaba en la receta (UNIQUE id_producto + id_insumo).
+ 10. Por cada entrada:
+       - verifica que el insumo exista
+       - bind_param('iid', id_producto, id_insumo, cantidad)
+       - execute()
+       - si affected_rows > 0, incrementa $agregados
+ 11. commit y close.
+ 12. Si $agregados === 0, responde 400 "ya se encuentran cargados".
+     Detalle: la transaccion ya se confirmo; el mensaje es informativo.
+ 13. Si hubo excepcion: rollback, close y 500.
+
+9.5 PHP/registrar_produccion.php (producir)
+-------------------------------------------
+Entrada: id_producto, cantidad.
+Salida: JSON con ok, mensaje, nombre_producto, cantidad, unidad.
+
+  1. header JSON, require conexion, alerta_stock, utilidades.
+  2. Valida que id_producto y cantidad no esten vacios.
+  3. Escapa ambos con mysqli_real_escape_string.
+  4. Busca la receta del producto:
+       SELECT id_insumo, cantidad AS cantidad_por_unidad
+       FROM receta WHERE id_producto = '...'
+  5. Si no hay filas: responde "Este producto no tiene receta definida".
+  6. Guarda la receta en $lineas_receta para usarla dos veces (verificar y
+     descontar). Esto evita repetir la consulta.
+  7. Para cada linea:
+       $cantidad_a_consumir = cantidad_por_unidad * cantidad_producida;
+       consulta el stock del insumo;
+       si no hay fila de stock: error;
+       si stock_actual < cantidad_a_consumir: error con el detalle
+       (necesitas X, tenes Y).
+  8. Si todo alcanza:
+       INSERT INTO produccion (id_producto, cantidad) VALUES (...)
+  9. Descuenta cada insumo:
+       UPDATE stock_insumos SET cantidad = cantidad - $cantidad
+       WHERE id_insumo = '...'
+ 10. Suma el stock del producto:
+       INSERT INTO stock_productos (id_producto, cantidad)
+       VALUES (...)
+       ON DUPLICATE KEY UPDATE cantidad = cantidad + VALUES(cantidad)
+ 11. enviar_alerta_stock($conexion).
+ 12. Consulta el nombre del producto y su unidad para la respuesta.
+ 13. close y JSON de exito.
+
+  Debilidad importante: aca NO hay transaccion. Si el INSERT de produccion
+  funciona y falla un UPDATE de stock, queda produccion registrada sin
+  descuento (o descuento parcial). Ademas usa interpolacion de strings en
+  lugar de sentencias preparadas (mitigado con real_escape_string).
+
+  Concepto clave: la receta define el consumo por UNA unidad de producto.
+  Si se producen N unidades, se multiplica cantidad_por_unidad * N.
+
+9.6 PHP/registrar_salida.php (salida de productos)
+--------------------------------------------------
+Entrada: motivo, observacion, id_producto[] (array), cantidad[] (array).
+Salida: JSON con ok y mensaje.
+
+  1. header JSON, session_start, require conexion, alerta_stock, utilidades.
+  2. Autorizacion explicita:
+       if (!isset($_SESSION['usuario_rol']) ||
+           !in_array($_SESSION['usuario_rol'],
+                     ['Administrador','Panadero'], true)) {
+           http_response_code(403); ... exit;
+       }
+     Es el unico endpoint de escritura que valida el rol.
+  3. Valida el motivo contra una lista blanca:
+       $motivos_validos = ['Venta mostrador','Consumo interno',
+                           'Merma/vencido','Rotura','Donacion','Otro'];
+       if (!in_array($motivo, $motivos_validos, true)) error.
+  4. Valida longitud de la observacion con mb_strlen (cuenta caracteres
+     UTF-8, no bytes) <= 255.
+  5. Normaliza las lineas:
+       - (float) str_replace(',', '.', cantidad)
+       - solo cantidad > 0
+       - id_producto a (int)
+  6. Si no hay lineas: error.
+  7. $id_usuario = (int)($_SESSION['usuario_id'] ?? 0) ?: null;
+     Si no hay usuario, guarda NULL.
+  8. begin_transaction y try/catch.
+  9. Prepara cuatro consultas:
+       - consulta_producto: nombre y unidad del producto.
+       - consulta_stock: SELECT cantidad FROM stock_productos
+                          WHERE id_producto = ? FOR UPDATE
+         FOR UPDATE bloquea la fila hasta el commit. Evita que dos salidas
+         simultaneas lean el mismo stock y lo dejen en negativo.
+       - insertar_salida: INSERT en salidas_productos.
+       - descontar_stock: UPDATE stock_productos SET cantidad = cantidad - ?
+                          WHERE id_producto = ?
+ 10. Por cada linea:
+       - verifica que el producto exista
+       - lee el stock con FOR UPDATE
+       - si stock_actual < cantidad_retirada: lanza excepcion con el detalle
+       - inserta la salida con bind_param('iidss',
+           id_producto, id_usuario, cantidad, motivo, observacion)
+       - descuenta con bind_param('di', cantidad, id_producto)
+ 11. commit.
+ 12. Si hay excepcion: rollback, error_log, responde ok=false con el mensaje.
+ 13. enviar_alerta_stock y respuesta con la cantidad de productos.
+
+  Este endpoint es el mejor implementado del proyecto: autorizacion,
+  validacion, transaccion, prepared statements y bloqueo de fila.
+
+9.7 PHP/envio_registro.php (alta de usuario)
+---------------------------------------------
+Entrada: nombre, apellido, correo, id_rol, contrasena, confirmar_contrasena.
+Salida: JSON con ok y mensaje.
+
+  1. header JSON, session_start, require conexion.
+  2. Autorizacion:
+       if (($_SESSION['usuario_rol'] ?? '') !== 'Administrador') error.
+  3. Recorre $campos_requeridos con foreach y empty().
+  4. trim de los textos y cast a int del rol.
+  5. Valida el correo con filter_var(..., FILTER_VALIDATE_EMAIL).
+  6. Valida longitud de contrasena con strlen >= 6.
+  7. Verifica que las dos contrasenas coincidan con !==.
+  8. Consulta el rol:
+       SELECT nombre FROM roles WHERE idroles = $id_rol LIMIT 1
+     Si no existe: error.
+  9. Si el rol es Administrador: error ("solo puede existir un
+     administrador"). Es una regla de negocio, no de la BD.
+ 10. Escapa nombre, apellido y correo.
+ 11. Verifica correo duplicado:
+       SELECT idusuarios FROM usuarios WHERE correo = '...' LIMIT 1
+ 12. Hashea:
+       password_hash($contrasena, PASSWORD_DEFAULT)
+ 13. INSERT INTO usuarios (id_rol, nombre, apellido, correo, contrasena).
+     No inserta activo: la BD usa DEFAULT 1.
+ 14. close y JSON de exito.
+
+  Nota: la contrasena hasheada se concatena directo en el INSERT porque es
+  un hash generado por el sistema (solo letras, numeros, $, /, .), no un dato
+  peligroso. Aun asi, lo ideal seria una sentencia preparada.
+
+9.8 PHP/formulario_ayuda.php (contacto)
+---------------------------------------
+Entrada: nombre, correo, asunto (id), mensaje.
+Salida: JSON con ok y mensaje.
+
+  1. header JSON, require conexion y las tres clases de PHPMailer.
+  2. Valida nombre, correo y asunto no vacios.
+  3. Escapa los cuatro datos.
+  4. Busca el nombre del asunto:
+       SELECT nombre FROM asunto WHERE idasunto = '...' LIMIT 1
+  5. INSERT INTO contacto (id_asunto, nombre, correo, mensaje).
+     Si falla: error con mysqli_error.
+  6. Busca el correo del administrador activo:
+       SELECT u.correo FROM usuarios u
+       INNER JOIN roles r ON r.idroles = u.id_rol
+       WHERE r.nombre = 'Administrador' AND u.activo = 1 LIMIT 1
+  7. Si no hay correo valido: el mensaje YA quedo guardado, responde ok=false
+     avisando que no se pudo enviar.
+  8. Carga config_panaderia.php (devuelve un array con smtp_user y
+     smtp_password). Si falta configuracion: avisa.
+  9. Configura PHPMailer:
+       isSMTP, Host smtp.gmail.com, SMTPAuth true,
+       SMTPSecure STARTTLS, Port 587, CharSet UTF-8.
+       setFrom(smtp_user, 'Formulario de ayuda...')
+       addAddress(correo_administrador)
+       addReplyTo(correo del visitante, nombre)
+       isHTML(true), Subject, Body HTML, AltBody texto.
+ 10. send().
+ 11. Si falla: error_log y responde que el mensaje se guardo pero no se pudo
+     enviar.
+ 12. Si todo bien: close y JSON ok.
+
+  Debilidad: no valida el formato del correo del visitante antes de guardar
+  (solo lo valida PHPMailer al hacer addReplyTo, pero el INSERT ya ocurrio).
+  Tampoco hay proteccion CSRF ni limite de envios.
+
+9.9 Resumen de endpoints
+------------------------
+  Endpoint                  Sesion/rol   Transaccion   Prepared   CSRF
+  ---------------------------------------------------------------------
+  registrar_compra.php         NO           SI           SI       SI*
+  registrar_insumo.php         NO           SI           NO       NO
+  registrar_producto.php       NO           SI           NO       NO
+  registrar_receta.php         NO           SI           SI       NO
+  registrar_produccion.php     NO           NO           NO       NO
+  registrar_salida.php         SI           SI           SI       NO
+  envio_registro.php           SI           NO           NO       NO
+  formulario_ayuda.php         NO           NO           NO       NO
+
+  * Solo si ambos tokens llegan no vacios.
+  Esta tabla es clave para la seccion 15 (seguridad).
+
+
+================================================================================
+10. CORREO ELECTRONICO Y ALERTAS DE STOCK
+================================================================================
+
+10.1 Configuracion SMTP
+-----------------------
+Archivo: PHP/config_panaderia.php
+
+  <?php
+  return [
+      'smtp_user'     => 'pedrozomaximo76@gmail.com',
+      'smtp_password' => 'fojoxqwmycaieypm',
+  ];
+
+  Es un archivo que DEVUELVE un array. Se carga asi:
+      $config_smtp = require __DIR__ . '/config_panaderia.php';
+  No se ejecuta como pagina: solo se incluye para obtener los valores.
+
+  smtp_password NO es la contrasena normal de Gmail: es una "contrasena de
+  aplicacion" generada en la cuenta de Google. Gmail exige esto cuando el
+  cliente no usa OAuth2 y tiene verificacion en dos pasos.
+
+  DEBILIDAD GRAVE: la contrasena esta escrita en el repositorio y queda en
+  el historial de Git. Deberia rotarse (cambiarla) y moverse a una variable
+  de entorno o a un archivo fuera del repositorio.
+
+10.2 Archivo alerta_stock.php
+-----------------------------
+Define la funcion enviar_alerta_stock(mysqli $conexion): bool.
+
+Objetivo: avisar por correo cuando un insumo o producto esta por debajo del
+stock minimo, pero sin mandar el mismo correo en cada carga de pagina.
+
+Paso a paso:
+
+  1. Inicia sesion si hace falta.
+  2. Toma el correo del usuario logueado:
+       $correo_destinatario = trim($_SESSION['usuario_correo'] ?? '');
+     Si no es un correo valido (filter_var), registra en el log y devuelve
+     false. O sea: la alerta se manda al usuario que esta usando el sistema.
+
+  3. Consulta insumos bajo el minimo:
+       SELECT i.nombre, COALESCE(s.cantidad,0) AS cantidad,
+              COALESCE(s.stock_minimo,10) AS stock_minimo, u.abreviatura
+       FROM insumos i
+       INNER JOIN unidad_de_medida u ON ...
+       LEFT JOIN stock_insumos s ON s.id_insumo = i.idinsumos
+       WHERE COALESCE(s.cantidad,0) < COALESCE(s.stock_minimo,10)
+     Arma un array $alertas con tipo, nombre, cantidad, minimo y unidad.
+
+  4. Consulta productos bajo el minimo con la misma logica y agrega al array.
+
+  5. Archivo de estado:
+       $archivo_estado = 'C:/xampp/stock_alerta_estado.json';
+     Es una ruta absoluta de Windows, fuera del proyecto. Guarda el ultimo
+     estado enviado.
+
+  6. Si no hay alertas:
+       - si el archivo existe, lo borra con unlink()
+       - devuelve true (nada que enviar).
+     Borrar el archivo permite que, si el stock vuelve a bajar despues, se
+     envie un correo nuevo.
+
+  7. Arma el estado actual:
+       $estado_actual = json_encode([
+           'destinatario' => $correo_destinatario,
+           'alertas'      => $alertas,
+       ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+
+  8. Compara con el estado anterior guardado en el archivo:
+       if ($estado_actual === $estado_anterior) return true;
+     Si es identico, no manda nada. Asi evita correos repetidos en cada
+     recarga de stock.php.
+
+  9. Carga la configuracion SMTP. Si falta usuario o contrasena, error_log y
+     false.
+
+ 10. Genera dos versiones del cuerpo:
+       - $filas_html con <li> y etiquetas <strong>
+       - $filas_texto en texto plano
+     Usa formatear_cantidad() y htmlspecialchars().
+
+ 11. Configura PHPMailer:
+       new PHPMailer(true)  -> el true activa excepciones.
+       isSMTP()
+       Host = 'smtp.gmail.com'
+       SMTPAuth = true
+       Username = smtp_user
+       Password = smtp_password
+       SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS
+       Port = 587
+       CharSet = 'UTF-8'
+       setFrom(smtp_user, 'Alertas de stock - Panaderia Normal 10')
+       addAddress(correo_destinatario)
+       isHTML(true)
+       Subject, Body, AltBody
+       send()
+
+ 12. Si el envio sale bien:
+       file_put_contents($archivo_estado, $estado_actual, LOCK_EX);
+     LOCK_EX bloquea el archivo mientras escribe, para que dos peticiones
+     simultaneas no lo corrompan.
+     Devuelve true.
+
+ 13. Si hay excepcion: error_log y false. La aplicacion no se rompe.
+
+Donde se llama
+--------------
+  - stock.php, al cargar el panel.
+  - registrar_compra.php, despues de confirmar la compra.
+  - registrar_produccion.php, despues de producir.
+  - registrar_salida.php, despues de registrar la salida.
+
+  Esto significa que la alerta se evalua cada vez que se mueve el stock o se
+  entra al panel principal.
+
+Problemas de diseno
+-------------------
+  - La ruta C:/xampp/... no es portable a Linux/Mac ni a otro servidor.
+  - El estado es un unico archivo global: si dos usuarios distintos usan el
+    sistema, el segundo puede no recibir la alerta porque el estado ya
+    coincide (incluye el correo, asi que en realidad si cambia; pero el
+    archivo se pisa).
+  - Enviar correo dentro de una peticion web puede demorar varios segundos.
+    Lo ideal seria un proceso en segundo plano (cron/cola).
+
+10.3 Diferencia entre los dos correos
+-------------------------------------
+  Alerta de stock:
+    - Se dispara automaticamente por el sistema.
+    - Destinatario: el usuario logueado.
+    - Asunto: "Alerta de stock bajo - Panaderia Normal 10".
+    - Evita duplicados con el archivo de estado.
+
+  Formulario de ayuda:
+    - Se dispara cuando un usuario envia el formulario.
+    - Destinatario: el Administrador activo.
+    - Reply-To: el correo del visitante.
+    - Asunto: "Nueva consulta: <categoria>".
+    - No evita duplicados: cada envio manda un correo.
+
+
+================================================================================
+11. GENERACION DEL PDF
+================================================================================
+
+Archivo: PHP/PDF/reportes_pdf.php
+
+Tecnologia: Dompdf. Convierte HTML + CSS en un PDF sin necesitar extensiones
+nativas. Es puro PHP.
+
+Por que se usa
+--------------
+  Permite reutilizar el mismo HTML del reporte y "imprimirlo" como PDF.
+  No requiere instalar nada en el servidor mas alla de la carpeta Libreria.
+
+Flujo del archivo
+-----------------
+  1. ob_start():
+     Activa el buffer de salida. Todo el HTML que se imprime queda en
+     memoria en lugar de ir al navegador.
+
+  2. $pagina_actual = 'reportes';
+     $prefijo_redireccion = '../../';
+     session_start();
+     require conexion, auth y utilidades.
+     auth.php usa el prefijo para redirigir bien si no hay sesion.
+     Solo el Administrador puede generar el PDF (reportes esta en su lista).
+
+  3. Filtro por mes: mismo codigo que reportes.php. Valida con regex y arma
+     los WHERE.
+
+  4. Nombres de meses en un array indexado del 1 al 12. Calcula
+     $etiqueta_periodo:
+       - si hay mes: "Octubre 2026"
+       - si no: "Historial completo"
+
+  5. Ejecuta las mismas cuatro consultas que reportes.php (ingresos,
+     consumos, produccion, salidas) y guarda los totales con
+     mysqli_num_rows.
+
+  6. Imprime el HTML del reporte. Incluye:
+       - <style> con @page A4 portrait y margenes.
+       - Encabezado con nombre del negocio, periodo y fecha de emision.
+       - Tabla resumen con 4 totales.
+       - Cuatro secciones con tablas.
+       - Pie con leyenda.
+     Reglas CSS pensadas para impresion:
+       page-break-inside: avoid  -> evita cortar una fila entre paginas.
+       page-break-after: avoid   -> evita que un titulo quede solo al final.
+       display: table-header-group -> repite el encabezado de tabla en cada
+       pagina.
+       isRemoteEnabled = false   -> no carga imagenes ni CSS externos.
+
+  7. $html = ob_get_clean();
+     Recupera todo lo impreso y limpia el buffer.
+
+  8. require '../../Libreria/dompdf/autoload.inc.php';
+     Carga el autoloader de Dompdf.
+
+  9. new Dompdf();
+     getOptions() y set(['isRemoteEnabled' => false]) por seguridad.
+     loadHtml($html, 'UTF-8');
+     setPaper('A4', 'portrait');
+     render();
+     stream('Reporte-movimientos.pdf', ['Attachment' => false]);
+
+     Attachment false = se muestra en el navegador (inline). Si fuera true,
+     se descargaria como archivo.
+
+Conceptos clave
+---------------
+  - Dompdf no ejecuta JavaScript: el HTML debe estar ya armado.
+  - No soporta todo CSS (por eso el diseno es simple, con tablas y bordes).
+  - La fuente DejaVu Sans soporta acentos y enie.
+  - El PDF se genera en el servidor, no en el cliente.
+
+
+================================================================================
+12. JAVASCRIPT, AJAX Y DATATABLES
+================================================================================
+
+12.1 JS/AJAX.js
+---------------
+Define una unica funcion global:
+
+  enviarFormularioAjax(formulario, url, opciones)
+
+Parametros:
+  - formulario: elemento <form> del DOM.
+  - url: endpoint PHP que procesa.
+  - opciones: objeto con reset, recargar, mostrarAlerta, onSuccess, onError.
+
+Que hace:
+  1. if (!formulario) return;  -> evita errores si el form no existe.
+  2. var config = opciones || {};  -> valor por defecto.
+  3. formulario.addEventListener('submit', function (evento) { ... });
+     Escucha el envio.
+  4. evento.preventDefault();
+     Cancela el envio normal del navegador (que recargaria la pagina).
+  5. Deshabilita el boton y lo pone en "Guardando...".
+     Evita doble click y da feedback.
+  6. var peticion = new XMLHttpRequest();
+     peticion.open('POST', url, true);  -> asincronico.
+  7. peticion.onreadystatechange = function () {
+         if (peticion.readyState == 4) { ... }
+     }
+     readyState 4 = peticion terminada.
+  8. Reactiva el boton con su texto original.
+  9. try { var respuesta = JSON.parse(peticion.responseText); ... }
+     Si la respuesta no es JSON valido, cae en el catch.
+ 10. if (config.mostrarAlerta !== false) alert(respuesta.mensaje);
+     Por defecto muestra el mensaje del servidor.
+ 11. Si respuesta.ok:
+       - if (config.reset) formulario.reset();
+       - if (config.recargar) window.location.reload();
+       - if (typeof config.onSuccess === 'function')
+             config.onSuccess(respuesta, formulario);
+     Si no:
+       - if (typeof config.onError === 'function') config.onError(...)
+ 12. peticion.send(new FormData(formulario));
+     FormData arma automaticamente todos los campos, incluidos los arrays
+     (id_insumo[], cantidad[]) y los input hidden.
+
+Por que XMLHttpRequest y no fetch
+---------------------------------
+  Es la API clasica de AJAX. Funciona en cualquier navegador y no necesita
+  polyfills. fetch es mas moderna y usa Promises, pero el proyecto opto por
+  XHR por simplicidad y compatibilidad escolar.
+
+12.2 Uso en cada pagina
+-----------------------
+  insumos.php:
+    form-compra  -> PHP/registrar_compra.php  { recargar: true }
+    form-insumo  -> PHP/registrar_insumo.php  { reset: true }
+
+  produccion.php:
+    cada .form-produccion -> PHP/registrar_produccion.php
+      onSuccess: limpia cantidad y recarga a los 500 ms.
+
+  nuevo_producto.php:
+    form-nuevo-producto -> PHP/registrar_producto.php { reset: true }
+
+  nueva_receta.php:
+    form-receta -> PHP/registrar_receta.php
+      onSuccess: reset, limpia contenedor, oculta boton, cantidad = 1.
+
+  salidas.php:
+    form-salida -> PHP/registrar_salida.php { recargar: true }
+
+  registro.php:
+    form-registro -> PHP/envio_registro.php
+      onSuccess: redirige a index.php a los 600 ms.
+
+  ayuda.php:
+    form-contacto -> PHP/formulario_ayuda.php { reset: true }
+
+12.3 Generacion dinamica de filas (nueva_receta.php)
+----------------------------------------------------
+  const contenedor = document.getElementById('contenedor-ingredientes');
+  btnGenerar.addEventListener('click', function () {
+      contenedor.innerHTML = '';
+      const cantidad = parseInt(inputCantidad.value);
+      for (let i = 0; i < cantidad; i++) {
+          const fila = document.createElement('div');
+          fila.className = 'fila-receta';
+          fila.innerHTML = `...select name="id_insumo[]"...input name="cantidad[]"...`;
+          contenedor.appendChild(fila);
+      }
+      ...
+  });
+
+  Es manipulacion del DOM: crear elementos, asignar innerHTML y agregarlos
+  con appendChild. El HTML del select lo genero PHP al renderizar la pagina.
+
+12.4 JS/datatables_config.js
+----------------------------
+  (function () { 'use strict'; ... })();
+  Es una IIFE (Immediately Invoked Function Expression): se ejecuta al
+  cargarse y encierra las variables en un scope privado. Solo expone lo que
+  asigna a window.
+
+  var idiomaEspanol = { ... };
+  Objeto de traduccion de DataTables. Usa placeholders:
+    _START_, _END_, _TOTAL_, _MAX_, _MENU_.
+
+  window.iniciarTabla = function (selector, opciones) {
+      if (typeof window.DataTable === 'undefined' ||
+          !document.querySelector(selector)) return null;
+      var configuracion = Object.assign({
+          paging: true,
+          searching: true,
+          ordering: true,
+          info: true,
+          lengthChange: true,
+          pageLength: 10,
+          language: idiomaEspanol
+      }, opciones || {});
+      return new window.DataTable(selector, configuracion);
+  };
+
+  - Verifica que DataTables este cargado y que la tabla exista.
+  - Object.assign fusiona la configuracion por defecto con las opciones
+    recibidas (estas ultimas pisan a las primeras).
+  - Devuelve la instancia de DataTable.
+
+  Uso tipico:
+    document.addEventListener('DOMContentLoaded', function () {
+        window.iniciarTabla('#tabla-productos');
+    });
+
+  DOMContentLoaded se dispara cuando el HTML termino de cargarse, antes de
+  esperar imagenes. Es necesario porque los scripts tienen defer o se
+  ejecutan antes de que exista la tabla.
+
+12.5 DataTables: que aporta
+---------------------------
+  - Paginacion en el cliente.
+  - Buscador.
+  - Ordenamiento por columna.
+  - Selector de cantidad de filas.
+  La tabla completa se imprime desde PHP y DataTables la procesa en el
+  navegador. No hay paginacion en el servidor: para muchos registros habria
+  que implementar "server-side processing".
+
+
+================================================================================
+13. CSS Y DISENO VISUAL
+================================================================================
+
+Archivo: CSS/styles.css (aproximadamente 1400 lineas, 17 secciones).
+
+13.1 Organizacion
+-----------------
+  El archivo tiene un indice al inicio:
+    1. Variables y reset
+    2. Base y estructura
+    3. Sidebar
+    4. Paginas de autenticacion
+    5. Tarjetas y encabezados
+    6. Formularios
+    7. Botones
+    8. Notificaciones
+    9. Stock
+    10. Insumos
+    11. Produccion
+    12. Productos
+    13. Salidas
+    14. Reportes
+    15. Ayuda
+    16. Tablas y DataTables
+    17. Responsive
+
+13.2 Variables CSS (custom properties)
+--------------------------------------
+  :root {
+    --cream: #fdf6ec;
+    --cream-dark: #f3e8d4;
+    --brown-dark: #2e1503;
+    --brown-mid: #6b3a1f;
+    --amber: #d4822a;
+    --gold-light: #f5c96a;
+    --red-accent: #c84b2f;
+    --green: #5a8a3c;
+    --text-main: #2e1503;
+    --text-muted: #8b6347;
+    --sidebar-w: 260px;
+    --shadow: 0 4px 20px rgba(46,21,3,0.1);
+  }
+
+  Se usan con var(--nombre). Ventaja: cambiar un color en un solo lugar
+  cambia todo el tema. La paleta imita panaderia (crema, marron, ambar).
+
+13.3 Reset y base
+-----------------
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { min-height: 100vh; background: var(--cream);
+         color: var(--text-main); font-family: 'Nunito', sans-serif; }
+  html { scroll-behavior: smooth; }
+
+  box-sizing: border-box hace que padding y border queden incluidos en el
+  ancho, lo que simplifica el calculo de layouts.
+
+13.4 Layout principal
+---------------------
+  .sidebar {
+    position: fixed; top: 0; left: 0; z-index: 100;
+    display: flex; flex-direction: column;
+    width: var(--sidebar-w); height: 100vh;
+    background: linear-gradient(rgba(0,0,0,0.72), rgba(0,0,0,0.72)),
+                url('Imagenes/Pan.jpg') center / cover no-repeat;
+  }
+
+  .main-content {
+    flex: 1;
+    margin-left: var(--sidebar-w);
+    padding: 36px 40px;
+  }
+
+  La sidebar esta fija a la izquierda (position: fixed) y el contenido tiene
+  un margen izquierdo igual a su ancho para no quedar tapado. El fondo es una
+  imagen con un degradado negro semitransparente encima para que el texto se
+  lea.
+
+13.5 Componentes
+----------------
+  .card            -> tarjeta blanca con sombra y bordes redondeados.
+  .card-header     -> titulo de la tarjeta.
+  .page-header     -> encabezado de pagina con flex y space-between.
+  .page-title      -> titulo con Playfair Display; <em> en color ambar.
+  .btn-primary     -> boton principal con gradiente ambar.
+  .form-group      -> agrupa label + input.
+  .form-grid       -> grilla de dos columnas para formularios.
+  .notif           -> caja de notificacion.
+  .alertas-list    -> lista de alertas de stock.
+  .fila-salida / .fila-produccion / .fila-receta
+                   -> filas con grid de 3 columnas.
+  .fila-sin-stock  -> estilo para productos sin stock.
+  .badge-dot       -> punto verde animado ("Sistema activo").
+
+13.6 Responsive
+---------------
+  Cuatro breakpoints (max-width):
+
+    1200px: .page-header pasa a flex-wrap: wrap.
+    1100px: .content-grid y .help-grid pasan a una columna.
+    900px:  .main-content pierde el margin-left y la sidebar se transforma
+            (deja de ocupar espacio fijo).
+    760px:  .card reduce padding y los formularios se apilan.
+
+  Es diseno "desktop first": se parte del escritorio y se adapta hacia
+  abajo con max-width.
+
+13.7 Tipografia
+---------------
+  Google Fonts:
+    - Playfair Display (serif) para titulos y marca.
+    - Nunito (sans-serif) para texto y formularios.
+  El <link> a Google Fonts esta en el <head> de cada pagina, con preconnect
+  para acelerar la carga.
+
+13.8 Bootstrap
+--------------
+  Se usa Bootstrap 5.1.3 local (Framework/bootstrap-5.1.3) para:
+    - Normalizacion y utilidades.
+    - Componentes como alert.
+    - bootstrap.bundle.min.js (incluye Popper) al final del body.
+  El diseno propio (styles.css) se carga despues de Bootstrap, por lo que
+  puede sobrescribir estilos.
+
+
+================================================================================
+14. FLUJOS COMPLETOS DE EJEMPLO
+================================================================================
+
+14.1 Flujo de login
+-------------------
+  Usuario escribe correo y contrasena en index.php.
+     -> POST index.php
+     -> $_SERVER['REQUEST_METHOD'] === 'POST'
+     -> trim y validacion de vacios
+     -> mysqli_real_escape_string del correo
+     -> SELECT usuarios + roles por correo
+     -> password_verify(plano, hash)
+     -> $_SESSION[...] = datos
+     -> header Location: stock.php
+     -> stock.php: session_start, require auth.php
+     -> auth.php ve $_SESSION['usuario_rol'] y deja pasar
+     -> se muestran stock y alertas
+
+  Si falla: $mensaje_error se imprime en un <div class="alert alert-error">.
+
+14.2 Flujo de entrada de insumos (compra)
+-----------------------------------------
+  insumos.php
+     -> se genera token CSRF si no existe
+     -> usuario carga cantidades en las filas
+     -> submit interceptado por AJAX.js
+     -> POST PHP/registrar_compra.php con id_insumo[], cantidad[], fecha,
+        csrf_token
+     -> valida CSRF
+     -> normaliza y valida cada par
+     -> begin_transaction
+     -> por cada insumo:
+          INSERT entrada_insumos (historial)
+          INSERT/UPDATE stock_insumos (stock actual)
+     -> commit
+     -> $_SESSION['compra_ok'] = mensaje
+     -> enviar_alerta_stock (puede mandar correo)
+     -> JSON ok
+     -> AJAX muestra alert y recarga insumos.php
+     -> insumos.php lee y borra $_SESSION['compra_ok']
+
+  Tablas afectadas: entrada_insumos (INSERT), stock_insumos (INSERT o
+  UPDATE).
+
+14.3 Flujo de produccion
+------------------------
+  produccion.php
+     -> lista productos con stock actual
+     -> usuario escribe cantidad y envia
+     -> POST PHP/registrar_produccion.php (id_producto, cantidad)
+     -> busca receta del producto
+     -> si no hay receta: error
+     -> por cada insumo de la receta:
+          cantidad_necesaria = receta.cantidad * cantidad_producida
+          verifica stock_insumos.cantidad >= cantidad_necesaria
+     -> si falta stock: error con detalle
+     -> INSERT produccion (historial)
+     -> UPDATE stock_insumos restando lo consumido
+     -> INSERT/UPDATE stock_productos sumando lo producido
+     -> alerta de stock
+     -> JSON ok
+     -> AJAX limpia cantidad y recarga
+
+  Tablas afectadas: produccion (INSERT), stock_insumos (UPDATE),
+  stock_productos (INSERT/UPDATE).
+
+14.4 Flujo de salida de productos
+---------------------------------
+  salidas.php
+     -> lista productos con stock
+     -> usuario carga cantidades, elige motivo y observacion
+     -> POST PHP/registrar_salida.php con arrays
+     -> valida sesion y rol
+     -> valida motivo contra lista blanca
+     -> valida longitud de observacion
+     -> normaliza lineas con cantidad > 0
+     -> begin_transaction
+     -> por cada producto:
+          verifica existencia
+          SELECT stock ... FOR UPDATE (bloquea la fila)
+          si stock < cantidad: excepcion
+          INSERT salidas_productos (con id_usuario)
+          UPDATE stock_productos restando
+     -> commit
+     -> alerta de stock
+     -> JSON ok
+     -> AJAX recarga
+
+  Tablas afectadas: salidas_productos (INSERT), stock_productos (UPDATE).
+
+14.5 Flujo de alta de producto y receta
+---------------------------------------
+  productos.php -> "Anadir Producto" -> nuevo_producto.php
+     -> nombre + unidad
+     -> POST PHP/registrar_producto.php
+     -> begin_transaction
+     -> INSERT productos
+     -> INSERT stock_productos (cantidad 0, minimo 10)
+     -> commit
+     -> JSON ok, formulario se resetea
+
+  productos.php -> "Anadir Receta" -> nueva_receta.php
+     -> elige producto y cantidad de ingredientes
+     -> JS genera filas (insumo + cantidad)
+     -> POST PHP/registrar_receta.php
+     -> valida producto
+     -> por cada insumo: INSERT IGNORE receta
+     -> commit
+     -> JSON con cantidad de ingredientes agregados
+
+  Tablas afectadas: productos, stock_productos, receta.
+
+14.6 Flujo de reportes y PDF
+----------------------------
+  reportes.php
+     -> usuario elige mes (GET ?mes=2026-10)
+     -> valida regex
+     -> arma los WHERE
+     -> 4 consultas con JOIN
+     -> 4 DataTables
+     -> boton "Imprimir Reportes"
+          -> abre PHP/PDF/reportes_pdf.php?mes=2026-10
+          -> auth.php valida sesion y rol
+          -> repite las consultas
+          -> arma HTML
+          -> ob_start/ob_get_clean
+          -> Dompdf renderiza
+          -> stream inline en A4
+
+14.7 Flujo de contacto
+----------------------
+  ayuda.php
+     -> usuario completa nombre, correo, asunto, mensaje
+     -> POST PHP/formulario_ayuda.php
+     -> valida campos
+     -> INSERT contacto
+     -> busca administrador activo
+     -> PHPMailer envia correo al administrador con Reply-To del visitante
+     -> JSON ok
+     -> AJAX muestra alert y resetea el formulario
+
+  Tablas afectadas: contacto (INSERT).
+
+14.8 Flujo de alta de usuario
+-----------------------------
+  registro.php (solo Administrador)
+     -> carga roles distintos de Administrador
+     -> completa nombre, apellido, correo, rol, contrasena x2
+     -> POST PHP/envio_registro.php
+     -> valida sesion de Administrador
+     -> valida campos, correo, longitud y coincidencia
+     -> valida que el rol exista y no sea Administrador
+     -> verifica correo duplicado
+     -> password_hash
+     -> INSERT usuarios (activo = 1 por defecto)
+     -> JSON ok
+     -> redirige a index.php
+
+
+================================================================================
+15. SEGURIDAD: PROTECCIONES ACTUALES Y DEBILIDADES
+================================================================================
+
+15.1 Protecciones que SI existen
+--------------------------------
+  1. Contrasenas hasheadas con password_hash / bcrypt.
+     Nunca se guarda texto plano.
+  2. password_verify para comparar.
+  3. Sesiones para mantener al usuario autenticado.
+  4. auth.php valida sesion y permisos por rol en cada pagina.
+  5. sidebar.php oculta opciones no permitidas (defensa visual).
+  6. htmlspecialchars en la mayoria de las salidas (previene XSS).
+  7. mysqli_real_escape_string en consultas concatenadas.
+  8. Sentencias preparadas en registrar_compra, registrar_receta y
+     registrar_salida.
+  9. Transacciones en las operaciones que tocan varias tablas.
+ 10. Token CSRF en el formulario de compra de insumos.
+ 11. Validacion de tipos con filter_var y casts (int)/(float).
+ 12. Lista blanca de motivos de salida.
+ 13. FOR UPDATE en la lectura de stock de salidas (evita condiciones de
+     carrera).
+ 14. Autorizacion explicita en registrar_salida y envio_registro.
+ 15. LIMIT 1 en consultas que esperan un unico resultado.
+
+15.2 Debilidades (importante para el parcial)
+---------------------------------------------
+  A. Credenciales en el repositorio
+     - conexion.php: root sin contrasena.
+     - config_panaderia.php: usuario y contrasena de aplicacion de Gmail.
+     - Ambos quedan en el historial de Git aunque se borren despues.
+     Mitigacion: variables de entorno, archivo .env fuera del repo, rotar
+     la contrasena de Gmail.
+
+  B. Endpoints sin autenticacion
+     - registrar_insumo.php, registrar_producto.php, registrar_receta.php,
+       registrar_produccion.php y formulario_ayuda.php no verifican sesion.
+     - Cualquiera que conozca la URL puede invocarlos (si el servidor esta
+       expuesto).
+     Mitigacion: incluir auth.php o validar $_SESSION al inicio.
+
+  C. Falta de CSRF en la mayoria de los formularios
+     - Solo registrar_compra.php tiene token.
+     - registrar_salida, registrar_produccion, registrar_insumo,
+       registrar_producto, registrar_receta, envio_registro y
+       formulario_ayuda no lo tienen.
+     Mitigacion: token por sesion y verificacion con hash_equals en todos.
+
+  D. El chequeo CSRF de compras es incompleto
+     - if ($token_sesion !== '' && $token_recibido !== '') { ... }
+     - Si falta uno de los dos, no valida.
+     Mitigacion: exigir ambos y rechazar si no coinciden.
+
+  E. Inyeccion SQL potencial
+     - registrar_produccion.php y otros concatenan variables en el SQL.
+     - Se mitiga con mysqli_real_escape_string, pero no es equivalente a
+       sentencias preparadas.
+     - reportes.php solo concatena el mes validado por regex (seguro).
+     Mitigacion: usar prepare/bind_param en todos los endpoints.
+
+  F. XSS
+     - La mayoria de las salidas usa htmlspecialchars.
+     - ayuda.php imprime HTML fijo del programador sin escapar (no es dato
+       de usuario, por lo tanto no es XSS).
+     - Riesgo residual si se agrega un echo sin escapar.
+     Mitigacion: escapar siempre datos de BD/usuario; usar Content-Security-
+     Policy.
+
+  G. Sesion
+     - No se llama a session_regenerate_id() al iniciar sesion (fijacion de
+       sesion).
+     - No se configuran cookie httponly, secure ni samesite.
+     - logout.php no borra la cookie.
+     Mitigacion: session_regenerate_id(true), session_set_cookie_params,
+     y borrar la cookie al salir.
+
+  H. Sin HTTPS
+     - En local no importa; en produccion las credenciales viajarian en
+       texto plano.
+     Mitigacion: certificado TLS y redireccion HTTP -> HTTPS.
+
+  I. Sin rate limiting
+     - El login y el formulario de ayuda pueden reciben intentos ilimitados
+       (fuerza bruta / spam).
+     Mitigacion: limite por IP, captcha o bloqueo temporal.
+
+  J. Errores visibles
+     - die("Error de conexion: " . $conexion->connect_error) muestra detalles
+       internos.
+     - Varios endpoints devuelven mysqli_error al usuario.
+     Mitigacion: log interno y mensaje generico al usuario.
+
+  K. Sin validacion de archivos ni de origen
+     - No se valida el header Origin/Referer en los endpoints.
+     Mitigacion: validar origen o usar SameSite=Strict.
+
+  L. Datos sensibles en el PDF
+     - El PDF incluye nombre del usuario que registro la salida. Es correcto
+       para el negocio, pero hay que controlar quien accede (solo Admin).
+
+15.3 Como explicar la seguridad en el parcial
+---------------------------------------------
+  La respuesta ideal no es "el sistema es inseguro", sino:
+    "El sistema implementa las protecciones basicas (hash, sesiones, roles,
+    escape de salida y transacciones), pero tiene deudas tecnicas: endpoints
+    sin autenticacion, CSRF parcial, credenciales en el repositorio y
+    ausencia de HTTPS y rate limiting. Son mejoras de produccion, no fallas
+    del modelo de datos."
+
+
+================================================================================
+16. OBSERVACIONES TECNICAS Y ERRORES CONCEPTUALES
+================================================================================
+
+16.1 El stock esta denormalizado
+--------------------------------
+  stock_insumos.cantidad y stock_productos.cantidad son datos derivados:
+  podrian recalcularse sumando entradas y restando consumos/salidas. Se
+  guardan para consultar rapido, pero pueden quedar desincronizados si una
+  operacion falla a mitad de camino o si alguien modifica la BD a mano.
+  No hay triggers que mantengan la coherencia.
+
+16.2 Produccion no es transaccional
+-----------------------------------
+  registrar_produccion.php inserta la produccion y despues actualiza stocks
+  sin begin_transaction. Si falla un UPDATE, la produccion queda registrada
+  pero el stock no se descuenta. Es el punto mas fragil del sistema.
+
+16.3 Consumos calculados con la receta actual
+---------------------------------------------
+  El reporte de consumos hace produccion.cantidad * receta.cantidad. Si la
+  receta cambia despues de una produccion, el reporte historico se recalcula
+  con la receta nueva. Para un historial exacto habria que guardar el consumo
+  real en una tabla de movimientos en el momento de producir.
+
+16.4 Unidad de medida del producto vs. unidad de la receta
+----------------------------------------------------------
+  productos.idunidad_de_medida suele ser "Unidad", mientras que
+  receta.cantidad se expresa en la unidad del insumo (Kg, Lt). El sistema no
+  guarda la unidad de la cantidad de receta: la hereda del insumo. Es
+  coherente en la practica, pero no esta modelado de forma explicita.
+
+16.5 Ruta absoluta del archivo de estado de alertas
+---------------------------------------------------
+  $archivo_estado = 'C:/xampp/stock_alerta_estado.json';
+  Funciona en Windows con XAMPP, pero no en Linux/Mac. Deberia usar una ruta
+  relativa al proyecto o una carpeta de almacenamiento configurable.
+
+16.6 Alerta de stock en cada carga
+----------------------------------
+  stock.php llama a enviar_alerta_stock() en cada visita. Si hay alertas y el
+  estado cambio, intenta conectarse a Gmail (puede tardar). Lo ideal es
+  desacoplar el envio del render.
+
+16.7 consulta N+1 en productos.php
+----------------------------------
+  Por cada producto se ejecuta una consulta extra para su receta. Con pocos
+  productos no se nota, pero con muchos es ineficiente. Se podria resolver
+  con un solo JOIN y agrupar en PHP.
+
+16.8 El reporte de compras se llama "compras" pero no guarda precios
+---------------------------------------------------------------------
+  La tabla entrada_insumos solo guarda insumo, cantidad y fecha. La guia de
+  ayuda menciona precio, proveedor y metodo de pago, pero el modelo no los
+  tiene. Es una diferencia entre el texto de la interfaz y la implementacion.
+
+16.9 No hay fecha en contacto
+-----------------------------
+  La tabla contacto no tiene columna fecha, por lo que no se puede ordenar
+  ni saber cuando se recibio un mensaje.
+
+16.10 El registro de usuarios solo permite un Administrador
+-----------------------------------------------------------
+  La regla se aplica en PHP (envio_registro.php), no en la BD. Si se inserta
+  un usuario por SQL se puede violar. Ademas, no hay pantalla para editar ni
+  desactivar usuarios.
+
+16.11 Mezcla de estilos mysqli
+------------------------------
+  El proyecto usa tanto la forma orientada a objetos ($conexion->query)
+  como la funcional, (mysqli_query($conexion, ...)). Funciona, pero es
+  inconsistente. Lo ideal es elegir una sola.
+
+16.12 Falta de manejo de charset explicito
+------------------------------------------
+  conexion.php no llama a $conexion->set_charset('utf8mb4'). En PHP 8.2 el
+  default suele ser utf8mb4, pero declararlo explicitamente evita problemas
+  con acentos si cambia la configuracion del servidor.
+
+16.13 Redireccion en registro.php
+---------------------------------
+  Despues de crear un usuario, el JS redirige a index.php (login), no a
+  stock.php. Es una decision de UX: el administrador tiene que volver a
+  loguearse. Podria redirigir a stock.php o a registro.php.
+
+16.14 No hay paginacion del lado del servidor
+---------------------------------------------
+  DataTables pagina en el navegador, por lo que trae todos los registros.
+  Con miles de filas el rendimiento baja.
+
+16.15 Dependencias copiadas manualmente
+---------------------------------------
+  Bootstrap, DataTables, PHPMailer y Dompdf estan en carpetas locales, sin
+  Composer. Es simple para XAMPP, pero actualizar versiones es manual y no
+  hay control de vulnerabilidades.
+
+16.16 Variable de mensaje sin usar
+----------------------------------
+  insumos.php guarda el mensaje flash en $mensaje_compra y borra la clave de
+  sesion, pero nunca imprime esa variable en el HTML. El usuario igual ve la
+  confirmacion porque AJAX.js muestra el campo "mensaje" del JSON con un
+  alert. Es codigo muerto que se podria eliminar o usar para mostrar un
+  cartel dentro de la pagina.
+
+
+================================================================================
+17. GLOSARIO
+================================================================================
+
+  AJAX            Tecnica de JavaScript para enviar/recibir datos del servidor
+                  sin recargar la pagina.
+  Apache          Servidor web que ejecuta PHP en XAMPP.
+  API             Interfaz de programacion. Aca, los endpoints que devuelven
+                  JSON.
+  bcrypt          Algoritmo de hash de contrasenas (el que usa PASSWORD_DEFAULT).
+  bind_param      Metodo de mysqli que asocia variables a los ? de una
+                  sentencia preparada.
+  Bootstrap       Framework CSS/JS para disenar interfaces.
+  commit          Confirmar una transaccion.
+  CSRF            Cross-Site Request Forgery: ataque que obliga al navegador a
+                  enviar una peticion no deseada. Se mitiga con tokens.
+  DataTables      Libreria JS que agrega paginacion, busqueda y orden a tablas.
+  DER             Diagrama Entidad-Relacion.
+  Dompdf          Libreria PHP que convierte HTML en PDF.
+  endpoint        Archivo PHP que devuelve datos (JSON), no HTML.
+  FK              Foreign Key (clave foranea).
+  GET             Metodo HTTP para pedir datos (parametros en la URL).
+  hash            Huella digital irreversible de un dato.
+  HTTP            Protocolo de comunicacion de la web.
+  InnoDB          Motor de almacenamiento de MySQL que soporta transacciones
+                  y claves foraneas.
+  JSON            Formato de texto para intercambiar datos.
+  JOIN            Operacion SQL que combina filas de varias tablas.
+  LEFT JOIN       Devuelve todas las filas de la tabla izquierda, aunque no
+                  tengan coincidencia en la derecha (NULL).
+  INNER JOIN      Devuelve solo las filas con coincidencia en ambas tablas.
+  mysqli          Extension de PHP para conectarse a MySQL/MariaDB.
+  ON DUPLICATE KEY UPDATE  Clausula de MySQL que actualiza si la clave unica
+                  ya existe (upsert).
+  ORM             Object-Relational Mapping. El proyecto NO usa ORM.
+  PK              Primary Key (clave primaria).
+  PDO             Otra extension de PHP para bases de datos.
+  POST            Metodo HTTP para enviar datos (formularios).
+  prepared statement  Consulta SQL precompilada con parametros.
+  rollback        Revertir una transaccion.
+  sesion          Estado del usuario guardado en el servidor y asociado a una
+                  cookie.
+  SMTP            Protocolo para enviar correo.
+  SQL             Lenguaje de consulta de bases de datos.
+  transaccion     Conjunto de operaciones que se ejecutan todas o ninguna.
+  XAMPP           Paquete Apache + MySQL/MariaDB + PHP + phpMyAdmin.
+  XSS             Cross-Site Scripting: inyeccion de JavaScript en una pagina.
+  upsert          Insertar o actualizar segun exista la clave.
+
+
+================================================================================
+18. PREGUNTAS DE PARCIAL CON RESPUESTAS
+================================================================================
+
+1. Que tipo de arquitectura tiene el sistema?
+   Cliente-servidor de tres capas: navegador, PHP/Apache y MySQL/MariaDB.
+   Es una aplicacion web multipagina (MPA) sin framework MVC.
+
+2. Donde se define la conexion a la base de datos?
+   En conexion.php, con new mysqli($servidor, $usuario, $contrasena,
+   $base_datos). Se incluye con require_once en cada pagina/endpoint.
+
+3. Que funcion cumple require_once?
+   Incluye un archivo solo una vez. Evita redeclarar funciones y abrir dos
+   veces la conexion. Si falla, detiene la ejecucion.
+
+4. Como se validan las contrasenas?
+   Se guardan con password_hash(..., PASSWORD_DEFAULT) (bcrypt) y se
+   comparan con password_verify en el login. Nunca se guardan en texto plano.
+
+5. Como se manejan las sesiones?
+   Con session_start(). Al iniciar sesion se guardan usuario_id,
+   usuario_nombre, usuario_correo y usuario_rol en $_SESSION. El navegador
+   conserva una cookie PHPSESSID.
+
+6. Como se controlan los permisos?
+   auth.php define $permisos_por_rol y compara $pagina_actual (definido en
+   cada pagina) con in_array(..., true). Si no esta permitido, redirige a
+   stock.php. sidebar.php ademas oculta las opciones.
+
+7. Cual es la diferencia entre Administrador y Panadero?
+   El Administrador accede a Reportes y a Registrar usuario. El Panadero no.
+   Ambos acceden a stock, insumos, produccion, productos, recetas, salidas y
+   ayuda.
+
+8. Que hace index.php?
+   Es el login: valida correo y contrasena, verifica que la cuenta este
+   activa, guarda los datos en sesion y redirige a stock.php.
+
+9. Que pasa si un usuario ya tiene sesion y entra a index.php?
+   Se lo redirige automaticamente a stock.php.
+
+10. Que es stock_insumos y por que existe si ya hay entrada_insumos?
+    entrada_insumos es el historial de ingresos; stock_insumos guarda la
+    existencia actual. Se separa el log del estado para consultar rapido.
+
+11. Que hace COALESCE en las consultas de stock?
+    Devuelve 0 (o 10 para el minimo) cuando la columna es NULL, por ejemplo
+    cuando un insumo todavia no tiene fila de stock.
+
+12. Por que se usa LEFT JOIN en las consultas de stock?
+    Porque un insumo o producto puede no tener fila en stock_insumos o
+    stock_productos. Con INNER JOIN desapareceria del listado.
+
+13. Que es la tabla receta?
+    Es la tabla intermedia de una relacion N:M entre productos e insumos.
+    Guarda que insumo y cuanta cantidad lleva cada producto.
+
+14. Que significa el UNIQUE (id_producto, id_insumo) en receta?
+    Que un producto no puede repetir el mismo insumo dos veces. Permite usar
+    INSERT IGNORE para no duplicar.
+
+15. Como se calcula el consumo de insumos al producir?
+    Cantidad necesaria = receta.cantidad * cantidad_producida. Se verifica
+    contra stock_insumos antes de producir y se descuenta despues.
+
+16. Que pasa si no hay stock suficiente para producir?
+    registrar_produccion.php responde ok=false con el detalle "necesitas X,
+    tenes Y" y no registra la produccion.
+
+17. Que hace ON DUPLICATE KEY UPDATE?
+    Es un upsert: inserta la fila y, si la clave unica ya existe, actualiza
+    la cantidad sumando. Se usa para el stock de insumos y productos.
+
+18. Que es una transaccion y donde se usa?
+    Un bloque de operaciones que se confirman todas o ninguna. Se usa en
+    compras, alta de insumos/productos, recetas y salidas. No se usa en
+    produccion (debilidad).
+
+19. Que diferencia hay entre registrar_salida y registrar_produccion en
+    cuanto a seguridad?
+    registrar_salida valida sesion/rol, usa transaccion, sentencias
+    preparadas y FOR UPDATE. registrar_produccion no valida sesion, no usa
+    transaccion ni prepared statements.
+
+20. Que es FOR UPDATE?
+    Bloquea la fila leida hasta el commit para que otra transaccion no la
+    modifique al mismo tiempo. Evita que dos salidas dejen el stock en
+    negativo.
+
+21. Como se evita inyectar SQL?
+    Con sentencias preparadas (prepare + bind_param) en las operaciones
+    criticas y con mysqli_real_escape_string en las consultas concatenadas.
+    Lo ideal es prepared statements en todos lados.
+
+22. Como se evita XSS?
+    Imprimiendo los datos con htmlspecialchars, que convierte <, >, &, " y '
+    en entidades HTML.
+
+23. Que es CSRF y como se protege el sistema?
+    Es un ataque que fuerza al navegador a enviar una peticion no deseada.
+    Se protege con un token en sesion y un campo oculto en el formulario,
+    comparados con hash_equals. Solo el formulario de compras lo implementa.
+
+24. Que hace AJAX.js?
+    Intercepta el submit, arma un XMLHttpRequest con FormData, muestra el
+    mensaje del JSON y ejecuta callbacks (reset, recargar, onSuccess,
+    onError) sin recargar la pagina.
+
+25. Que hace datatables_config.js?
+    Define window.iniciarTabla(selector, opciones), que inicializa DataTables
+    con idioma espanol y opciones por defecto (paginacion, busqueda, orden,
+    10 filas).
+
+26. Como se genera el PDF?
+    reportes_pdf.php arma el HTML, lo captura con ob_start/ob_get_clean y lo
+    pasa a Dompdf, que lo renderiza en A4 vertical y lo muestra inline.
+
+27. Que hace Dompdf y que limitacion tiene?
+    Convierte HTML/CSS en PDF. No ejecuta JavaScript y soporta un subconjunto
+    de CSS (por eso el diseno es simple).
+
+28. Como se envian los correos?
+    Con PHPMailer por SMTP de Gmail (smtp.gmail.com, puerto 587, STARTTLS),
+    usando una contrasena de aplicacion. Se usa en alertas de stock y en el
+    formulario de ayuda.
+
+29. Como evita el sistema mandar alertas repetidas?
+    Guarda el ultimo estado de alertas en C:/xampp/stock_alerta_estado.json
+    y lo compara con el estado actual. Si es igual, no envia.
+
+30. Que pasa si el correo falla?
+    Se registra con error_log y la operacion principal continua. En compras y
+    salidas la transaccion ya se confirmo. En el formulario de ayuda el
+    mensaje ya quedo guardado en la tabla contacto.
+
+31. Que es el archivo config_panaderia.php?
+    Un archivo que devuelve un array con smtp_user y smtp_password. Se carga
+    con require y se accede por claves.
+
+32. Cuales son las 13 tablas?
+    roles, usuarios, unidad_de_medida, insumos, productos, receta,
+    stock_insumos, stock_productos, entrada_insumos, produccion,
+    salidas_productos, asunto, contacto.
+
+33. Que tablas son catalogos y cuales son de movimiento?
+    Catalogos: roles, unidad_de_medida, asunto.
+    Maestros: usuarios, insumos, productos.
+    Relacion: receta.
+    Estado: stock_insumos, stock_productos.
+    Movimientos: entrada_insumos, produccion, salidas_productos, contacto.
+
+34. Que campos tiene salidas_productos y por que id_usuario es NULL?
+    idsalida, id_producto, id_usuario, cantidad, motivo, observacion, fecha.
+    id_usuario es NULL porque la FK usa ON DELETE SET NULL: si se borra el
+    usuario, la salida se conserva sin responsable.
+
+35. Que tipo de dato se usa para cantidades y por que?
+    DECIMAL(10,3): permite 3 decimales exactos (gramos, mililitros) sin los
+    errores de redondeo de FLOAT.
+
+36. Que es utf8mb4?
+    Juego de caracteres UTF-8 completo, que incluye emojis y caracteres de 4
+    bytes. Es el recomendado para MySQL/MariaDB.
+
+37. Que es una clave foranea?
+    Una columna que referencia la clave primaria de otra tabla y garantiza
+    integridad referencial: no se puede insertar un id que no exista.
+
+38. Que diferencia hay entre PK y UNIQUE?
+    Ambas garantizan unicidad. La PK identifica la fila y no admite NULL; una
+    tabla puede tener varias UNIQUE y pueden admitir NULL (segun el motor).
+
+39. Que es la normalizacion y como se aplica?
+    Es organizar los datos para evitar redundancia. El modelo esta en 3FN:
+    cada dato vive en una sola tabla y las relaciones N:M se resuelven con
+    tabla intermedia. La excepcion son las tablas de stock (denormalizadas a
+    proposito).
+
+40. Que mejoras propondrias?
+    Autenticacion en todos los endpoints, CSRF en todos los formularios,
+    prepared statements siempre, transaccion en produccion, HTTPS, variables
+    de entorno para credenciales, session_regenerate_id, rate limiting y
+    triggers o recalculo de stock.
+
+
+================================================================================
+19. RESUMEN PARA MEMORIZAR
+================================================================================
+
+Idea central
+------------
+  Aplicacion web PHP + MySQL para gestionar una panaderia. El usuario se
+  autentica, y segun su rol accede a modulos que leen y escriben en la BD.
+
+Piezas clave
+------------
+  conexion.php  -> abre mysqli.
+  auth.php      -> valida sesion y rol.
+  index.php     -> login con password_verify.
+  sidebar.php   -> menu segun rol.
+  Paginas       -> HTML + consultas de lectura.
+  PHP/*.php     -> endpoints JSON que escriben.
+  AJAX.js       -> envia formularios sin recargar.
+  alerta_stock  -> correo cuando el stock baja del minimo.
+  Dompdf        -> PDF del reporte.
+
+Base de datos
+-------------
+  13 tablas. InnoDB, utf8mb4.
+  Relacion N:M principal: productos <-> insumos a traves de receta.
+  Stock separado del historial: stock_* (estado) vs entrada/produccion/
+  salidas (movimientos).
+  DECIMAL(10,3) para cantidades.
+
+Operaciones criticas
+--------------------
+  Compra: INSERT entrada + UPSERT stock, en transaccion.
+  Produccion: valida receta y stock, INSERT produccion, UPDATE stock insumos,
+              UPSERT stock productos (sin transaccion: debilidad).
+  Salida: valida rol y motivo, SELECT ... FOR UPDATE, INSERT salida, UPDATE
+          stock, en transaccion.
+
+Seguridad en una frase
+----------------------
+  Hash de contrasenas, sesiones, roles, escape de salida y transacciones;
+  deudas: endpoints sin auth, CSRF parcial, credenciales en el repo, sin
+  HTTPS ni rate limiting.
+
+Frases que conviene tener listas
+--------------------------------
+  "mysqli es la extension de PHP para MySQL; el proyecto usa el estilo
+   orientado a objetos y tambien funciones."
+  "Una sentencia preparada separa la consulta de los datos y evita
+   inyeccion SQL."
+  "Una transaccion garantiza atomicidad: todo o nada."
+  "Una clave foranea garantiza integridad referencial."
+  "El stock esta denormalizado para consultar rapido; el historial esta en
+   las tablas de movimientos."
+  "password_hash genera un hash irreversible; password_verify lo compara."
+
+
+================================================================================
+20. MAPA RAPIDO DE ARCHIVOS
+================================================================================
+
+  ARCHIVO                          QUE HACE
+  ----------------------------------------------------------------------------
+  conexion.php                     Abre mysqli y fija zona horaria.
+  auth.php                         Valida sesion y permisos por rol.
+  sidebar.php                      Menu lateral filtrado por rol.
+  logout.php                       Destruye la sesion.
+  index.php                        Login.
+  stock.php                        Panel: stock y alertas.
+  insumos.php                      Entradas de insumos + alta de insumos.
+  produccion.php                   Formularios de produccion.
+  productos.php                    Listado de productos y recetas.
+  nuevo_producto.php               Alta de producto.
+  nueva_receta.php                 Alta de receta con filas dinamicas.
+  salidas.php                      Salida de productos.
+  reportes.php                     Reportes por mes (Admin).
+  registro.php                     Alta de usuarios (Admin).
+  ayuda.php                        Guia, FAQ y contacto.
+  PHP/registrar_compra.php         Endpoint de entradas multiples.
+  PHP/registrar_insumo.php         Endpoint de alta de insumo.
+  PHP/registrar_producto.php       Endpoint de alta de producto.
+  PHP/registrar_receta.php         Endpoint de alta de receta.
+  PHP/registrar_produccion.php     Endpoint de produccion.
+  PHP/registrar_salida.php         Endpoint de salida.
+  PHP/envio_registro.php           Endpoint de alta de usuario.
+  PHP/formulario_ayuda.php         Endpoint de contacto + correo.
+  PHP/alerta_stock.php             Funcion de alerta por correo.
+  PHP/utilidades.php               formatear_cantidad().
+  PHP/config_panaderia.php         Credenciales SMTP.
+  PHP/PDF/reportes_pdf.php         Genera el PDF con Dompdf.
+  JS/AJAX.js                       Envio de formularios por XHR.
+  JS/datatables_config.js          Inicializacion de DataTables.
+  CSS/styles.css                   Estilos del sistema.
+  database/panaderia.sql           Script de la BD.
+
+  Tabla -> modulo que la usa
+  ----------------------------------------------------------------------------
+  usuarios            index.php, registro.php, envio_registro.php
+  roles               index.php, registro.php, sidebar.php
+  insumos             insumos.php, productos.php, reportes.php
+  productos           productos.php, produccion.php, salidas.php
+  receta              nueva_receta.php, productos.php, produccion.php
+  stock_insumos       stock.php, insumos.php, produccion.php
+  stock_productos     stock.php, produccion.php, salidas.php
+  entrada_insumos     registrar_compra.php, reportes.php
+  produccion          registrar_produccion.php, reportes.php
+  salidas_productos   registrar_salida.php, reportes.php
+  unidad_de_medida    todas las consultas con nombre de unidad
+  asunto / contacto   ayuda.php, formulario_ayuda.php
+
+  Endpoint -> tablas que modifica
+  ----------------------------------------------------------------------------
+  registrar_compra.php      entrada_insumos, stock_insumos
+  registrar_insumo.php      insumos, stock_insumos
+  registrar_producto.php    productos, stock_productos
+  registrar_receta.php      receta
+  registrar_produccion.php  produccion, stock_insumos, stock_productos
+  registrar_salida.php      salidas_productos, stock_productos
+  envio_registro.php        usuarios
+  formulario_ayuda.php      contacto
+
+  Pagina -> endpoint que llama
+  ----------------------------------------------------------------------------
+  insumos.php           PHP/registrar_compra.php, PHP/registrar_insumo.php
+  produccion.php        PHP/registrar_produccion.php
+  nuevo_producto.php    PHP/registrar_producto.php
+  nueva_receta.php      PHP/registrar_receta.php
+  salidas.php           PHP/registrar_salida.php
+  registro.php          PHP/envio_registro.php
+  ayuda.php             PHP/formulario_ayuda.php
+  reportes.php          PHP/PDF/reportes_pdf.php (enlace, no AJAX)
+
+  Funciones y metodos clave
+  ----------------------------------------------------------------------------
+  formatear_cantidad($n)            Formatea 10.5 -> "10,5".
+  enviar_alerta_stock($conexion)    Envia correo si el stock bajo cambio.
+  responder_compra($datos, $codigo) Responde JSON y termina.
+  responder_receta($datos, $codigo) Idem para recetas.
+  enviarFormularioAjax(form, url, opciones)  Envia un form por XHR.
+  iniciarTabla(selector, opciones)  Inicializa DataTables.
+  password_hash / password_verify   Hash y verificacion.
+  htmlspecialchars                  Escape de salida.
+  filter_var                        Validacion de enteros, floats y emails.
+  mysqli_real_escape_string         Escape para SQL concatenado.
+  prepare / bind_param / execute    Sentencias preparadas.
+  begin_transaction / commit / rollback  Transacciones.
+
+  Constantes y valores utiles
+  ----------------------------------------------------------------------------
+  Zona horaria: America/Argentina/Buenos_Aires
+  BD: panaderia | host: localhost | usuario: root | sin contrasena
+  Puerto SMTP: 587 | host: smtp.gmail.com | STARTTLS
+  Stock minimo por defecto: 10.000
+  Decimales de cantidad: 3
+  Filas por pagina en DataTables: 10
+  Roles: Administrador (1), Panadero (2)
+  Unidades: Kilogramo (Kg), Litros (Lt), Unidad (Un)
+
+
+================================================================================
+FIN DEL DOCUMENTO
+================================================================================
+
+Sugerencia de estudio:
+  1. Leer secciones 1, 2 y 5 para entender el recorrido de una peticion.
+  2. Memorizar el modelo de datos (seccion 6) con el DER de docs/DER.pdf.
+  3. Repasar los flujos (seccion 14) y las preguntas (seccion 18).
+  4. Leer la seccion 15 para poder criticar el sistema con fundamentos.
+
