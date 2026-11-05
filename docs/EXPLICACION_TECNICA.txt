@@ -6,7 +6,7 @@ Documento de estudio para el parcial
 
 Sistema........: Panaderia Normal 10 - Gestion de panaderia
 Tecnologias....: PHP 8.2, MySQL/MariaDB 10.4, HTML5, CSS3, JavaScript,
-                 Bootstrap 5.1.3, DataTables, PHPMailer y Dompdf.
+                 Bootstrap 5.3.3, DataTables 3.0.2, PHPMailer y Dompdf.
 Servidor local.: XAMPP (Apache + MySQL/MariaDB)
 Base de datos..: panaderia
 Repositorio....: https://github.com/Maximo046/Panaderia
@@ -16,10 +16,13 @@ esta en README.md. Aca se describe la arquitectura, cada archivo, cada tabla,
 cada flujo, las funciones de PHP, la conexion a MySQL y los detalles tecnicos
 que pueden preguntarse en un parcial.
 
-IMPORTANTE: el documento describe el sistema TAL COMO ESTA IMPLEMENTADO. En la
-seccion 15 se explican las debilidades y en la 16 las observaciones tecnicas.
-No hay que confundir "como funciona hoy" con "como deberia funcionar en
-produccion".
+IMPORTANTE: este documento de estudio tiene secciones redactadas para una
+version anterior del codigo. Para la implementacion vigente, consultar primero
+explicacion/00_exposicion_final.txt, explicacion/01_inventario_variables.txt
+y las guias por archivo. En particular, el AJAX actual usa fetch (no
+XMLHttpRequest), la interfaz usa Bootstrap 5.3.3 y el menu usa offcanvas.
+No hay que confundir "como funcionaba en una version anterior" con "como
+funciona hoy".
 
 
 ================================================================================
@@ -165,7 +168,7 @@ Recorrido de una peticion AJAX (endpoint)
 -----------------------------------------
   El usuario completa un formulario y lo envia.
   JS/AJAX.js intercepta el evento submit con preventDefault().
-  Arma un XMLHttpRequest con method POST y un objeto FormData.
+  Arma un objeto FormData y lo envia con fetch usando method POST.
      |
      v
   PHP ejecuta el endpoint (por ejemplo PHP/registrar_salida.php):
@@ -177,7 +180,7 @@ Recorrido de una peticion AJAX (endpoint)
      - commit o rollback
      - echo json_encode([...])
      v
-  El navegador recibe el JSON, hace JSON.parse y muestra el mensaje.
+  El navegador recibe el JSON con response.json() y muestra el mensaje.
   Si la operacion fue OK y la configuracion lo indica, recarga la pagina.
 
 Ventajas de esta arquitectura
@@ -231,9 +234,9 @@ Arbol simplificado (sin Framework/, Libreria/ ni descartado/):
   |   |-- config_panaderia.php      Credenciales SMTP (devuelve un array).
   |   |-- PDF/
   |   |   |-- reportes_pdf.php      Genera el PDF con Dompdf.
-  |   |-- JS/
-  |       |-- AJAX.js               Funcion enviarFormularioAjax().
-  |       |-- datatables_config.js  Funcion window.iniciarTabla().
+  |-- JS/
+  |   |-- AJAX.js                   Funcion global de envio asincrono.
+  |   |-- datatables_config.js      Funcion window.iniciarTabla().
   |-- CSS/
   |   |-- styles.css                Hoja de estilos propia.
   |   |-- Imagenes/                 Logo.png, Pan.jpg, etc.
@@ -243,7 +246,8 @@ Arbol simplificado (sin Framework/, Libreria/ ni descartado/):
   |   |-- DER.mwb / DER.pdf         Modelo entidad-relacion.
   |   |-- capturas/                 Capturas para el README.
   |-- Framework/
-  |   |-- bootstrap-5.1.3/          Bootstrap local (CSS y JS).
+  |   |-- bootstrap-5.3.3/          Bootstrap activo local (CSS y JS).
+  |   |-- bootstrap-5.1.3/          Version local anterior, no usada por las paginas activas revisadas.
   |-- Libreria/
   |   |-- DataTables/               DataTables local.
   |   |-- PHPMailer/                PHPMailer local.
@@ -1156,7 +1160,7 @@ Todos los endpoints de la carpeta PHP/ comparten estas caracteristicas:
   - Reciben datos por $_POST.
   - Devuelven un JSON con la forma { "ok": true|false, "mensaje": "..." }.
   - No devuelven HTML.
-  - Se llaman desde JavaScript con XMLHttpRequest (JS/AJAX.js).
+  - Se llaman desde JavaScript con fetch y FormData (JS/AJAX.js).
 
 9.1 PHP/registrar_compra.php (entradas de insumos)
 --------------------------------------------------
@@ -1682,51 +1686,37 @@ Conceptos clave
 
 12.1 JS/AJAX.js
 ---------------
-Define una unica funcion global:
+Define la funcion enviarFormularioAjax(formulario, url, opciones) en window,
+para que la puedan invocar paginas PHP diferentes.
 
-  enviarFormularioAjax(formulario, url, opciones)
+  1. El archivo se ejecuta dentro de una IIFE (funcion anonima que se invoca
+     inmediatamente). Esto mantiene privados los nombres auxiliares.
+  2. mostrarNotificacion(formulario, mensaje, tipo) busca .notif dentro de la
+     tarjeta del formulario, despues busca un .notif global y, si no hay
+     ninguno, usa window.alert. Cambia las clases Bootstrap alert-success o
+     alert-danger, escribe el texto con textContent y asigna role=alert.
+  3. enviarFormularioAjax recibe un elemento HTMLFormElement, una URL string
+     y un objeto opciones con flags/callbacks opcionales.
+  4. Si el formulario es null/falso, retorna sin registrar evento. config
+     toma opciones o un objeto vacio.
+  5. addEventListener('submit', ...) registra un callback. preventDefault()
+     impide que el navegador haga el POST tradicional y recargue la pagina.
+  6. Busca el boton submit, guarda su texto en textoOriginal, lo deshabilita
+     y presenta "Guardando..." para informar y reducir doble envio.
+  7. fetch(url, {method:'POST', body:new FormData(formulario)}) envia campos
+     incluyendo arrays id_insumo[]/cantidad[] y campos hidden.
+  8. La cadena de Promises usa then para convertir Response a JSON y luego
+     procesar el objeto datos. datos.ok controla exito; datos.mensaje es
+     texto recibido del endpoint.
+  9. En exito se puede resetear formulario, llamar config.onSuccess y/o
+     recargar. En error de negocio puede llamarse config.onError.
+ 10. catch maneja errores de red o una respuesta que no pudo convertirse
+     desde JSON; se presenta un mensaje de fallo.
+ 11. finally se ejecuta en ambos caminos y vuelve a habilitar el boton y
+     restaurar textoOriginal.
 
-Parametros:
-  - formulario: elemento <form> del DOM.
-  - url: endpoint PHP que procesa.
-  - opciones: objeto con reset, recargar, mostrarAlerta, onSuccess, onError.
-
-Que hace:
-  1. if (!formulario) return;  -> evita errores si el form no existe.
-  2. var config = opciones || {};  -> valor por defecto.
-  3. formulario.addEventListener('submit', function (evento) { ... });
-     Escucha el envio.
-  4. evento.preventDefault();
-     Cancela el envio normal del navegador (que recargaria la pagina).
-  5. Deshabilita el boton y lo pone en "Guardando...".
-     Evita doble click y da feedback.
-  6. var peticion = new XMLHttpRequest();
-     peticion.open('POST', url, true);  -> asincronico.
-  7. peticion.onreadystatechange = function () {
-         if (peticion.readyState == 4) { ... }
-     }
-     readyState 4 = peticion terminada.
-  8. Reactiva el boton con su texto original.
-  9. try { var respuesta = JSON.parse(peticion.responseText); ... }
-     Si la respuesta no es JSON valido, cae en el catch.
- 10. if (config.mostrarAlerta !== false) alert(respuesta.mensaje);
-     Por defecto muestra el mensaje del servidor.
- 11. Si respuesta.ok:
-       - if (config.reset) formulario.reset();
-       - if (config.recargar) window.location.reload();
-       - if (typeof config.onSuccess === 'function')
-             config.onSuccess(respuesta, formulario);
-     Si no:
-       - if (typeof config.onError === 'function') config.onError(...)
- 12. peticion.send(new FormData(formulario));
-     FormData arma automaticamente todos los campos, incluidos los arrays
-     (id_insumo[], cantidad[]) y los input hidden.
-
-Por que XMLHttpRequest y no fetch
----------------------------------
-  Es la API clasica de AJAX. Funciona en cualquier navegador y no necesita
-  polyfills. fetch es mas moderna y usa Promises, pero el proyecto opto por
-  XHR por simplicidad y compatibilidad escolar.
+Las notificaciones se dibujan en la interfaz con clases Bootstrap y el CSS
+propio; el helper no usa XMLHttpRequest ni muestra siempre un alert nativo.
 
 12.2 Uso en cada pagina
 -----------------------
@@ -1828,28 +1818,13 @@ Por que XMLHttpRequest y no fetch
 13. CSS Y DISENO VISUAL
 ================================================================================
 
-Archivo: CSS/styles.css (aproximadamente 1400 lineas, 17 secciones).
+Archivo: CSS/styles.css (754 lineas en la revision consultada; el archivo puede cambiar).
 
 13.1 Organizacion
 -----------------
-  El archivo tiene un indice al inicio:
-    1. Variables y reset
-    2. Base y estructura
-    3. Sidebar
-    4. Paginas de autenticacion
-    5. Tarjetas y encabezados
-    6. Formularios
-    7. Botones
-    8. Notificaciones
-    9. Stock
-    10. Insumos
-    11. Produccion
-    12. Productos
-    13. Salidas
-    14. Reportes
-    15. Ayuda
-    16. Tablas y DataTables
-    17. Responsive
+  La version vigente esta organizada alrededor de variables de tema,
+  layout/navegacion, autenticacion, tarjetas, formularios, botones,
+  tablas/DataTables, alertas, componentes propios y responsive.
 
 13.2 Variables CSS (custom properties)
 --------------------------------------
@@ -1868,8 +1843,9 @@ Archivo: CSS/styles.css (aproximadamente 1400 lineas, 17 secciones).
     --shadow: 0 4px 20px rgba(46,21,3,0.1);
   }
 
-  Se usan con var(--nombre). Ventaja: cambiar un color en un solo lugar
-  cambia todo el tema. La paleta imita panaderia (crema, marron, ambar).
+  Se usan con var(--nombre). Ademas, :root redefine custom properties --bs-*
+  para adaptar colores, fuente, radios, offcanvas, cards, botones y tablas de
+  Bootstrap 5.3. Cambiar una variable de tema puede actualizar varias vistas.
 
 13.3 Reset y base
 -----------------
@@ -1883,24 +1859,10 @@ Archivo: CSS/styles.css (aproximadamente 1400 lineas, 17 secciones).
 
 13.4 Layout principal
 ---------------------
-  .sidebar {
-    position: fixed; top: 0; left: 0; z-index: 100;
-    display: flex; flex-direction: column;
-    width: var(--sidebar-w); height: 100vh;
-    background: linear-gradient(rgba(0,0,0,0.72), rgba(0,0,0,0.72)),
-                url('Imagenes/Pan.jpg') center / cover no-repeat;
-  }
-
-  .main-content {
-    flex: 1;
-    margin-left: var(--sidebar-w);
-    padding: 36px 40px;
-  }
-
-  La sidebar esta fija a la izquierda (position: fixed) y el contenido tiene
-  un margen izquierdo igual a su ancho para no quedar tapado. El fondo es una
-  imagen con un degradado negro semitransparente encima para que el texto se
-  lea.
+  La barra lateral se construye con el componente Bootstrap offcanvas-lg:
+  queda como panel desplegable en pantallas pequenas y como navegacion fija
+  en pantallas grandes. .topbar y .sidebar personalizan el componente;
+  .main-content ajusta margen y relleno segun media queries.
 
 13.5 Componentes
 ----------------
@@ -1908,28 +1870,16 @@ Archivo: CSS/styles.css (aproximadamente 1400 lineas, 17 secciones).
   .card-header     -> titulo de la tarjeta.
   .page-header     -> encabezado de pagina con flex y space-between.
   .page-title      -> titulo con Playfair Display; <em> en color ambar.
-  .btn-primary     -> boton principal con gradiente ambar.
-  .form-group      -> agrupa label + input.
-  .form-grid       -> grilla de dos columnas para formularios.
-  .notif           -> caja de notificacion.
-  .alertas-list    -> lista de alertas de stock.
-  .fila-salida / .fila-produccion / .fila-receta
-                   -> filas con grid de 3 columnas.
-  .fila-sin-stock  -> estilo para productos sin stock.
-  .badge-dot       -> punto verde animado ("Sistema activo").
+  La hoja propia adapta .card, .card-header, .card-body, .form-control,
+  .form-select, .btn, .btn-primary, .btn-outline-secondary, .table y
+  .alert; estas clases son componentes Bootstrap modificados, no reemplazos.
+  .notif, .alertas-list, .fila-sin-stock y .badge-dot son clases propias.
 
 13.6 Responsive
 ---------------
-  Cuatro breakpoints (max-width):
-
-    1200px: .page-header pasa a flex-wrap: wrap.
-    1100px: .content-grid y .help-grid pasan a una columna.
-    900px:  .main-content pierde el margin-left y la sidebar se transforma
-            (deja de ocupar espacio fijo).
-    760px:  .card reduce padding y los formularios se apilan.
-
-  Es diseno "desktop first": se parte del escritorio y se adapta hacia
-  abajo con max-width.
+  La version actual emplea @media (min-width: 992px) para escritorio y
+  max-width: 991.98px / 575.98px para tabletas y telefonos. Bootstrap aporta
+  ademas clases responsive como d-lg-none, col-md-* y col-xl-* en HTML.
 
 13.7 Tipografia
 ---------------
@@ -1941,12 +1891,12 @@ Archivo: CSS/styles.css (aproximadamente 1400 lineas, 17 secciones).
 
 13.8 Bootstrap
 --------------
-  Se usa Bootstrap 5.1.3 local (Framework/bootstrap-5.1.3) para:
-    - Normalizacion y utilidades.
-    - Componentes como alert.
-    - bootstrap.bundle.min.js (incluye Popper) al final del body.
-  El diseno propio (styles.css) se carga despues de Bootstrap, por lo que
-  puede sobrescribir estilos.
+  Las paginas activas revisadas cargan Bootstrap 5.3.3 desde
+  Framework/bootstrap-5.3.3/. El CSS propio se carga despues, asi que
+  personaliza las variables y componentes Bootstrap. El bundle JS de
+  Bootstrap se carga al final del body y activa, entre otros, offcanvas y
+  acordeon. El directorio bootstrap-5.1.3 que tambien existe es version
+  anterior y no es la ruta usada por las paginas activas revisadas.
 
 
 ================================================================================
@@ -2479,7 +2429,7 @@ Archivo: CSS/styles.css (aproximadamente 1400 lineas, 17 secciones).
     comparados con hash_equals. Solo el formulario de compras lo implementa.
 
 24. Que hace AJAX.js?
-    Intercepta el submit, arma un XMLHttpRequest con FormData, muestra el
+    Intercepta el submit, arma FormData y lo envia con fetch, muestra el
     mensaje del JSON y ejecuta callbacks (reset, recargar, onSuccess,
     onError) sin recargar la pagina.
 
@@ -2649,7 +2599,7 @@ Frases que conviene tener listas
   PHP/utilidades.php               formatear_cantidad().
   PHP/config_panaderia.php         Credenciales SMTP.
   PHP/PDF/reportes_pdf.php         Genera el PDF con Dompdf.
-  JS/AJAX.js                       Envio de formularios por XHR.
+  JS/AJAX.js                       Envio asincrono de formularios con fetch.
   JS/datatables_config.js          Inicializacion de DataTables.
   CSS/styles.css                   Estilos del sistema.
   database/panaderia.sql           Script de la BD.
@@ -2697,7 +2647,7 @@ Frases que conviene tener listas
   enviar_alerta_stock($conexion)    Envia correo si el stock bajo cambio.
   responder_compra($datos, $codigo) Responde JSON y termina.
   responder_receta($datos, $codigo) Idem para recetas.
-  enviarFormularioAjax(form, url, opciones)  Envia un form por XHR.
+  enviarFormularioAjax(form, url, opciones)  Envia un form con fetch.
   iniciarTabla(selector, opciones)  Inicializa DataTables.
   password_hash / password_verify   Hash y verificacion.
   htmlspecialchars                  Escape de salida.
@@ -2727,4 +2677,3 @@ Sugerencia de estudio:
   2. Memorizar el modelo de datos (seccion 6) con el DER de docs/DER.pdf.
   3. Repasar los flujos (seccion 14) y las preguntas (seccion 18).
   4. Leer la seccion 15 para poder criticar el sistema con fundamentos.
-

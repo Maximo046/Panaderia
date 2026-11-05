@@ -1,0 +1,17 @@
+LIBRERIA: PHPMailer
+UBICACION: Libreria/PHPMailer/src/.
+PROPOSITO: construir y enviar correos desde PHP, incluyendo transporte SMTP autenticado y cifrado.
+
+COMO SE INTEGRA
+PHP/alerta_stock.php y PHP/formulario_ayuda.php incluyen Exception.php, PHPMailer.php y SMTP.php con require_once. use PHPMailer\PHPMailer\PHPMailer y use ...\Exception importan clases del namespace; namespace separa nombres de clases y evita colisiones.
+new PHPMailer(true) crea objeto y solicita excepciones para errores. isSMTP selecciona SMTP como transporte; Host el servidor; SMTPAuth activa autenticacion; Username/Password son credenciales; SMTPSecure=ENCRYPTION_STARTTLS solicita STARTTLS; Port=587 configura puerto habitual de submission; CharSet='UTF-8' controla codificacion.
+setFrom asigna remitente, addAddress destinatario, addReplyTo direccion para responder, isHTML(true) configura cuerpo HTML, Subject el asunto, Body HTML y AltBody la alternativa de texto. send() intenta enviar.
+
+MANEJO DE ERROR
+try/catch(Exception $excepcion) captura fallos SMTP y permite registrar detalles con error_log sin mostrarlos necesariamente al usuario. PHPMailer no valida permisos de usuarios ni guarda mensajes en base de datos: esas tareas pertenecen a los endpoints de la aplicacion.
+
+CONFIGURACION SMTP
+El sistema lee un array de PHP/config_panaderia.php para usuario/contrasena. Ese archivo contiene credenciales en el codigo en la copia actual; no se transcriben aqui. Las credenciales deben migrarse a archivo local excluido del repositorio o variables de entorno y las claves expuestas deben rotarse. No publicar salida de depuracion SMTP con secretos.
+
+CLASES
+PHPMailer es una clase; $correo es objeto; sus propiedades almacenan host, puerto y mensaje, y sus metodos configuran y transmiten correo. Exception es una clase de error. SMTP.php implementa transporte, no debe editarse para configurar cada cuenta.

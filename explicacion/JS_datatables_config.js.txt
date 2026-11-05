@@ -1,0 +1,15 @@
+ARCHIVO: JS/datatables_config.js
+PROPOSITO: inicializar tablas DataTables con textos en espanol y opciones comunes.
+TIPO: script JavaScript clasico que publica una funcion global.
+
+IDIOMA Y CONFIGURACION
+Una IIFE y 'use strict' crean un ambito privado. idiomaEspanol es un objeto literal; sus propiedades traducen mensajes, paginacion, ordenamiento, busqueda y estados vacios. paginate y aria son objetos anidados.
+window.iniciarTabla(selector, opciones) es la API publica. selector es un string CSS, opciones es un objeto opcional. Si DataTable no existe o document.querySelector(selector) no encuentra elemento, retorna null; esto permite cargar la configuracion en paginas sin tablas.
+Object.assign(destino, origen1, origen2) construye configuracion combinando defaults con opciones entregadas; si una opcion tiene la misma clave, el valor proporcionado por la pagina reemplaza el predeterminado.
+
+OPCIONES Y EJECUCION
+paging, searching, ordering, info y lengthChange son booleanos. pageLength es entero, autoWidth booleano, layout describe las posiciones de longitud, busqueda, informacion y paginador. language apunta al objeto idiomaEspanol.
+new window.DataTable(selector, configuracion) crea la instancia de DataTables y retorna un objeto de la biblioteca.
+
+INTEGRACION
+Cada pagina que inicializa tablas debe cargar primero DataTables, luego el adaptador DataTables Bootstrap 5, luego este archivo y por ultimo llamar iniciarTabla cuando el DOM este listo. La implementacion local declara version DataTables 3.0.2; mantener la hoja, el adaptador y el nucleo en versiones compatibles.

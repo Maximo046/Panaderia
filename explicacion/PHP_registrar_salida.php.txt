@@ -1,0 +1,18 @@
+ARCHIVO: PHP/registrar_salida.php
+PROPOSITO: verificar y registrar salidas de productos, disminuyendo el saldo en una transaccion.
+TIPO: endpoint PHP JSON con autorizacion, consultas preparadas y bloqueo de filas.
+
+AUTORIZACION Y ENTRADA
+header marca JSON UTF-8. session_start() inicia sesion; require_once carga conexion, alertas y utilidades. isset y in_array(..., true) requieren sesion con rol permitido; http_response_code(403) marca acceso prohibido.
+$motivos_validos es array de strings. trim limpia motivo y observacion; mb_strlen cuenta caracteres multibyte; las listas de ids/cantidades se obtienen de $_POST.
+foreach recorre productos; str_replace normaliza decimal y (float)/(int) convierten datos. Solo cantidad > 0 se agrega a $lineas_salida como array asociativo. El usuario actual se convierte a entero y ?: null permite no tener id.
+
+CAMBIOS ATOMICOS
+mysqli_begin_transaction inicia transaccion. prepare crea cuatro consultas y ? evita concatenar valores directamente. SELECT de stock incluye FOR UPDATE para bloquear la fila hasta commit/rollback y evitar que dos retiros simultaneos lean/modifiquen el mismo saldo sin coordinacion.
+bind_param('i', id) enlaza id entero. execute ejecuta; get_result()->fetch_assoc() obtiene fila como array; free_result libera el resultado. Si producto no existe o no hay saldo suficiente se lanza RuntimeException.
+INSERT registra producto, usuario, cantidad, motivo y observacion. UPDATE resta cantidad. Si todas las lineas pasan, se cierran statements y mysqli_commit confirma todo. catch(Throwable) ejecuta rollback, registra detalle tecnico en error_log y responde error JSON.
+
+DESPUES
+enviar_alerta_stock se llama despues de guardar; count cuenta filas elegidas; un operador ternario ajusta singular/plural. La respuesta JSON incluye mensaje.
+
+Los arrays ids_productos y cantidades son datos externos pareados por indice; la consistencia se valida en servidor. El uso de FOR UPDATE depende de una tabla transaccional como InnoDB.

@@ -1,0 +1,16 @@
+ARCHIVO: conexion.php
+PROPOSITO: establecer los valores de conexion a MariaDB/MySQL y crear la conexion compartida.
+TIPO: script PHP de configuracion y creacion de objeto.
+
+COMANDOS
+- date_default_timezone_set('America/Argentina/Buenos_Aires') configura la zona horaria usada por funciones de fecha de PHP.
+- $servidor, $usuario, $contrasena y $base_datos son variables string que almacenan parametros de conexion.
+- new mysqli(...) crea un objeto de la clase mysqli, la conexion activa que las paginas reutilizan como $conexion.
+- $conexion->connect_error accede a una propiedad del objeto que contiene el error de conexion; el operador -> significa acceso a miembro de un objeto.
+- die(...) imprime el mensaje indicado y detiene el script si falla la conexion.
+
+USO
+Los archivos de la aplicacion cargan este archivo con require_once. No hay una funcion que retorne la conexion: el archivo crea la variable $conexion en el ambito de ejecucion compartido por la inclusion.
+
+TIPOS Y PRECAUCIONES
+La conexion es un objeto; los parametros son strings. El archivo actualmente define credenciales locales directamente en el codigo; no deben copiarse a documentacion ni repositorios publicos. Para despliegues reales se recomienda configuracion externa, usuario de base de datos de privilegios limitados y mensajes de error que no revelen detalles al visitante.

@@ -1,0 +1,32 @@
+ARCHIVO: database/panaderia.sql
+PROPOSITO: crear las tablas, cargar datos iniciales, definir claves e indices y finalizar la importacion.
+TIPO: script SQL de definicion y carga de datos para MariaDB/MySQL.
+
+CABECERA Y COMANDOS
+SET SQL_MODE configura reglas de compatibilidad; NO_AUTO_VALUE_ON_ZERO determina como se trata cero en columnas auto incrementales. START TRANSACTION inicia una transaccion para importar cambios agrupados; COMMIT confirma el conjunto. SET time_zone define zona horaria de la sesion SQL. Las sentencias /*!...*/ son comentarios ejecutables condicionalmente por versiones compatibles de MySQL.
+SET NAMES utf8mb4 selecciona codificacion de cuatro bytes para caracteres, incluidos simbolos extendidos. CREATE TABLE define columnas, tipos, nulabilidad y motor InnoDB. INSERT INTO ... VALUES carga filas existentes. ALTER TABLE agrega claves, indices, restricciones o comportamiento AUTO_INCREMENT.
+
+TABLAS
+- asunto(idasunto, nombre): identificador y nombre del tema del formulario de ayuda.
+- contacto(idcontacto, id_asunto, nombre, correo, mensaje): consulta recibida y relacion con asunto; no contiene columna de fecha.
+- entrada_insumos(idcompras_insumos, id_insumos, cantidad, fecha): movimiento historico de entrada, con cantidad DECIMAL y fecha DATE.
+- insumos(idinsumos, idunidad_de_medida, nombre): catalogo de materia prima y su unidad.
+- produccion(idproduccion, id_producto, cantidad, fecha): elaboracion; fecha DATETIME tiene DEFAULT CURRENT_TIMESTAMP.
+- productos(idproductos, idunidad_de_medida, nombre): catalogo de producto terminado y unidad.
+- receta(idreceta, id_producto, id_insumo, cantidad): relacion muchos-a-muchos producto/insumo; cantidad es uso por una unidad de producto.
+- roles(idroles, nombre): roles asignables a usuarios.
+- salidas_productos(idsalida, id_producto, id_usuario, cantidad, motivo, observacion, fecha): movimiento de retiro; usuario y observacion aceptan NULL; fecha tiene DEFAULT CURRENT_TIMESTAMP.
+- stock_insumos(idstock_insumos, id_insumo, cantidad, stock_minimo): saldo actual/minimo para una materia prima.
+- stock_productos(idstock_productos, id_producto, cantidad, stock_minimo): saldo actual/minimo para producto terminado.
+- unidad_de_medida(idunidad_de_medida, nombre, abreviatura): catalogo de unidades usadas por productos e insumos.
+- usuarios(idusuarios, id_rol, nombre, apellido, correo, contrasena, fecha_registro, activo): identidad, referencia a rol, hash de password, fecha automatica y estado tinyint.
+
+La sintaxis lista columnas en el orden de cada CREATE TABLE. Los identificadores son enteros; las referencias se guardan en columnas id_*. nombre/correo/motivo son texto acotado; mensaje es longtext; cantidades y minimos son DECIMAL(10,3). correo es UNIQUE y por ello permite comprobar unicidad en la base.
+
+TIPOS Y RESTRICCIONES
+int representa enteros/identificadores; varchar limita texto; longtext almacena texto largo; decimal(10,3) guarda cantidades con precision decimal fija; date almacena fecha. NOT NULL prohibe ausencia; AUTO_INCREMENT asigna ids nuevos; PRIMARY KEY identifica cada fila. UNIQUE KEY impide valores repetidos o pares duplicados. KEY crea un indice para busquedas/relaciones. FOREIGN KEY asegura que la referencia exista; ON DELETE SET NULL conserva una salida si desaparece su usuario y elimina solo esa referencia.
+Las relaciones principales conectan recetas con productos e insumos, stock con su entidad, movimientos con sus productos/insumos, usuarios con roles y contactos con asuntos.
+Restriccion UNIQUE uq_receta_producto_insumo impide repetir el mismo ingrediente en la receta del mismo producto. id_insumo de stock_insumos y id_producto de stock_productos son unicos, garantizando como maximo una fila de saldo por entidad. fk_salida_usuario usa ON DELETE SET NULL para conservar el movimiento aunque se elimine un usuario.
+
+COMO IMPORTAR
+El archivo contiene tambien INSERTs de datos de ejemplo. Importarlo de nuevo sobre tablas ya existentes puede fallar o duplicar contenido segun estado y restricciones; usar una copia de seguridad y una base vacia de prueba antes de volver a ejecutar. No es una migracion incremental.

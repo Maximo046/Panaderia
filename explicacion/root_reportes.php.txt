@@ -1,0 +1,16 @@
+ARCHIVO: reportes.php
+PROPOSITO: mostrar consumo, compras, produccion y salidas con filtro por mes.
+TIPO: pagina PHP con consultas SELECT, generacion HTML y widgets DataTables.
+
+FILTRO
+$mes_seleccionado y los tres $filtro_* empiezan como strings vacios. $_GET es el array asociativo de parametros de URL. ?? '' proporciona valor por defecto. is_string impide tratar un array como texto; preg_match verifica el formato YYYY-MM y que el mes este entre 01 y 12.
+Si el patron coincide, $mes_seleccionado alimenta fragmentos WHERE DATE_FORMAT(...). Solo se inserta en SQL tras validarlo como cuatro digitos, guion y mes valido. La pagina y el PDF repiten la misma logica para mantener el filtro.
+
+CONSULTAS Y PLANTILLA
+Cuatro resultados mysqli consultan consumo derivado (produccion por cantidad de receta), ingresos, produccion y salidas. INNER JOIN trae entidades relacionadas; LEFT JOIN permite mostrar usuario ausente; ORDER BY ordena cronologicamente. while recorre filas; mysqli_num_rows detecta tablas vacias.
+htmlspecialchars() codifica texto, strtotime() interpreta fechas y date() las presenta como dia/mes/ano. formatear_cantidad() adapta los decimales. El formulario GET se refleja en un input month; urlencode() codifica el mes para la URL PDF.
+
+BOOTSTRAP Y DATATABLES
+Se usan row/col de Bootstrap, flex-wrap, align-items-end y gap para encabezados; card, table-responsive, table-striped, table-hover, alertas y botones forman la interfaz. Se cargan DataTables, su adaptador Bootstrap 5 y la configuracion local. Cada tabla se inicializa desde window.iniciarTabla en el bloque JavaScript al pie.
+
+El enlace al PDF lleva el mismo filtro a PHP/PDF/reportes_pdf.php y target=_blank lo abre en una pestaña. rel=noopener evita que la nueva ventana manipule window.opener.

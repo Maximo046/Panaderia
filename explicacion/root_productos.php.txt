@@ -1,0 +1,16 @@
+ARCHIVO: productos.php
+PROPOSITO: mostrar catalogo de productos junto a sus ingredientes de receta.
+TIPO: pagina PHP con consultas SQL, plantilla HTML y JavaScript para DataTables.
+
+PHP
+$pagina_actual, session_start(), conexion.php, auth.php y utilidades.php preparan la pantalla. $lista_productos es un resultado mysqli. Cada producto se lee con mysqli_fetch_assoc; dentro del ciclo se ejecuta otra consulta para sus ingredientes. $partes_receta es un array indexado de strings. Cada ingrediente se convierte en HTML seguro con htmlspecialchars, se formatea su cantidad y se agrega con [].
+empty($partes_receta) comprueba si hay ingredientes. implode('<br>', ...) une los elementos del array con saltos HTML para mostrarlos en una celda.
+
+HTML Y BOOTSTRAP
+Los enlaces de acciones usan btn-primary y btn-outline-secondary. card organiza el panel; table-responsive permite desplazamiento horizontal; table-striped y table-hover decoran filas; align-middle centra contenido verticalmente.
+
+DataTables
+La pagina carga el CSS base y la integracion Bootstrap 5 de DataTables, y los scripts en orden: biblioteca principal, adaptador Bootstrap y JS/datatables_config.js. defer descarga scripts sin bloquear el analisis HTML y los ejecuta cuando el DOM esta disponible. El bloque final llama iniciarTabla('#tabla-productos') si existe la funcion.
+
+RENDIMIENTO
+La consulta de receta esta dentro del ciclo de productos, por lo que la cantidad de consultas crece con el numero de productos. Es el patron N+1: funciona pero puede requerir optimizacion si el catalogo aumenta.

@@ -1,0 +1,33 @@
+DOCUMENTACION TECNICA DEL SISTEMA - PANADERIA NORMAL 10
+
+OBJETIVO
+Esta carpeta contiene una guia de lectura para comprender los archivos de codigo y configuracion propios del sistema. Cada documento lleva como nombre el archivo explicado, con "_" para separar las carpetas originales. Por ejemplo, PHP_registrar_compra.php.txt explica PHP/registrar_compra.php.
+
+ALCANCE
+Se documentan los archivos de aplicacion PHP, JavaScript, CSS, SQL, configuracion y los documentos de texto principales; el codigo activo tiene una guia por archivo. Tambien se agregan guias de los archivos ejecutables y respaldos SQL de descartado/, identificados expresamente como historicos, no como parte del sistema en ejecucion. Las imagenes, capturas, PDF y modelos binarios no contienen comandos de aplicacion que deban desglosarse. El codigo interno de Bootstrap, DataTables, PHPMailer y Dompdf tampoco se repite archivo por archivo: cada biblioteca tiene una guia propia que explica su funcion, configuracion e integracion en este sistema.
+
+COMO LEER LAS GUIAS
+- "Tipo" identifica si un elemento es variable, array, funcion, objeto, clase, constante, consulta SQL, etiqueta HTML, selector CSS o regla de configuracion.
+- "Flujo" explica en orden que hace el archivo cuando se ejecuta.
+- Las palabras entre parentesis, como $_POST y $_SESSION, son superglobales de PHP; no se declaran como variables normales del proyecto.
+- HTML se genera en el servidor por PHP y despues lo interpreta el navegador. JavaScript se ejecuta en el navegador; SQL se ejecuta en MariaDB/MySQL.
+- Las guias describen el codigo existente. No equivalen a una auditoria ni afirman que todo el codigo sea seguro o que todos los escenarios esten probados.
+
+DOCUMENTOS DE EXPOSICION Y REFERENCIA
+- 00_exposicion_final.txt: guion tecnico para defender arquitectura, modelo, flujo y decisiones.
+- 01_inventario_variables.txt: variables, parametros y objetos declarados en cada archivo PHP/JavaScript activo, con tipo inferido, origen y funcion.
+- 02_comandos_y_sintaxis.txt: explicacion comun de instrucciones PHP, JavaScript, SQL, HTML, CSS y Bootstrap presentes en el proyecto.
+- docs_EXPLICACION_TECNICA.txt.txt: referencia a la explicacion extensa que ya existe en docs/. Los documentos nuevos deben considerarse la referencia cotejada con los archivos actuales.
+
+RECORRIDO SUGERIDO
+1. conexion.php y database_panaderia.sql.txt: conexion y datos.
+2. index.php, auth.php y sidebar.php: inicio y permisos.
+3. Las paginas de gestion: formularios y consultas.
+4. Los archivos PHP/registrar_*.php.txt: acciones que modifican datos.
+5. JS_AJAX.js, JS_datatables_config.js y CSS_styles.css.txt: comportamiento e interfaz.
+6. Las cuatro guias de bibliotecas para entender los componentes externos.
+7. Practicar la defensa con 00_exposicion_final.txt y consultar variables/comandos en 01_inventario_variables.txt y 02_comandos_y_sintaxis.txt.
+8. Leer las fichas descartado_* solo para explicar la evolucion del proyecto; esos modulos de venta no se ejecutan como parte de la aplicacion actual.
+
+NOTA DE CONFIGURACION
+No se copian contrasenas, tokens ni credenciales de los archivos fuente a esta documentacion. Las credenciales de correo deben mantenerse fuera del repositorio y no deben compartirse en documentos.

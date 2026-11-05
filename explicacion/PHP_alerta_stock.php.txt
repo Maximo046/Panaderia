@@ -1,0 +1,21 @@
+ARCHIVO: PHP/alerta_stock.php
+PROPOSITO: detectar stock bajo y enviar un correo solo cuando el estado de alertas cambia.
+TIPO: modulo PHP procedural que define la funcion enviar_alerta_stock(mysqli $conexion): bool.
+
+DEPENDENCIAS
+use importa nombres de clases Exception y PHPMailer desde el espacio de nombres PHPMailer\PHPMailer. require_once carga esas tres clases desde archivos fuente y PHP/utilidades.php. __DIR__ es una constante magica con la carpeta de este archivo; evita depender del directorio actual.
+
+PROCESO
+1. La funcion comprueba session_status y puede iniciar la sesion. $_SESSION['usuario_correo'] identifica al destinatario. trim limpia espacios; filter_var con FILTER_VALIDATE_EMAIL valida la sintaxis. error_log registra diagnostico del servidor; return false termina con resultado booleano.
+2. $alertas es un array indexado. Dos consultas SELECT combinan catalogos, unidades y saldos con LEFT JOIN. COALESCE sustituye datos ausentes; WHERE conserva solo cantidades inferiores al minimo; ORDER BY ordena. Cada fila se lee como array asociativo y se agrega a $alertas[] como array clave-valor; las cantidades se casteam a float.
+3. Si no existen alertas, is_file verifica un archivo JSON de estado y unlink lo quita para que una alerta futura pueda volver a enviarse.
+4. json_encode convierte destinatario y alertas en texto JSON; sus banderas conservan caracteres Unicode y barras. file_get_contents lee el estado anterior. Si ambos strings son iguales, no vuelve a enviar el correo.
+5. require de config_panaderia.php espera recibir un array asociativo SMTP. La funcion verifica que usuario y contrasena existan antes de configurar correo.
+6. foreach recorre alertas. htmlspecialchars escapa nombres para HTML; formatear_cantidad crea etiquetas decimales legibles. Se construyen dos strings: HTML y texto plano.
+7. try/catch crea un objeto PHPMailer, configura SMTP Gmail con STARTTLS/587, credenciales, remitente, destinatario, asunto, HTML y AltBody. send() intenta el envio. file_put_contents(..., LOCK_EX) guarda el estado solo tras exito; LOCK_EX solicita bloqueo exclusivo durante la escritura.
+8. catch de Exception registra el mensaje y retorna false. La funcion retorna true si no hay alertas nuevas o el correo se envio.
+
+TIPOS
+$conexion es objeto mysqli; $alertas es array de arrays; $estado_actual, HTML y texto son strings; $correo es objeto PHPMailer. La configuracion es array asociativo.
+
+El archivo de estado se encuentra en una ruta absoluta local de XAMPP, por lo que es una dependencia de entorno. Los datos SMTP reales no se incluyen en esta guia.

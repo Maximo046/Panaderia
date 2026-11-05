@@ -1,0 +1,18 @@
+ARCHIVO: insumos.php
+PROPOSITO: listar insumos y su stock, registrar entradas de compra y crear insumos.
+TIPO: pagina PHP que combina consultas de lectura, HTML de formularios y JavaScript AJAX.
+
+PREPARACION PHP
+$pagina_actual identifica la pantalla; session_start() inicia la sesion; require_once carga conexion.php, auth.php y PHP/utilidades.php.
+random_bytes(32) crea 32 bytes impredecibles; bin2hex() los convierte a texto hexadecimal. El resultado guardado en $_SESSION['token_compra'] es un token CSRF. empty() verifica si falta o esta vacio. La variable $token_compra copia el valor para imprimirlo en un campo oculto.
+$mensaje_compra lee un mensaje flash de sesion. unset() elimina esa clave para que se muestre una sola vez.
+$lista_insumos guarda un resultado mysqli de SELECT. COALESCE(cantidad, 0) reemplaza NULL por cero; INNER JOIN obtiene unidad; LEFT JOIN conserva insumos aun sin fila de stock; ORDER BY ordena por nombre.
+
+PLANTILLA
+Bootstrap define cards, row/col, form-control, form-select, table-responsive, table y botones; CSS/styles.css adapta colores y marca. El primer formulario contiene el token oculto, la fecha y pares de campos id_insumo[]/cantidad[]. Los corchetes indican que el navegador envia una lista de valores.
+while (mysqli_fetch_assoc(...)) recorre filas de la consulta. (float) y (int) convierten datos numericos. htmlspecialchars() codifica texto para HTML; ENT_QUOTES protege comillas en atributos.
+
+JAVASCRIPT
+Al ocurrir DOMContentLoaded, enviarFormularioAjax enlaza el formulario de compra con PHP/registrar_compra.php y solicita recarga despues del exito. El de alta se enlaza con PHP/registrar_insumo.php y limpia los campos con reset. El bundle de Bootstrap habilita los componentes de interfaz.
+
+La respuesta de compra se conserva como mensaje de sesion para la siguiente carga. El endpoint de compra vuelve a validar los valores; la validacion visual min/step de input no sustituye la validacion del servidor.

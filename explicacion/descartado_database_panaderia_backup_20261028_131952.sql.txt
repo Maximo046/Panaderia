@@ -1,0 +1,6 @@
+ARCHIVO: descartado/database/panaderia_backup_20261028_131952.sql
+ESTADO: respaldo de base historico generado el 28-10-2026.
+TIPO: dump SQL phpMyAdmin con esquema y registros de esa fecha.
+
+SET configura la sesion de importacion; START TRANSACTION/COMMIT agrupan carga; CREATE TABLE/ALTER TABLE describen esquema, indices y relaciones; INSERT INTO restaura filas. El timestamp del nombre sirve para identificar la copia, no para establecer orden de migraciones.
+Los datos pueden diferir del modelo vigente y el volcado no es idempotente por defecto. No importarlo en produccion; usar database/panaderia.sql para una base nueva y revisar scripts de migracion individualmente si se estudia la evolucion.

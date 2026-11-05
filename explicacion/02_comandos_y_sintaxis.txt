@@ -1,0 +1,53 @@
+GLOSARIO DE INSTRUCCIONES Y SINTAXIS DEL PROYECTO
+
+PHP: ESTRUCTURA Y VARIABLES
+<?php abre PHP; ?> cierra el bloque. <?= expresion ?> es una forma abreviada de echo.
+$nombre = valor asigna una variable local. PHP infiere su tipo en ejecucion; (int), (float), (string) hacen conversiones explicitas.
+[] construye arrays. $a[] = $x agrega un elemento; ['clave' => valor] construye array asociativo.
+$_POST, $_GET, $_SESSION, $_SERVER son superglobales proporcionadas por PHP.
+?? elige un valor por defecto cuando la clave no existe/es null. ?: elige entre expresiones segun truthiness. ===/!== comparan tipo y valor estrictamente. -> accede propiedad/metodo de objeto. . concatena strings; .= concatena y reasigna.
+if/elseif/else seleccionan caminos; foreach recorre listas/mapas; for repite con indice; while repite mientras condicion; continue salta a siguiente vuelta; return devuelve desde funcion; exit termina la solicitud.
+function define funcion; parametros reciben argumentos; type hints como array/int/mysqli y tipo de retorno : bool/void declaran contratos.
+try/catch captura excepciones/Throwable; throw crea una excepcion; new instancia una clase. namespace identifica espacio de nombres; use importa un nombre de clase, no carga el archivo.
+require_once carga un archivo una sola vez y falla si no existe; include ejecuta inclusion menos estricta. __DIR__ es constante magica de carpeta del archivo.
+header envia encabezado HTTP antes del cuerpo; http_response_code fija status; echo imprime; die imprime y detiene; session_start recupera/inicia sesion; session_destroy destruye datos de sesion.
+
+PHP: FUNCIONES NATIVAS USADAS
+isset comprueba existencia/no null; empty comprueba valor considerado vacio; is_string valida tipo; trim quita espacios; count cuenta; in_array busca elemento; filter_var valida/filtra; str_replace sustituye texto; number_format formatea decimal; rtrim quita caracteres finales; htmlspecialchars escapa salida HTML; nl2br convierte saltos de linea; json_encode serializa PHP a JSON; password_hash genera hash y password_verify lo comprueba; random_bytes crea aleatoriedad criptografica; bin2hex convierte bytes a hexadecimal; hash_equals compara secretos; file_get_contents lee archivo/cuerpo; file_put_contents escribe; is_file consulta archivo; unlink elimina archivo; error_log registra en log; ob_start inicia buffer; ob_get_clean devuelve y vacia buffer; parse_str analiza query string; urlencode codifica parametro de URL; date/strtotime/DateTime trabajan con fechas; mb_strlen cuenta caracteres multibyte; preg_match verifica patron regex; function_exists comprueba si una funcion fue definida.
+
+MYSQLI
+new mysqli(host,user,pass,db) instancia conexion. $conexion->connect_error consulta error de conexion.
+mysqli_query/mysqli_fetch_assoc/mysqli_num_rows son API procedural: ejecutar SQL, obtener fila asociativa, contar filas. $conexion->prepare crea mysqli_stmt con marcadores ?; bind_param adjunta valores y tipo (i entero, d decimal/double, s string); execute ejecuta; store_result/get_result obtienen resultados; close libera statement/conexion; insert_id lee AUTO_INCREMENT.
+begin_transaction/iniciar transaccion, commit/confirmar, rollback/revertir: agrupan escrituras en motor transaccional.
+mysqli_real_escape_string escapa texto antes de concatenarlo en consulta; no sustituye validacion ni es preferible a prepared statements.
+mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT) solicita que errores mysqli se conviertan en excepciones. El simbolo | combina flags.
+mysqli_insert_id obtiene el id AUTO_INCREMENT de la ultima insercion; mysqli_close cierra conexion; mysqli_begin_transaction/mysqli_commit/mysqli_rollback son formas funcionales de begin_transaction/commit/rollback. mysqli_real_escape_string escapa caracteres conforme a la conexion, pero preparar consultas es el patron preferido.
+
+SQL
+SELECT lee; FROM define origen; INNER JOIN combina solo coincidencias; LEFT JOIN conserva filas izquierdas aunque no haya pareja; ON define condicion de union; WHERE filtra; ORDER BY ordena; LIMIT limita filas.
+AS crea alias temporal de columna/tabla; COALESCE devuelve primer valor no NULL; DATE_FORMAT transforma fecha; CONCAT_WS concatena con separador y omite nulos; multiplicacion y resta producen calculos de cantidades.
+INSERT INTO agrega filas; UPDATE modifica; ON DUPLICATE KEY UPDATE hace upsert al chocar con clave duplicada; INSERT IGNORE omite ciertas colisiones/errores; FOR UPDATE bloquea filas seleccionadas durante transaccion.
+CREATE TABLE define tabla/campos; ALTER TABLE cambia definicion; PRIMARY KEY identifica fila; UNIQUE KEY impide repeticion; KEY/INDEX optimiza busquedas; FOREIGN KEY garantiza referencia; AUTO_INCREMENT genera id; NOT NULL impide ausencia; DECIMAL(P,S) almacena decimal con precision/escala; ENGINE=InnoDB selecciona motor con transacciones.
+START TRANSACTION inicia; COMMIT confirma; ROLLBACK revierte; SET configura sesion SQL; /*! ... */ es comentario condicional especial de MySQL.
+
+JAVASCRIPT
+var declara variable de funcion/ambito; const declara enlace no reasignable; let declara variable reasignable de bloque; function define funcion; function anonima(callback) es una funcion pasada como dato.
+IIFE (function(){...})(); crea un ambito local y se ejecuta inmediatamente. 'use strict' solicita modo estricto.
+window es global; document es DOM; querySelector/querySelectorAll buscan nodos; getElementById busca por id; closest busca ancestro; classList add/remove cambia clases; setAttribute asigna atributo; textContent asigna texto seguro; innerHTML interpreta HTML; createElement/appendChild crean e insertan DOM; addEventListener registra evento; preventDefault cancela comportamiento predeterminado.
+fetch(url, opciones) inicia peticion HTTP y devuelve Promise; then encadena resultado; response.json parsea JSON; catch maneja rechazo; finally ejecuta limpieza siempre; FormData empaqueta campos del formulario; disabled bloquea boton; reset limpia form; reload recarga; setTimeout retrasa callback; parseInt convierte string a entero; isNaN comprueba si no es numero; Object.assign combina propiedades; typeof consulta tipo; return entrega valor.
+
+HTML Y ACCESIBILIDAD
+doctype/html/head/body definen documento; meta charset establece codificacion; viewport permite adaptacion movil; link carga CSS/preconnect; script carga JS; form agrupa campos; label y for asocian etiqueta/control; input/select/textarea reciben datos; button activa accion; name define clave enviada; id da identificador DOM; required/min/max/step validan entradas en navegador; hidden transporta dato no visible pero manipulable.
+aria-label da nombre accesible; aria-live anuncia cambios; role describe tipo de region; aria-current identifica actual; aria-controls relaciona controles. data-bs-toggle/target/dismiss son atributos que interpreta Bootstrap.
+
+CSS
+selector { propiedad: valor; } aplica reglas. .clase selecciona clase; #id selecciona id; :root define variables globales; :hover/:focus/:active indican estado; ::before/::after/::placeholder pseudo-elementos; > hijo directo; espacio descendiente; + hermano adyacente.
+--nombre declara custom property; var(--nombre) la consume. @media activa reglas a cierto ancho; @keyframes define animacion; rem relativo a fuente raiz; vh relativo a alto de ventana; rgba agrega transparencia; !important eleva prioridad y debe limitarse.
+display:flex activa Flexbox; flex-direction organiza eje; gap define separacion; position:fixed posiciona relativo a ventana; z-index ordena capas; box-sizing:border-box incluye borde/relleno en dimension; object-fit ajusta imagen; transition anima cambio; transform modifica geometria.
+
+BOOTSTRAP 5
+Clases son utilidades/componentes CSS, no variables PHP: .row/.col-* grilla; .d-flex/flex-column flexbox; .gap-* separacion; .mt-*/.mb-* margen; .card y .card-body panel; .form-control/.form-select controles; .btn y variantes botones; .table variantes tablas; .alert avisos; .accordion, .collapse y .offcanvas componentes interactivos. Los breakpoints sm/md/lg/xl condicionan el ancho; por ejemplo col-md-6 significa media fila desde md. Los atributos data-bs-* conectan componente con bundle JavaScript.
+
+JSON Y HTTP
+JSON es formato de intercambio de texto con objetos, arreglos, strings, numeros, booleanos y null. Una respuesta tipica se construye en PHP como array asociativo y se serializa con json_encode; fetch response.json la interpreta como objeto JavaScript.
+GET suele solicitar/pasar filtro en URL; POST envia datos en cuerpo. 200 es exito general; 400 entrada invalida; 403 prohibido; 500 falla del servidor. Content-Type informa al cliente si el cuerpo es HTML o JSON.

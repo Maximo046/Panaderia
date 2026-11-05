@@ -1,0 +1,6 @@
+ARCHIVO: descartado/database/panaderia_normal10.1.sql
+ESTADO: exportacion MariaDB historica de la base panaderia_normal10.
+TIPO: snapshot SQL previo del proyecto.
+
+La cabecera confirma MariaDB 10.4. Las directivas /*!...*/ preservan/restauran variables de sesion cliente, resultados y cotejamiento; SET NAMES fija juego de caracteres. CREATE/ALTER describen las tablas y sus restricciones, INSERT carga los registros, y transaccion/comandos de sesion controlan la importacion.
+El nombre versionado .1 no lo convierte en migracion; es otro dump completo y puede contener el esquema de ventas antiguo. No ejecutarlo junto al esquema activo sin comparar y respaldar. Instalacion actual: database/panaderia.sql.

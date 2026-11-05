@@ -1,0 +1,27 @@
+ARCHIVO: CSS/styles.css
+PROPOSITO: tema visual propio y adaptacion de componentes Bootstrap al sistema.
+TIPO: hoja de estilos CSS; contiene variables personalizadas, selectores, declaraciones, pseudoclases y media queries.
+
+INVENTARIO COMPLETO DE CUSTOM PROPERTIES
+El archivo define las variables --cream, --cream-dark, --brown-dark, --brown-mid, --amber, --gold-light, --red-accent, --green, --text-main, --text-muted, --sidebar-w y --shadow para paleta, texto, ancho y sombra.
+Adapta los grupos Bootstrap --bs-body-*, --bs-emphasis-color, --bs-secondary-color, --bs-border-*, --bs-link-*, --bs-primary*, --bs-success*, --bs-danger*, --bs-focus-ring-color, --bs-offcanvas-*, --bs-card-*, --bs-btn-*, --bs-table-*, --bs-pagination-*, --bs-accordion-* y --bs-alert-*.
+El nombre exacto de cada custom property declarada esta enumerado en la seccion "Variables CSS personalizadas" de 01_inventario_variables.txt. Cada nombre comienza con --; var(--nombre) recupera su valor en una declaracion CSS.
+
+ORDEN Y CONCEPTOS
+1. :root declara propiedades personalizadas CSS (--cream, --brown-dark, --amber, --shadow y otras). Se reutilizan con var(--nombre). Tambien redefine variables --bs-* de Bootstrap 5.3 para armonizar fuentes, color de texto/fondo, bordes, enlaces, primary/success/danger y anillo de foco.
+2. Reglas base para html, body, encabezados e imagenes definen desplazamiento, colores, tipografia y limites responsivos.
+3. Layout y navegacion dan estilo a .main-content, .topbar y .sidebar. La regla @media (min-width: 992px) cambia comportamiento en escritorio; las reglas d-lg-* y offcanvas de Bootstrap definen la visibilidad estructural.
+4. Estilos de autenticacion organizan logo, tarjeta y formularios de ingreso/registro.
+5. .card, .card-header y .card-body personalizan componentes Bootstrap.
+6. .form-label, .form-control y .form-select adaptan campos, foco, placeholder, lectura y deshabilitado.
+7. .btn, .btn-primary, .btn-outline-secondary y .btn-outline-primary alteran botones de Bootstrap, incluidos hover y active.
+8. .table y sus selectores descendientes cambian cabeceras, celdas y bordes. Reglas .dt-container ajustan controles que genera DataTables.
+9. .alert-danger, .alert-success y .notif adaptan mensajes; los estados del sistema incluyen badge, listas de alertas, estado vacio, ayuda, acordeon y contacto.
+10. .fila-sin-stock comunica que una fila no tiene existencias.
+11. @media (max-width: 991.98px) y @media (max-width: 575.98px) ajustan layout y tamanos en tablets y telefonos.
+
+COMO LEER SELECTORES
+.clase selecciona cualquier elemento con esa clase; #id selecciona un id; :hover/:focus/:active seleccionan estados de interaccion; > limita al hijo directo; espacios significan descendiente; + significa hermano adyacente; ::placeholder selecciona el texto de ayuda. Una declaracion es propiedad: valor; por ejemplo display: flex activa Flexbox y gap define separacion entre elementos.
+
+ORDEN DE CARGA
+Las paginas cargan Bootstrap antes que styles.css. Una regla propia puede sobrescribir Bootstrap por orden y especificidad; conviene conservar clases Bootstrap para estructura y usar este archivo para identidad visual, no duplicar sin necesidad todos sus componentes.

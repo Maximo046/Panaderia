@@ -1,0 +1,6 @@
+ARCHIVO: descartado/database/panaderia1.sql
+ESTADO: volcado historico de la base durante desarrollo, fechado 28-10-2026.
+TIPO: exportacion phpMyAdmin de MariaDB, no fuente activa.
+
+Un dump contiene definiciones de tablas (CREATE TABLE/ALTER TABLE), datos precargados (INSERT INTO), indices, restricciones y configuracion de sesion. Los comentarios de cabecera informan herramienta, fecha y version del servidor. SET prepara modo SQL/codificacion; START TRANSACTION/COMMIT agrupan importacion.
+El sufijo 1 identifica una revision anterior; no implica que sea migracion incremental ni que se deba aplicar despues de panaderia.sql. Los registros de datos se omiten de esta guia. Para instalacion nueva usar database/panaderia.sql.

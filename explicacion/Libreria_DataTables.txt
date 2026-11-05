@@ -1,0 +1,24 @@
+LIBRERIA: DataTables y su integracion Bootstrap 5
+VERSION DETECTADA: DataTables 3.0.2 segun la cabecera de Libreria/DataTables/datatables.js.
+PROPOSITO: mejorar tablas HTML con busqueda, ordenamiento, paginacion, selector de cantidad y mensajes localizados.
+
+ARCHIVOS
+datatables.js es la biblioteca principal; datatables.min.js es su version comprimida. datatables.css/datatables.min.css son estilos base. datatables.bootstrap5.min.js y datatables.bootstrap5.min.css adaptan controles a los componentes Bootstrap 5.
+La aplicacion carga los recursos desde Libreria/DataTables/. La biblioteca queda versionada localmente; DataTables no necesita una base de datos ni envia por si sola la tabla al servidor.
+
+INTEGRACION EN LAS PAGINAS
+1. Cargar CSS de Bootstrap.
+2. Cargar CSS de DataTables y el adaptador de Bootstrap cuando se usa.
+3. Cargar el script principal de DataTables.
+4. Cargar su adaptador Bootstrap 5.
+5. Cargar JS/datatables_config.js.
+6. Una vez disponible el DOM, llamar window.iniciarTabla('#id-de-tabla').
+El orden importa porque el adaptador depende del nucleo. defer evita bloquear el analisis del HTML y conserva el orden de los scripts diferidos.
+
+CONFIGURACION PROPIA
+datatables_config.js establece idioma espanol, busqueda, orden, paginacion, informacion y 10 filas por pagina. Las paginas entregan selector CSS y pueden sobrescribir opciones. La funcion retorna una instancia DataTable o null si falta libreria/tabla.
+Las tablas de productos, stock y reportes mantienen HTML server-side inicial; DataTables anade controles en el cliente una vez que carga el documento.
+
+LIMITES Y TERMINOS
+El selector como '#tabla-productos' identifica un elemento HTML por id. layout organiza los controles en zonas; language es objeto de textos; paging/searching/ordering son booleanos. Para conjuntos muy grandes se necesita procesado server-side, que la configuracion actual no implementa.
+La adaptacion visual de DataTables es distinta de cargar solo Bootstrap; ambos archivos CSS deben ser compatibles con las versiones instaladas.

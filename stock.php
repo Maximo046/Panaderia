@@ -13,7 +13,6 @@ require_once 'PHP/alerta_stock.php';
 require_once 'PHP/utilidades.php';
 
 enviar_alerta_stock($conexion);
-
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -23,53 +22,41 @@ enviar_alerta_stock($conexion);
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Panadería - Panel Principal</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Nunito:wght@300;400;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="Framework/bootstrap-5.1.3/css/bootstrap.min.css"/>
+  <link rel="stylesheet" href="Framework/bootstrap-5.3.3/css/bootstrap.min.css"/>
   <link rel="stylesheet" href="Libreria/DataTables/datatables.min.css"/>
+  <link rel="stylesheet" href="Libreria/DataTables/datatables.bootstrap5.min.css"/>
   <link rel="stylesheet" href="CSS/styles.css"/>
   <script src="Libreria/DataTables/datatables.min.js" defer></script>
+  <script src="Libreria/DataTables/datatables.bootstrap5.min.js" defer></script>
   <script src="JS/datatables_config.js" defer></script>
 </head>
 <body>
-  <!-- ==================== Navegación principal ==================== -->
-  <aside class="sidebar">
-    <div class="sidebar-brand">
-      <div class="brand-icon"><img src="CSS/Imagenes/Logo.png" alt="Logo panadería"></div>
-      <div class="brand-text">
-        <span class="brand-name">Panadería Normal 10</span>
-        <span class="brand-sub">Gestión de Panadería</span>
-      </div>
-    </div>
-    <ul class="nav-links">
-      <?php include 'sidebar.php'; ?>
-    </ul>
-    <div class="sidebar-footer">
-      <span>Escuela Normal N°10 · 2026</span>
-      <a href="logout.php" class="btn-logout">Cerrar sesión</a>
-    </div>
-  </aside>
+
+  <?php include 'sidebar.php'; ?>
 
   <main class="main-content">
     <!-- ==================== Saludo y estado del sistema ==================== -->
-    <header class="page-header page-header-stock">
+    <header class="page-header d-flex flex-wrap justify-content-between align-items-end gap-3">
       <div>
         <?php
-        $hora_actual  = (int) date('G');
-        $saludo       = $hora_actual < 12 ? 'Buenos días' : ($hora_actual < 20 ? 'Buenas tardes' : 'Buenas noches');
+        $hora_actual   = (int) date('G');
+        $saludo        = $hora_actual < 12 ? 'Buenos días' : ($hora_actual < 20 ? 'Buenas tardes' : 'Buenas noches');
         $nombre_sesion = $_SESSION['usuario_nombre'] ?? 'Panadero';
         ?>
         <h1 class="page-title"><?= htmlspecialchars($saludo) ?>, <em><?= htmlspecialchars($nombre_sesion) ?></em></h1>
+        <p class="page-subtitle">Resumen del estado actual del depósito.</p>
       </div>
-      <div class="header-badge">
+      <span class="header-badge">
         <span class="badge-dot"></span> Sistema activo
-      </div>
+      </span>
     </header>
 
-
-
-    <div class="bottom-grid">
+    <div class="row g-4">
       <!-- ==================== Tablas de stock de insumos y productos ==================== -->
-      <section class="stock-panel" aria-label="Stock de insumos y productos">
+      <div class="col-12 col-xl-8">
+        <div class="d-flex flex-column gap-4">
           <?php
           $stock_insumos = mysqli_query($conexion, "
               SELECT i.nombre AS nombre_insumo,
@@ -83,37 +70,31 @@ enviar_alerta_stock($conexion);
           ?>
 
           <section class="card" aria-label="Stock de insumos">
-            <header class="card-header"><h2>Insumos: Stock</h2></header>
-
-            <?php if (mysqli_num_rows($stock_insumos) === 0): ?>
-              <p class="sin-datos">No hay insumos registrados.</p>
-            <?php else: ?>
-
-              <table id="tabla-stock-insumos" class="display">
-
-                <thead>
-                  <tr>
-                    <th>Insumo</th>
-                    <th>Cantidad</th>
-                  </tr>
-                </thead>
-
-                <tbody>
-
-                  <?php while ($fila = mysqli_fetch_assoc($stock_insumos)): ?>
-
-                    <tr>
-                      <td><?= htmlspecialchars($fila['nombre_insumo']) ?></td>
-                      <td><?= formatear_cantidad($fila['cantidad']) ?> <?= htmlspecialchars($fila['abreviatura']) ?></td>
-                    </tr>
-
-                  <?php endwhile; ?>
-
-                </tbody>
-              </table>
-
-            <?php endif; ?>
-
+            <div class="card-header"><h2>Insumos: Stock</h2></div>
+            <div class="card-body">
+              <?php if (mysqli_num_rows($stock_insumos) === 0): ?>
+                <p class="sin-datos">No hay insumos registrados.</p>
+              <?php else: ?>
+                <div class="table-responsive">
+                  <table id="tabla-stock-insumos" class="table table-striped table-hover align-middle mb-0">
+                    <thead>
+                      <tr>
+                        <th>Insumo</th>
+                        <th>Cantidad</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <?php while ($fila = mysqli_fetch_assoc($stock_insumos)): ?>
+                        <tr>
+                          <td><?= htmlspecialchars($fila['nombre_insumo']) ?></td>
+                          <td><?= formatear_cantidad($fila['cantidad']) ?> <?= htmlspecialchars($fila['abreviatura']) ?></td>
+                        </tr>
+                      <?php endwhile; ?>
+                    </tbody>
+                  </table>
+                </div>
+              <?php endif; ?>
+            </div>
           </section>
 
           <?php
@@ -128,103 +109,98 @@ enviar_alerta_stock($conexion);
           ?>
 
           <section class="card" aria-label="Stock de productos">
-            <header class="card-header"><h2>Productos: Stock</h2></header>
-
-            <?php if (mysqli_num_rows($stock_productos) === 0): ?>
-              <p class="sin-datos">No hay productos registrados.</p>
-            <?php else: ?>
-
-              <table id="tabla-stock-productos" class="display">
-
-                <thead>
-                  <tr>
-                    <th>Producto</th>
-                    <th>Cantidad</th>
-                  </tr>
-                </thead>
-
-                <tbody>
-
-                  <?php while ($fila = mysqli_fetch_assoc($stock_productos)): ?>
-
-                    <tr>
-                      <td><?= htmlspecialchars($fila['nombre_producto']) ?></td>
-                      <td><?= formatear_cantidad($fila['cantidad']) ?> <?= htmlspecialchars($fila['abreviatura']) ?></td>
-                    </tr>
-
-                  <?php endwhile; ?>
-
-                </tbody>
-              </table>
-
-            <?php endif; ?>
-
+            <div class="card-header"><h2>Productos: Stock</h2></div>
+            <div class="card-body">
+              <?php if (mysqli_num_rows($stock_productos) === 0): ?>
+                <p class="sin-datos">No hay productos registrados.</p>
+              <?php else: ?>
+                <div class="table-responsive">
+                  <table id="tabla-stock-productos" class="table table-striped table-hover align-middle mb-0">
+                    <thead>
+                      <tr>
+                        <th>Producto</th>
+                        <th>Cantidad</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <?php while ($fila = mysqli_fetch_assoc($stock_productos)): ?>
+                        <tr>
+                          <td><?= htmlspecialchars($fila['nombre_producto']) ?></td>
+                          <td><?= formatear_cantidad($fila['cantidad']) ?> <?= htmlspecialchars($fila['abreviatura']) ?></td>
+                        </tr>
+                      <?php endwhile; ?>
+                    </tbody>
+                  </table>
+                </div>
+              <?php endif; ?>
+            </div>
           </section>
-
-
-
-      </section>
+        </div>
+      </div>
 
       <!-- ==================== Alertas de stock bajo ==================== -->
-      <aside class="side-panel" aria-label="Alertas de stock">
-        <section class="card">
-          <header class="card-header"><h2>Alertas de Stock de Insumos</h2></header>
-          <ul class="alertas-list">
-            <?php
-            $alertas_stock = mysqli_query($conexion, "
-                SELECT i.nombre AS nombre_insumo,
-                       COALESCE(s.cantidad, 0) AS cantidad,
-                       COALESCE(s.stock_minimo, 10) AS stock_minimo
-                FROM insumos i
-                LEFT  JOIN stock_insumos s ON s.id_insumo = i.idinsumos
-                WHERE COALESCE(s.cantidad, 0) < COALESCE(s.stock_minimo, 10)
-            ");
-            $hay_alertas = false;
-            while ($alerta = mysqli_fetch_assoc($alertas_stock)):
-                $hay_alertas = true;
-                $cantidad_actual = formatear_cantidad($alerta['cantidad']);
-                $cantidad_minima = formatear_cantidad($alerta['stock_minimo']);
-            ?>
-              <li><?= htmlspecialchars($alerta['nombre_insumo']) ?>: <?= $cantidad_actual ?> (mínimo <?= $cantidad_minima ?>)</li>
-            <?php endwhile; ?>
-            <?php if (!$hay_alertas): ?>
-              <li class="alerta-ok">Sin alertas de stock</li>
-            <?php endif; ?>
-          </ul>
-        </section>
+      <aside class="col-12 col-xl-4" aria-label="Alertas de stock">
+        <div class="d-flex flex-column gap-4">
+          <section class="card">
+            <div class="card-header"><h2>Alertas de Stock de Insumos</h2></div>
+            <div class="card-body">
+              <ul class="list-group list-group-flush alertas-list">
+                <?php
+                $alertas_stock = mysqli_query($conexion, "
+                    SELECT i.nombre AS nombre_insumo,
+                           COALESCE(s.cantidad, 0) AS cantidad,
+                           COALESCE(s.stock_minimo, 10) AS stock_minimo
+                    FROM insumos i
+                    LEFT  JOIN stock_insumos s ON s.id_insumo = i.idinsumos
+                    WHERE COALESCE(s.cantidad, 0) < COALESCE(s.stock_minimo, 10)
+                ");
+                $hay_alertas = false;
+                while ($alerta = mysqli_fetch_assoc($alertas_stock)):
+                    $hay_alertas = true;
+                    $cantidad_actual = formatear_cantidad($alerta['cantidad']);
+                    $cantidad_minima = formatear_cantidad($alerta['stock_minimo']);
+                ?>
+                  <li class="list-group-item"><?= htmlspecialchars($alerta['nombre_insumo']) ?>: <?= $cantidad_actual ?> (mínimo <?= $cantidad_minima ?>)</li>
+                <?php endwhile; ?>
+                <?php if (!$hay_alertas): ?>
+                  <li class="list-group-item alerta-ok">Sin alertas de stock</li>
+                <?php endif; ?>
+              </ul>
+            </div>
+          </section>
 
-        <section class="card">
-          <header class="card-header"><h2>Alertas de Stock de Productos</h2></header>
-          <ul class="alertas-list">
-            <?php
-            $alertas_stock = mysqli_query($conexion, "
-                SELECT p.nombre AS nombre_producto,
-                       COALESCE(s.cantidad, 0) AS cantidad,
-                       COALESCE(s.stock_minimo, 10) AS stock_minimo
-                FROM productos p
-                LEFT  JOIN stock_productos s ON s.id_producto = p.idproductos
-                WHERE COALESCE(s.cantidad, 0) < COALESCE(s.stock_minimo, 10)
-            ");
-            $hay_alertas = false;
-            while ($alerta = mysqli_fetch_assoc($alertas_stock)):
-                $hay_alertas = true;
-                $cantidad_actual = formatear_cantidad($alerta['cantidad']);
-                $cantidad_minima = formatear_cantidad($alerta['stock_minimo']);
-            ?>
-              <li><?= htmlspecialchars($alerta['nombre_producto']) ?>: <?= $cantidad_actual ?> (mínimo <?= $cantidad_minima ?>)</li>
-            <?php endwhile; ?>
-            <?php if (!$hay_alertas): ?>
-              <li class="alerta-ok">Sin alertas de stock</li>
-            <?php endif; ?>
-          </ul>
-        </section>
+          <section class="card">
+            <div class="card-header"><h2>Alertas de Stock de Productos</h2></div>
+            <div class="card-body">
+              <ul class="list-group list-group-flush alertas-list">
+                <?php
+                $alertas_stock = mysqli_query($conexion, "
+                    SELECT p.nombre AS nombre_producto,
+                           COALESCE(s.cantidad, 0) AS cantidad,
+                           COALESCE(s.stock_minimo, 10) AS stock_minimo
+                    FROM productos p
+                    LEFT  JOIN stock_productos s ON s.id_producto = p.idproductos
+                    WHERE COALESCE(s.cantidad, 0) < COALESCE(s.stock_minimo, 10)
+                ");
+                $hay_alertas = false;
+                while ($alerta = mysqli_fetch_assoc($alertas_stock)):
+                    $hay_alertas = true;
+                    $cantidad_actual = formatear_cantidad($alerta['cantidad']);
+                    $cantidad_minima = formatear_cantidad($alerta['stock_minimo']);
+                ?>
+                  <li class="list-group-item"><?= htmlspecialchars($alerta['nombre_producto']) ?>: <?= $cantidad_actual ?> (mínimo <?= $cantidad_minima ?>)</li>
+                <?php endwhile; ?>
+                <?php if (!$hay_alertas): ?>
+                  <li class="list-group-item alerta-ok">Sin alertas de stock</li>
+                <?php endif; ?>
+              </ul>
+            </div>
+          </section>
+        </div>
       </aside>
     </div>
   </main>
 
-
-
-  <!-- ==================== Inicialización de tablas de stock ==================== -->
   <script>
     document.addEventListener('DOMContentLoaded', function () {
       if (typeof window.iniciarTabla === 'function') {
@@ -233,6 +209,6 @@ enviar_alerta_stock($conexion);
       }
     });
   </script>
-  <script src="Framework/bootstrap-5.1.3/js/bootstrap.bundle.min.js"></script>
+  <script src="Framework/bootstrap-5.3.3/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

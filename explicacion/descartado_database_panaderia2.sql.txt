@@ -1,0 +1,6 @@
+ARCHIVO: descartado/database/panaderia2.sql
+ESTADO: volcado historico phpMyAdmin del 28-10-2026.
+TIPO: snapshot SQL de desarrollo.
+
+Como todo dump SQL, combina metadatos de sesion (SET), transaccion (START TRANSACTION/COMMIT), estructura (CREATE/ALTER), filas de datos (INSERT), indices y claves. No es una migracion incremental.
+El sufijo 2 identifica una exportacion distinta de panaderia1.sql; sus datos/esquema pueden diferir. No importar sobre la base activa sin comparar tablas y tener respaldo. El instalador vigente es database/panaderia.sql.

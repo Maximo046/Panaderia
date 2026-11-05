@@ -1,0 +1,20 @@
+ARCHIVO: descartado/ventas.php
+ESTADO: vista historica de ventas, sustituida por el modulo salidas.php. No se incluye desde la navegacion activa.
+PROPOSITO ORIGINAL: formulario de venta y reporte de ventas del dia con precios, medios de pago y DataTables.
+TIPO: pagina PHP/HTML antigua con JavaScript XHR.
+
+VARIABLES PHP
+$pagina_actual: identificador legado 'ventas'. $conexion: objeto mysqli desde conexion.php.
+$lista_productos/$lista_metodos_pago/$ventas_hoy/$detalle: resultados de consultas.
+$producto/$metodo/$venta/$linea: arrays asociativos de filas iteradas.
+$sin_stock: booleano para producto agotado. $stock_formateado: string de saldo; $solo_lectura/$clase_fila: strings para atributo/clases HTML.
+$productos/$precios: arrays indexados de textos para componer celdas con implode.
+$cantidad: texto numerico formateado para el detalle.
+
+JAVASCRIPT
+evento es el SubmitEvent; preventDefault cancela el envio tradicional. peticion es XMLHttpRequest, se configura con open('POST',...) y se envia con FormData. onreadystatechange consulta readyState===4; JSON.parse convierte responseText en objeto respuesta. alert presenta mensaje; location.reload recarga si respuesta.ok. DOMContentLoaded espera el HTML. new DataTable instancia la biblioteca.
+
+HTML Y DEPENDENCIAS
+La vista contiene campos precio[], cantidad[], id_producto[] y id_metodopago. Carga Bootstrap 5.1.3 y DataTables sin el adaptador Bootstrap actual, y enlaza un ticket historico. Se conservan esos nombres solo para explicar el codigo de respaldo.
+
+El sistema activo sustituyo "ventas" por el registro de salidas de productos. No se debe mezclar esta pantalla con la arquitectura actual ni asumir que las tablas ventas/detalle_venta existen en database/panaderia.sql.

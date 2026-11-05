@@ -1,0 +1,23 @@
+ARCHIVO: index.php
+PROPOSITO: pantalla de inicio de sesion y punto de entrada sin autenticar.
+TIPO: script PHP procedural que combina procesamiento de formulario y plantilla HTML.
+
+FLUJO PHP
+1. session_start() inicia o recupera la sesion del navegador. $_SESSION es un array global asociado a esa sesion.
+2. require_once 'conexion.php' carga una sola vez el archivo que crea el objeto mysqli llamado $conexion.
+3. $mensaje_error es una variable de tipo string. El array asociativo $pagina_por_rol relaciona cada nombre de rol con la ruta inicial.
+4. isset($_SESSION['usuario_id']) comprueba si hay una sesion autenticada. El operador ?? proporciona un valor por defecto si falta la clave. header('Location: ...') envia una redireccion HTTP y exit detiene el script.
+5. $_SERVER['REQUEST_METHOD'] === 'POST' detecta el envio del formulario. $_POST es un array asociativo con los campos enviados.
+6. trim() quita espacios laterales. El usuario se busca en la tabla usuarios junto con su rol mediante SELECT, INNER JOIN y LIMIT 1. mysqli_real_escape_string() escapa texto antes de insertarlo en la consulta; no reemplaza consultas preparadas.
+7. mysqli_fetch_assoc() convierte una fila SQL en un array asociativo, o devuelve false si no hay fila. Las condiciones if/elseif separan usuario inexistente, cuenta inactiva y clave incorrecta.
+8. password_verify() compara la clave ingresada con el hash guardado; no desencripta la clave.
+9. En caso exitoso, se guardan id, nombre, correo y rol dentro de $_SESSION y se redirige a la pantalla de stock.
+
+PLANTILLA Y TIPOS
+El bloque posterior a ?> es HTML. Las expresiones <?= ... ?> son abreviaturas de echo. htmlspecialchars() codifica caracteres especiales antes de insertarlos en HTML y reduce el riesgo de inyeccion de marcado. El formulario HTML usa POST, type=email y type=password; required activa validacion basica del navegador.
+
+DEPENDENCIAS VISUALES
+La hoja CSS de Bootstrap se carga antes de CSS/styles.css para que las reglas propias puedan adaptar el tema. El bundle JavaScript de Bootstrap se carga al final del body. En esta pantalla se usan clases Bootstrap como card, form-label, form-control, alert-danger y btn.
+
+TERMINOS
+mysqli representa una conexion/extension de base de datos; $resultado es un resultado SQL; los arrays $pagina_por_rol y la fila $usuario_encontrado son datos clave-valor; las claves de sesion son valores persistidos entre solicitudes.

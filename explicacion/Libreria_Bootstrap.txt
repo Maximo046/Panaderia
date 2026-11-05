@@ -1,0 +1,26 @@
+LIBRERIA: Bootstrap
+VERSION EN USO PRINCIPAL: 5.3.3, guardada localmente bajo Framework/bootstrap-5.3.3/.
+PROPOSITO: conjunto de estilos CSS y JavaScript que proporciona componentes, grillas adaptativas, utilidades y comportamiento interactivo para interfaces web.
+
+ARCHIVOS Y CARGA
+Las paginas enlazan Framework/bootstrap-5.3.3/css/bootstrap.min.css dentro de <head>; el CSS define reglas visuales. Framework/bootstrap-5.3.3/js/bootstrap.bundle.min.js se carga al final del <body>; el bundle incluye el comportamiento JavaScript necesario y Popper para componentes que lo requieren.
+La carga local evita depender del CDN para estos recursos. En otras partes del repositorio tambien existe Bootstrap 5.1.3, pero las paginas activas revisadas cargan la ruta 5.3.3. No cargar CSS de una version y JS de otra en la misma pagina.
+
+COMO SE APLICA
+- Grilla: .row agrupa columnas, .col-12 ocupa ancho completo, .col-md-6 ocupa la mitad desde el breakpoint md, .col-xl-8/4 divide el panel en proporcion 2:1 en pantallas xl.
+- Flexbox y espaciado: .d-flex, .flex-column, .flex-wrap, .justify-content-end, .align-items-end, .gap-2/.gap-3 y .mt-3 organizan componentes sin reglas manuales de margen.
+- Componentes: .card, .card-header, .card-body, .alert, .list-group, .accordion y .offcanvas crean paneles, mensajes, listas, acordeones y menu movil.
+- Formularios: .form-label, .form-control y .form-select normalizan etiquetas, entradas y selectores.
+- Botones: .btn debe combinarse con una variante como .btn-primary o .btn-outline-secondary; btn-sm y w-100 ajustan tamano/ancho.
+- Tablas: .table y variantes .table-striped, .table-hover, .align-middle; .table-responsive permite desplazamiento horizontal.
+- Responsive: clases como .d-lg-none y .offcanvas-lg cambian comportamiento segun ancho.
+
+EJEMPLOS DEL SISTEMA
+sidebar.php utiliza navbar-toggler y offcanvas para desplegar navegacion en movil. ayuda.php conecta el acordeon con atributos data-bs-toggle/collapse y data-bs-target. Las paginas de stock y reportes usan card, grilla y tablas.
+CSS/styles.css carga despues del CSS Bootstrap y redefine variables --bs-* para la paleta crema/ambar/marron. Conserva el sistema de componentes y modifica su identidad visual.
+
+TERMINOS TECNICOS
+Una clase Bootstrap es un nombre CSS que se agrega al atributo class; no es una clase PHP. Un breakpoint es un ancho a partir del cual cambia una regla responsive. data-bs-* son atributos HTML que el JavaScript de Bootstrap lee. El bundle es un archivo JS combinado/minificado, no un comando de terminal.
+
+IMPORTANTE
+Bootstrap ayuda con estilos y comportamiento del navegador; no valida permisos, no procesa formularios PHP ni garantiza seguridad. La fuente de verdad de version es el paquete local realmente cargado, no las clases presentes en HTML.

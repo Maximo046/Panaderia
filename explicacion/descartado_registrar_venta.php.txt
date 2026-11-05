@@ -1,0 +1,30 @@
+ARCHIVO: descartado/registrar_venta.php
+ESTADO: modulo historico, reemplazado por PHP/registrar_salida.php. No forma parte del flujo actual.
+PROPOSITO ORIGINAL: registrar una venta con precio, metodo de pago, detalle monetario y descuento de stock.
+TIPO: endpoint PHP antiguo con respuesta JSON.
+
+VARIABLES
+$id_metodo_pago: entero de $_POST['id_metodopago'].
+$ids_productos, $cantidades, $precios_unitarios: arrays POST paralelos.
+$lineas_venta: array indexado de arrays asociativos; incluye id_producto entero, cantidad_vendida y precio_unitario como float.
+$indice: clave de foreach; $id_producto: id recibido.
+$cantidad_vendida / $precio_por_unidad: valores numericos convertidos desde formulario.
+$linea: fila normalizada del array de ventas.
+$stock_disponible: resultado mysqli que comprueba saldo; $fila_stock: fila con existencia y producto.
+$total_venta: suma de subtotales redondeados a 2 decimales usando array_map, arrow function fn y array_sum.
+$id_venta_nueva: id AUTO_INCREMENT de la venta insertada.
+$subtotal_linea: cantidad por precio, redondeada a centavos.
+$conexion: objeto mysqli incluido desde conexion.php.
+
+ORDEN DE COMANDOS
+1. header configura JSON; require_once carga conexion y alertas.
+2. empty exige metodo de pago; si falta, echo json_encode envia array de error y exit termina.
+3. foreach empareja ids/cantidades/precios por indice y agrega lineas positivas.
+4. SELECT comprueba que exista stock suficiente por articulo.
+5. array_map aplica callback anonimo a cada linea; round redondea monetario; array_sum acumula el total.
+6. INSERT ventas crea encabezado; mysqli_insert_id lee su id.
+7. Otro foreach inserta detalle_venta y ejecuta UPDATE stock_productos restando cantidad.
+8. enviar_alerta_stock consulta estado; mysqli_close cierra conexion; echo/json_encode entrega resultado.
+
+DIFERENCIA CON EL MODULO ACTUAL
+El codigo antiguo modelaba una transaccion comercial con precios y metodo de pago, tablas ventas/detalle_venta y ticket. La aplicacion actual registra salidas por motivo, sin facturacion/precio, en salidas.php y PHP/registrar_salida.php. Este endpoint antiguo no utiliza transaccion ni sentencias preparadas y no debe reactivarse tal cual.

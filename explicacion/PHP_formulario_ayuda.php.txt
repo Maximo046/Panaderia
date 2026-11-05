@@ -1,0 +1,16 @@
+ARCHIVO: PHP/formulario_ayuda.php
+PROPOSITO: guardar un mensaje de contacto y enviar copia por correo al administrador activo.
+TIPO: endpoint PHP de escritura SQL y envio de correo; respuesta JSON.
+
+ENTRADA Y GUARDADO
+header declara JSON. require_once carga conexion y los archivos base de PHPMailer; use importa Exception y PHPMailer. $_POST es array asociativo; empty comprueba nombre, correo y asunto.
+mysqli_real_escape_string escapa cada valor antes de interpolarlo en consultas. La consulta SELECT busca nombre de asunto; mysqli_fetch_assoc obtiene fila como array; ?? usa "Consulta general" si no hay resultado. INSERT guarda el contacto.
+Si el INSERT falla se devuelve JSON con ok=false y se detiene. A continuacion SELECT e INNER JOIN buscan el correo del primer administrador activo. filter_var comprueba que sea email valido.
+
+SMTP
+require __DIR__ . '/config_panaderia.php' carga un array asociativo con credenciales. Si faltan valores, mysqli_close cierra conexion, error_log escribe al registro y se responde que el mensaje se guardo pero el correo no pudo enviarse.
+try crea un objeto PHPMailer, configura SMTP, STARTTLS, puerto 587 y UTF-8. setFrom, addAddress y addReplyTo asignan remitente, destinatario y respuesta. isHTML activa cuerpo HTML. htmlspecialchars escapa datos del usuario; nl2br transforma saltos de linea tras escapar el texto. AltBody es version de texto sin formato.
+send() entrega el correo. catch captura Exception, cierra conexion, registra error y responde JSON indicando que el mensaje ya quedo guardado. El camino final cierra conexion y responde exito.
+
+TIPOS
+Datos de formulario y salida son strings; consulta SQL puede producir resultados mysqli o false; $config_smtp y cada fila son arrays; $correo es objeto PHPMailer; respuesta JSON representa un objeto con ok booleano y mensaje string.

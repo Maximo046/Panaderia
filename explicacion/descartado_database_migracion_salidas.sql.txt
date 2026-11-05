@@ -1,0 +1,7 @@
+ARCHIVO: descartado/database/migracion_salidas.sql
+ESTADO: migracion historica que introdujo salidas de productos al reemplazar ventas.
+TIPO: script SQL de cambio de esquema/datos, no incluido automaticamente por PHP.
+
+Su comentario de cabecera declara fecha y objetivo: crear salidas_productos, quitar rol/usuario Vendedor y eliminar tablas ventas/detalle_venta. El archivo agrupa DDL (CREATE/ALTER TABLE para estructura), DML (INSERT/UPDATE/DELETE para filas) y posiblemente control de transaccion.
+Cada tabla se define con tipos, indices y restricciones. ALTER TABLE modifica definicion; FOREIGN KEY relaciona tablas; INSERT/UPDATE preparan datos compatibles; DELETE/DROP eliminan filas/estructura. Las sentencias destructivas pueden causar perdida irreversible si se ejecutan en una base incorrecta.
+La migracion documenta la evolucion de negocio, pero para una instalacion nueva usar el dump actual database/panaderia.sql. No ejecutar el script de manera repetida ni sin leer cada DROP/DELETE y tener backup.

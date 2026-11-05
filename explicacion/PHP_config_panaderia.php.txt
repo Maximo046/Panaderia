@@ -1,0 +1,9 @@
+ARCHIVO: PHP/config_panaderia.php
+PROPOSITO: devolver los parametros SMTP consumidos por las funciones de correo.
+TIPO: archivo PHP de configuracion que retorna un array asociativo.
+
+return termina la ejecucion del archivo incluido y entrega el valor al codigo que hizo require. El array tiene claves string smtp_user y smtp_password; el valor de cada clave debe ser texto. El consumidor usa expresiones como $config_smtp['smtp_user'] ?? '' para recuperar el valor o una cadena vacia.
+
+El archivo actual contiene credenciales escritas directamente en el codigo fuente. Esta documentacion no reproduce esos valores. Las credenciales deben guardarse en configuracion local ignorada por Git o variables de entorno; dado que ya estan en el archivo, conviene reemplazarlas/rotarlas y evitar subirlas al historial. .gitignore ya menciona config_panaderia.local.php, pero los archivos consumidores actualmente hacen require de config_panaderia.php; la configuracion local debe conectarse al flujo de ejecucion de forma coherente.
+
+No hay funciones, clases, objetos ni validacion dentro de este archivo: su resultado es solo un array.

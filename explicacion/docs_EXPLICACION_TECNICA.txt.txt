@@ -1,0 +1,15 @@
+ARCHIVO: docs/EXPLICACION_TECNICA.txt
+PROPOSITO: documento tecnico amplio ya existente, orientado al estudio del codigo y al repaso de conceptos.
+TIPO: texto plano de documentacion, no ejecutable.
+
+ESTADO DE ACTUALIZACION
+Este texto extenso se escribio para una revision anterior y contiene observaciones historicas. En la revision actual se corrigieron algunas referencias principales (Bootstrap 5.3.3 y fetch), pero otras explicaciones pueden no reflejar cambios recientes en las paginas. Para preparar una defensa sobre el codigo actual, usar primero explicacion/00_exposicion_final.txt, explicacion/01_inventario_variables.txt, explicacion/02_comandos_y_sintaxis.txt y las fichas por archivo, contrastandolas con el fuente vigente.
+
+ORGANIZACION
+El documento contiene un indice por temas: arquitectura, estructura de archivos, conceptos PHP, conexion a base de datos, modelo relacional, autenticacion, vistas, endpoints, correo, PDF, JavaScript/AJAX/DataTables, CSS, recorridos completos, observaciones tecnicas, glosario y preguntas.
+Las lineas de signos "=" y "-" son separadores visuales. Los nombres numerados ayudan a navegar, pero el archivo no tiene enlaces interactivos.
+
+RELACION CON ESTA CARPETA
+La guia existente describe el sistema de forma transversal; los documentos nuevos separan los detalles por archivo y se cotejaron con el codigo vigente. Cuando la implementacion cambie, las fuentes deben actualizarse para no contradecirse. La guia existente es documento de estudio; no es una especificacion formal ni se ejecuta con PHP.
+
+Para consultar texto extenso se puede abrirlo en un editor y buscar encabezados del indice. No se replica aqui su contenido completo para evitar mantener dos copias que diverjan.

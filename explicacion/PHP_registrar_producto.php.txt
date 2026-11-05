@@ -1,0 +1,10 @@
+ARCHIVO: PHP/registrar_producto.php
+PROPOSITO: crear un producto y su fila de stock inicial.
+TIPO: endpoint PHP que entrega JSON.
+
+empty valida nombre e idunidad_de_medida de $_POST. mysqli_real_escape_string escapa texto antes de insertarlo en SQL. mysqli_begin_transaction agrupa dos escrituras.
+INSERT INTO productos crea el catalogo. Si falla, mysqli_rollback deshace la transaccion y echo/json_encode responde error. mysqli_insert_id obtiene el id generado.
+INSERT INTO stock_productos registra saldo inicial cero y minimo diez. Si falla, tambien se revierte la creacion del producto. mysqli_commit confirma ambas operaciones; mysqli_close cierra la conexion.
+El array final contiene ok booleano, mensaje, id y nombre. htmlspecialchars codifica el nombre para uso posterior en HTML; json_encode serializa el array y echo lo envia.
+
+La clave de unidad llega del navegador y se escapa como texto; una consulta preparada y validacion explicita del id de unidad son formas mas robustas de tratar identificadores numericos.

@@ -26,7 +26,7 @@ Sistema web para administrar una panadería: control de insumos, recetas, produc
 |---|---|
 | Backend | PHP 8.2 (procedural + POO puntual) |
 | Base de datos | MySQL / MariaDB 10.4 |
-| Frontend | HTML5, CSS3, JavaScript, Bootstrap 5.1 |
+| Frontend | HTML5, CSS3, JavaScript, Bootstrap 5.3.3 |
 | Tablas | DataTables |
 | Correo | PHPMailer |
 | PDF | Dompdf |

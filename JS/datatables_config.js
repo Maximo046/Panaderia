@@ -1,3 +1,8 @@
+/* ============================================================
+   datatables_config.js — Configuración compartida de DataTables
+   Requiere: DataTables 3 + integración Bootstrap 5
+   ============================================================ */
+
 (function () {
   'use strict';
 
@@ -35,6 +40,13 @@
       info: true,
       lengthChange: true,
       pageLength: 10,
+      autoWidth: false,
+      layout: {
+        topStart: 'pageLength',
+        topEnd: 'search',
+        bottomStart: 'info',
+        bottomEnd: 'paging'
+      },
       language: idiomaEspanol
     }, opciones || {});
 

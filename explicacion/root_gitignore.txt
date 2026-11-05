@@ -1,0 +1,14 @@
+ARCHIVO: .gitignore
+PROPOSITO: indicar a Git que archivos locales y temporales debe excluir de seguimiento.
+TIPO: archivo de patrones de configuracion de Git; no es un programa.
+
+PATRONES
+- .DS_Store, Thumbs.db y desktop.ini omiten metadatos de explorador/sistema operativo.
+- .vscode/ y .idea/ omiten preferencias locales de editores.
+- *.sublime-project y *.sublime-workspace omiten configuracion de Sublime Text.
+- *.bak, *.tmp y *.log omiten respaldos temporales y registros.
+- !descartado/**/*.bak es una negacion: vuelve a permitir archivos .bak bajo descartado aunque coincidan con el patron anterior.
+- Libreria/dompdf/vendor/masterminds/html5/bin/ excluye un auxiliar que no se usa en ejecucion.
+- PHP/config_panaderia.local.php excluye una configuracion local que podria contener credenciales.
+
+Git aplica estos patrones a archivos no rastreados; agregar una regla no deja de rastrear automaticamente un archivo que ya esta confirmado en el historial. Nunca incluir secretos en archivos publicos ni asumir que .gitignore borra datos previamente subidos.

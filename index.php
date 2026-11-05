@@ -24,7 +24,7 @@ if (isset($_SESSION['usuario_id'])) {
 
 // ==================== Procesamiento del inicio de sesión ====================
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $correo_ingresado    = trim($_POST['correo']    ?? '');
+    $correo_ingresado     = trim($_POST['correo'] ?? '');
     $contrasena_ingresada = $_POST['contrasena'] ?? '';
 
     if ($correo_ingresado === '' || $contrasena_ingresada === '') {
@@ -72,8 +72,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Panadería - Iniciar Sesión</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Nunito:wght@300;400;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="Framework/bootstrap-5.1.3/css/bootstrap.min.css"/>
+  <link rel="stylesheet" href="Framework/bootstrap-5.3.3/css/bootstrap.min.css"/>
   <link rel="stylesheet" href="CSS/styles.css"/>
 </head>
 <body class="pagina-auth">
@@ -86,37 +87,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </header>
 
     <!-- ==================== Formulario de acceso ==================== -->
-    <section class="auth-card" aria-label="Formulario de acceso">
-      <header class="auth-card-header">
-        <h2>Iniciar sesión</h2>
-        <p>Ingresá con tu correo y contraseña</p>
-      </header>
+    <section class="card auth-card" aria-label="Formulario de acceso">
+      <div class="card-body">
+        <header class="auth-card-header">
+          <h2>Iniciar sesión</h2>
+          <p>Ingresá con tu correo y contraseña</p>
+        </header>
 
-      <?php if ($mensaje_error !== ''): ?>
-        <div class="alert alert-error"><?= htmlspecialchars($mensaje_error) ?></div>
-      <?php endif; ?>
+        <?php if ($mensaje_error !== ''): ?>
+          <div class="alert alert-danger" role="alert"><?= htmlspecialchars($mensaje_error) ?></div>
+        <?php endif; ?>
 
-      <form class="auth-form" method="POST" action="index.php">
-        <div class="form-group">
-          <label for="correo">Correo electrónico</label>
-          <input type="email" id="correo" name="correo" required
-                 placeholder="tu@correo.com"
-                 value="<?= htmlspecialchars($_POST['correo'] ?? '') ?>">
-        </div>
+        <form class="auth-form" method="POST" action="index.php">
+          <div>
+            <label for="correo" class="form-label">Correo electrónico</label>
+            <input type="email" class="form-control" id="correo" name="correo" required
+                   placeholder="tu@correo.com"
+                   value="<?= htmlspecialchars($_POST['correo'] ?? '') ?>">
+          </div>
 
-        <div class="form-group">
-          <label for="contrasena">Contraseña</label>
-          <input type="password" id="contrasena" name="contrasena" required
-                 placeholder="Tu contraseña">
-        </div>
+          <div>
+            <label for="contrasena" class="form-label">Contraseña</label>
+            <input type="password" class="form-control" id="contrasena" name="contrasena" required
+                   placeholder="Tu contraseña">
+          </div>
 
-        <button type="submit" class="btn-primary">Ingresar</button>
-      </form>
-
+          <button type="submit" class="btn btn-primary w-100">Ingresar</button>
+        </form>
+      </div>
     </section>
 
     <footer class="auth-school">Escuela Normal N°10 · 2026</footer>
   </main>
-  <script src="Framework/bootstrap-5.1.3/js/bootstrap.bundle.min.js"></script>
+  <script src="Framework/bootstrap-5.3.3/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

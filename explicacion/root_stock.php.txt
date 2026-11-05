@@ -1,0 +1,17 @@
+ARCHIVO: stock.php
+PROPOSITO: panel inicial con existencias de insumos, productos y alertas por debajo del minimo.
+TIPO: pagina PHP con consultas de lectura, HTML y JavaScript para tablas.
+
+INICIO
+$pagina_actual identifica el panel. session_start() activa la sesion. require_once carga conexion.php, auth.php, PHP/alerta_stock.php y PHP/utilidades.php. enviar_alerta_stock($conexion) ejecuta la funcion que compara el estado del stock con el estado previamente notificado.
+
+DATOS
+$hora_actual es un entero obtenido de date('G'); $saludo es string elegido por operadores ternarios segun la hora; $nombre_sesion procede de la sesion o usa un valor de respaldo.
+Las consultas mysqli recuperan catalogo, unidad y stock. INNER JOIN exige relacion con unidad; LEFT JOIN conserva productos aunque su stock no tenga registro; COALESCE(..., 0) convierte ausencia a cero. mysqli_num_rows detecta conjuntos vacios y mysqli_fetch_assoc devuelve cada fila como array asociativo.
+Las consultas de alertas comparan cantidad con stock_minimo; $hay_alertas es booleano que controla el texto "Sin alertas". formatear_cantidad() da formato local y htmlspecialchars() codifica datos antes de imprimirlos.
+
+INTERFAZ
+Bootstrap row, col-12, col-xl-8/4, d-flex, flex-column, gap, card, table-responsive, table-striped, table-hover, list-group y list-group-item organizan el panel. El tema local adapta su apariencia. En pantallas XL, las tablas ocupan dos tercios y alertas un tercio.
+
+DATATABLES
+Los recursos se cargan en orden: core DataTables, integracion Bootstrap 5 y JS/datatables_config.js. defer permite analizar HTML antes de ejecutar los scripts. Al DOMContentLoaded se inicializan las dos tablas si existe la funcion iniciarTabla.

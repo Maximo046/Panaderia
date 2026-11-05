@@ -1,0 +1,24 @@
+ARCHIVO: descartado/tiquet_venta.php
+ESTADO: endpoint PDF historico del modulo de ventas, reemplazado por PHP/PDF/reportes_pdf.php.
+PROPOSITO ORIGINAL: consultar la venta mas reciente y generar ticket A5 con Dompdf.
+TIPO: script PHP que arma HTML mediante output buffering y lo convierte a PDF.
+
+VARIABLES
+$pagina_actual: string 'reportes' para el control de permisos.
+$conexion: objeto mysqli cargado por require_once.
+$venta_resultado: resultado SELECT de la ultima venta o false.
+$venta: array asociativo de venta o null cuando no hay fila.
+$detalle_venta: resultado mysqli de productos de esa venta o null.
+$id_venta: entero casteado desde la fila.
+$linea: array asociativo de linea de detalle.
+$html: string HTML recogido con ob_get_clean.
+$dompdf: objeto de clase Dompdf.
+$options: objeto de opciones devuelto por getOptions(), luego pasado a setOptions.
+
+FLUJO Y COMANDOS
+SELECT + INNER JOIN obtiene venta/medio de pago; ORDER BY id descendente y LIMIT 1 escogen la mas reciente. Se comprueba false y se responde HTTP 500 con exit si falla.
+mysqli_fetch_assoc convierte resultado en array. Si hay venta, otra consulta obtiene detalle; ob_start captura la plantilla; htmlspecialchars escapa texto; number_format formatea dinero; date/strtotime presentan fecha.
+require_once carga autoload de Dompdf; use importa la clase. getOptions/setOptions habilitan isRemoteEnabled; loadHtml entrega plantilla; setPaper selecciona A5 vertical; render compone; stream devuelve PDF inline.
+
+OBSERVACION
+La habilitacion de recursos remotos y el uso de este archivo historico no deben copiarse a la generacion de reportes sin revisar permisos y seguridad. El modulo actual es reportes_pdf.php y genera reportes de movimientos, no tickets de venta.

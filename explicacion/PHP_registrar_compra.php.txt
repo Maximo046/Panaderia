@@ -1,0 +1,20 @@
+ARCHIVO: PHP/registrar_compra.php
+PROPOSITO: registrar una o varias entradas de insumos y aumentar sus stocks en una unica transaccion.
+TIPO: endpoint PHP JSON con validacion, consultas preparadas y control transaccional.
+
+RESPUESTA Y SEGURIDAD
+header declara JSON UTF-8. session_status() y session_start() garantizan sesion. responder_compra(array $datos, int $codigo_http=200): void es una funcion tipada que establece status HTTP, codifica JSON en Unicode, imprime y termina con exit.
+El codigo recupera token recibido y token de sesion con ?? ''. hash_equals compara de manera segura ambos textos. Si ambos existen y no coinciden, retorna HTTP 403. La condicion actual solo ejecuta comparacion cuando ambos valores no son vacios.
+mysqli_report activa excepciones estrictas de MySQLi. require_once carga conexion, alerta y formato.
+
+VALIDACION Y CONSTRUCCION
+La fecha se recorta; vacia o invalida se reemplaza por fecha actual. DateTime::createFromFormat parsea AAAA-MM-DD y format confirma que no hubo una fecha normalizada de manera silenciosa.
+$ids_insumo y $cantidades se esperan como arrays. is_array protege el tipo. Si no llegan en POST, file_get_contents('php://input') lee el cuerpo original y parse_str lo interpreta.
+foreach recorre ids. Se omiten cantidades vacias/cero. filter_var con FILTER_VALIDATE_INT/FLOAT valida ids y cantidades; str_replace normaliza coma decimal a punto. $entradas es un array de arrays con id entero y cantidad numerica decimal. Si queda vacio, responder_compra retorna HTTP 400.
+
+TRANSACCION
+begin_transaction inicia unidad atomica. prepare crea consultas preparadas; ? son marcadores que separan datos de SQL; bind_param asigna tipos (i=entero, d=double, s=string); execute ejecuta. SELECT verifica cada insumo. INSERT registra entrada y se guarda insert_id. INSERT ... ON DUPLICATE KEY UPDATE suma la cantidad al stock si la clave ya existe. close libera sentencias.
+commit hace permanentes todos los cambios. En catch (Throwable) se ejecuta rollback si la transaccion seguia activa. El catch interno tambien maneja fallo al revertir. La respuesta externa no revela el detalle tecnico.
+
+FINALIZACION
+Se guarda mensaje flash en $_SESSION; se intenta enviar alerta en otro try/catch, que registra fallo sin deshacer la compra confirmada. Se cierra conexion y responder_compra devuelve total e ids creados.

@@ -1,0 +1,15 @@
+ARCHIVO: registro.php
+PROPOSITO: permitir al administrador crear cuentas para panaderos.
+TIPO: pagina PHP/HTML con peticion AJAX.
+
+INICIO
+session_start() activa $_SESSION. $pagina_actual = 'registro' se comprueba por auth.php; conexion.php crea la conexion y auth.php verifica rol y pagina permitida.
+
+FORMULARIO
+Los campos nombre, apellido, correo, contrasena y confirmar_contrasena se envian por POST. id_rol es un campo oculto con valor fijo 2; el servidor no debe confiar en ese valor solo por ser oculto y debe validar que corresponda a un rol permitido. type=email hace una validacion superficial; minlength y required son ayudas del navegador, no reglas de seguridad del servidor.
+form-label, form-control, btn-primary y w-100 son clases Bootstrap. auth-card, auth-wrapper y otras clases del tema adaptan la identidad visual. notif d-none es un contenedor donde AJAX.js mostrara mensajes.
+
+JAVASCRIPT
+El listener DOMContentLoaded conecta el formulario con PHP/envio_registro.php. onSuccess espera 600 ms antes de redirigir al login, lo que permite leer la notificacion de exito. Las funciones y objetos usados son del navegador; no se define una clase propia.
+
+El proceso de validacion, hash de contrasena, verificacion de correo unico e INSERT pertenece al endpoint envio_registro.php, no a esta vista.

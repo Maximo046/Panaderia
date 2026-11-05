@@ -1,0 +1,378 @@
+INVENTARIO DE VARIABLES, PARAMETROS Y OBJETOS
+
+ALCANCE Y COMO LEERLO
+Este inventario corresponde al codigo de aplicacion propio activo y revisado. No lista variables internas de Bootstrap, DataTables, PHPMailer o Dompdf: esas dependencias tienen guias separadas. Tampoco lista las miles de variables internas de PHP/MySQL.
+
+PHP es de tipado dinamico: el tipo indicado es el tipo normal observado/inferido por su asignacion y uso, no una declaracion obligatoria del lenguaje. Algunos resultados SQL pueden ser false si la consulta falla. Las variables de foreach/while nacen al ejecutar el bucle y cambian con cada vuelta. $_POST, $_GET, $_SESSION y $_SERVER son superglobales administradas por PHP, no se crean manualmente. Un array no es lo mismo que un objeto.
+
+OBJETOS PROPIOS/EXTERNOS QUE APARECEN
+- $conexion: instancia de mysqli creada con new mysqli en conexion.php. La comparten los archivos incluidos y los endpoints que requieren ese archivo.
+- $consulta_insumo, $insertar_compra, $actualizar_stock, $verificar_producto, $verificar_insumo, $stmt, $consulta_producto, $consulta_stock, $insertar_salida, $descontar_stock: instancias mysqli_stmt creadas por prepare() para consultas parametrizadas.
+- $correo: instancia PHPMailer creada con new PHPMailer(true); aparece en correo de alerta y contacto.
+- $dompdf: instancia Dompdf creada para producir PDF.
+- No se definen clases propias de dominio en el codigo activo. Se definen funciones PHP y se instancian clases de bibliotecas/extensiones.
+
+SUPERGLOBALES Y DATOS DE SOLICITUD
+$_POST: array asociativo de campos de formulario enviados por POST.
+$_GET: array asociativo de parametros en URL, como mes.
+$_SESSION: array asociativo persistente entre solicitudes del mismo usuario; PHP lo conecta a una cookie de sesion.
+$_SERVER: array de informacion de solicitud/servidor; aqui se lee REQUEST_METHOD.
+php://input: cuerpo crudo de solicitud leido como string en registrar_compra.php; no es una variable PHP.
+
+RAIZ: AUTENTICACION, CONEXION Y NAVEGACION
+
+index.php
+$mensaje_error (string): inicia vacio y guarda el mensaje para la proxima renderizacion del login.
+$pagina_por_rol (array asociativo string=>string): mapea nombre de rol a destino posterior al login.
+$rol_actual (string): copia el rol de la sesion para redireccionar una sesion ya iniciada.
+$correo_ingresado (string): correo POST recortado con trim.
+$contrasena_ingresada (string): clave de POST; no se guarda en la sesion.
+$correo_seguro (string): copia escapada para la consulta SQL concatenada.
+$resultado (mysqli_result|bool): fila/conjunto de usuario devuelto por la consulta.
+$usuario_encontrado (array asociativo|false|null): fila del usuario convertida por mysqli_fetch_assoc; incluye id, nombre, correo, hash, activo y rol.
+$redireccion (string): destino seleccionado segun rol tras login exitoso.
+
+auth.php
+$prefijo_redireccion (string): ruta inicial opcional definida por una pagina hija; si no existe vale ''.
+$rol_del_usuario (string): rol extraido de la sesion.
+$permisos_por_rol (array asociativo de arrays): lista las pantallas habilitadas por rol.
+$paginas_del_rol (array): lista correspondiente al rol actual; [] si el rol no existe en el mapa.
+$pagina_principal_por_rol (array asociativo): destino permitido por defecto para cada rol.
+$redireccion (string): destino final seleccionado ante acceso denegado.
+$pagina_actual (string, contrato externo): la pagina que incluye auth.php debe definirlo antes; no lo crea auth.
+
+sidebar.php
+$rol_del_usuario (string): rol de sesion empleado para filtrar menu.
+$items_del_menu (array multidimensional asociativo): etiqueta, ruta y array de roles por identificador de pagina.
+$clave (string, iteracion): clave de modulo en items_del_menu.
+$item (array asociativo, iteracion): registro del enlace actual (etiqueta, enlace, roles).
+$activo (bool): resultado estricto de comparar $pagina_actual y $clave.
+$pagina_actual (string, contrato externo): la provee la pagina incluyente.
+
+conexion.php
+$servidor (string): host SQL.
+$usuario (string): usuario SQL.
+$contrasena (string): clave SQL local.
+$base_datos (string): nombre de base.
+$conexion (objeto mysqli): conexion abierta y compartida.
+Las credenciales no se reproducen aqui. En despliegues reales deben venir de configuracion externa.
+
+logout.php
+No declara variables. Usa la superglobal de sesion indirectamente mediante session_start() y session_destroy().
+
+PAGINAS DE GESTION
+
+stock.php
+$pagina_actual (string): identificador consumido por auth/sidebar.
+$hora_actual (int): hora local 0-23 obtenida con date('G') y cast.
+$saludo (string): saludo seleccionado por hora.
+$nombre_sesion (string): nombre completo de sesion o valor predeterminado.
+$stock_insumos / $stock_productos (mysqli_result|bool): resultados de consultas de stock.
+$fila (array asociativo, iteracion): fila actual de stock.
+$alertas_stock (mysqli_result|bool): resultado de consulta de bajo minimo.
+$hay_alertas (bool): indica si el recorrido produjo al menos una alerta.
+$alerta (array asociativo, iteracion): fila de articulo bajo minimo.
+$cantidad_actual / $cantidad_minima (string): cantidades formateadas para interfaz.
+$conexion (objeto mysqli, incluido).
+
+insumos.php
+$pagina_actual (string): identificador de vista.
+$token_compra (string hexadecimal): random_bytes(32) convertido por bin2hex y guardado en sesion; protege el formulario de compra.
+$mensaje_compra (string): mensaje flash extraido de sesion y borrado con unset; la vista actual puede no imprimirlo.
+$lista_insumos (mysqli_result|bool): lista con existencia y unidad.
+$insumo (array asociativo, iteracion): registro de insumo actual.
+$stock (float): copia numerica de su stock.
+$lista_unidades (mysqli_result|bool): catalogo consultado para el selector.
+$unidad (array asociativo, iteracion): id/nombre de unidad.
+$conexion (objeto mysqli).
+
+produccion.php
+$pagina_actual (string): clave de permisos.
+$lista_productos (mysqli_result|bool): catalogo unido con unidad y stock.
+$producto (array asociativo, iteracion): producto que recibe formulario individual.
+$conexion (objeto mysqli).
+JavaScript inline: btnGenerar/inputCantidad/contenedor/btnGuardar son objetos DOM; cantidad/i son numeros; fila es un elemento DOM; const mantiene fija la referencia, let declara contador reasignable.
+
+productos.php
+$pagina_actual (string): clave de permisos.
+$lista_productos (mysqli_result|bool): resultados del catalogo.
+$producto (array asociativo, iteracion): producto actual.
+$receta_del_producto (mysqli_result|bool): filas de insumos asociados al producto.
+$partes_receta (array de strings): texto HTML escapado de cada ingrediente formateado.
+$fila_receta (array asociativo, iteracion): ingrediente y cantidad actuales.
+$conexion (objeto mysqli).
+
+nuevo_producto.php
+$pagina_actual (string): clave de permisos.
+$lista_unidades (mysqli_result|bool): resultado de catalogo unidades.
+$unidad (array asociativo, iteracion): opcion actual.
+$conexion (objeto mysqli).
+
+nueva_receta.php
+$pagina_actual (string): clave de permisos.
+$lista_productos / $lista_insumos (mysqli_result|bool): opciones de select consultadas en servidor.
+$producto / $insumo (array asociativo, iteracion): fila convertida para cada opcion.
+$conexion (objeto mysqli).
+JavaScript inline: btnGenerar, inputCantidad, contenedor, btnGuardar son referencias a elementos DOM; cantidad es entero de filas; i es indice entero del bucle; fila es elemento div; const declara referencias que no se reasignan.
+
+salidas.php
+$pagina_actual (string): clave de permisos.
+$motivos_salida (array indexado de strings): lista blanca tambien repetida/validada en backend.
+$lista_productos (mysqli_result|bool): filas de producto con existencia.
+$producto (array asociativo, iteracion): producto actual.
+$sin_stock (bool): existencia menor/igual a cero.
+$stock_formateado (string): saldo visible con formato local.
+$solo_lectura (string): atributo readonly o cadena vacia para HTML.
+$clase_fila (string): clase adicional para estilo de fila agotada o cadena vacia.
+$motivo (string, iteracion): valor del array de motivos al construir opciones.
+$conexion (objeto mysqli).
+
+registro.php
+$pagina_actual (string): clave de permiso que restringe la vista a Administrador.
+$conexion y datos de opciones quedan disponibles por inclusion/auth; el archivo de la vista no declara otras variables propias.
+
+ayuda.php
+$pagina_actual (string): clave de permisos.
+$items_guia (array indexado de arrays): pares de titulo/descripcion de ayuda.
+$titulo_seccion / $descripcion_seccion (string, iteracion por destructuracion): valores de cada par.
+$preguntas_frecuentes (array indexado de arrays): pares pregunta/respuesta para acordeon.
+$indice (int, iteracion): sufijo numerico que hace unico cada id HTML de acordeon.
+$pregunta / $respuesta (string, iteracion por destructuracion): contenido del panel.
+$lista_asuntos (mysqli_result|bool): resultado del catalogo de temas.
+$asunto (array asociativo, iteracion): una opcion de tema.
+$conexion (objeto mysqli).
+
+reportes.php
+$pagina_actual (string): clave de permiso.
+$mes_seleccionado (string): mes validado o vacio.
+$filtro_produccion / $filtro_compras / $filtro_salidas (string SQL controlado): fragmentos WHERE opcionales; se llenan solo si el mes pasa regex.
+$mes_solicitado (mixed|string): valor GET crudo; se comprueba is_string antes de tratarlo como fecha.
+$sufijo_vacio (string): fragmento para texto cuando el reporte esta filtrado.
+$consumos_insumos, $ingresos_insumos, $produccion_registrada, $salidas_registradas (mysqli_result|bool): conjuntos de movimientos.
+$fila (array asociativo, iteracion de resultados).
+$conexion (objeto mysqli).
+
+ENDPOINTS Y MODULOS PHP
+
+PHP/alerta_stock.php
+Parametro $conexion (objeto mysqli): conexion inyectada por el llamador.
+$correo_destinatario (string): direccion validada obtenida de sesion.
+$alertas (array indexado de arrays asociativos): filas normalizadas bajo minimo.
+$insumos / $productos (mysqli_result|bool): resultados de consultas.
+$fila (array asociativo, iteracion): registro SQL actual.
+$alerta (array asociativo, iteracion de envio): articulo actual.
+$tipo / $nombre / $unidad (string): campos de una alerta ya formateados/escapados.
+$cantidad / $minimo (float): magnitudes convertidas desde SQL.
+$archivo_estado (string ruta): ubicacion local del snapshot JSON anti-repeticion.
+$estado_actual / $estado_anterior (string): representacion JSON actual y bytes leidos previamente.
+$config_smtp (array asociativo): config devuelta por require.
+$smtp_usuario / $smtp_contrasena (string): credenciales cargadas localmente; no imprimir.
+$filas_html / $filas_texto (string): cuerpo de correo en HTML y texto.
+$correo (objeto PHPMailer): mensaje/transporte configurado.
+$excepcion (Exception): error capturado por catch.
+
+PHP/config_panaderia.php
+No define variables; return produce un array asociativo con parametros SMTP, que se asigna a $config_smtp en los llamadores. Los valores secretos no se copian.
+
+PHP/utilidades.php
+$numero (mixed recibido, convertido a float): parametro de formatear_cantidad.
+$texto (string): numero formateado a tres decimales y despues recortado.
+formatear_cantidad retorna string listo para presentacion.
+
+PHP/registrar_compra.php
+responder_compra($datos, $codigo_http): parametros array de respuesta y entero HTTP.
+$token_recibido / $token_sesion (string): valores CSRF POST/sesion.
+$fecha_entrada (string YYYY-MM-DD): fecha validada/fallback actual.
+$fecha_valida (DateTime|false): resultado de createFromFormat.
+$ids_insumo / $cantidades (mixed normalizado a array): datos paralelos recibidos.
+$raw (string|false): cuerpo crudo HTTP; $parsed (array): parseo de respaldo.
+$indice (int|string iteracion), $id_insumo_raw (mixed), $cantidad_raw (mixed): valores de entrada sin normalizar.
+$cantidad_trim / $cantidad_texto (string): formas recortada y decimal con punto.
+$id_insumo (int|false): id validado.
+$cantidad (float|false): cantidad validada.
+$entradas (array de arrays): pares ya validados.
+$en_transaccion (bool): seguimiento para saber si ejecutar rollback.
+$insertar_compra / $actualizar_stock / $consulta_insumo (mysqli_stmt): sentencias preparadas.
+$entrada (array, iteracion): par id/cantidad; $id_insumo_ent (int) y $cantidad_ent (float) son valores locales enlazados.
+$ids_compras (array de ids int): ids creados.
+$total_entradas (int): cantidad de filas a registrar.
+$excepcion / $error_rollback / $excepcion_alerta (Throwable): errores de operacion, rollback o alerta.
+$mensaje_ok (string): mensaje singular/plural almacenado en sesion y respuesta.
+$datos / $codigo_http (parametros de respuesta): payload y status.
+$conexion (objeto mysqli).
+
+PHP/registrar_insumo.php
+$nombre_insumo (string POST escapado): nombre a insertar.
+$id_unidad_medida (string escapado): clave de unidad.
+$insumo_creado (bool): resultado del INSERT principal.
+$id_nuevo_insumo (int): id generado.
+$stock_inicial (bool): resultado del INSERT de saldo inicial.
+$conexion (objeto mysqli).
+
+PHP/registrar_producto.php
+$nombre_producto (string escapado): nombre a crear.
+$id_unidad_medida (string escapado): unidad seleccionada.
+$producto_creado (bool): resultado del INSERT de catalogo.
+$id_nuevo_producto (int): id generado.
+$stock_inicial (bool): resultado del INSERT de existencia inicial.
+$conexion (objeto mysqli).
+
+PHP/registrar_produccion.php
+$id_producto_a_producir / $cantidad_producida (strings de entrada escapados): id del producto y unidades a elaborar.
+$receta_del_producto (mysqli_result|bool): filas de ingredientes.
+$lineas_receta (array de filas): copia reusable de receta.
+$linea / $linea_receta (array asociativo): filas en iteraciones.
+$id_insumo_necesario / $id_insumo_a_descontar (ids de ingrediente en momentos de validacion/descuento).
+$cantidad_a_consumir / $cantidad_a_descontar (numeric): multiplicaciones de receta por produccion.
+$stock_insumo (mysqli_result|bool): consulta de saldo de un ingrediente.
+$fila_stock (array asociativo): fila actual de saldo.
+$disponible / $necesario (string): cantidad para mensaje.
+$produccion_guardada (bool): resultado de INSERT.
+$datos_producto (array asociativo|false): nombre/unidad para respuesta.
+$conexion (objeto mysqli).
+
+PHP/registrar_receta.php
+responder_receta($datos, $codigo_http): funcion local de respuesta; array y entero.
+$id_producto (int): id convertido desde POST.
+$insumos / $cantidades (array): campos paralelos.
+$entradas (array de arrays asociativos): pares saneados.
+$i (int): indice del for.
+$id_insumo_raw / $cant_raw (mixed): entrada cruda.
+$id_insumo (int|false): id validado.
+$cant_texto (string): cantidad con punto y sin espacios laterales.
+$cantidad (float|false): cantidad validada.
+$conexion (objeto mysqli).
+$verificar_producto / $verificar_insumo / $stmt (mysqli_stmt): consultas preparadas para verificar existencia e insertar.
+$entrada (array, iteracion): par actual.
+$agregados (int): filas nuevas aceptadas.
+$mensaje (string): resultado singular/plural.
+$datos / $codigo_http (parametros): payload y status.
+$e (Throwable): error capturado.
+
+PHP/registrar_salida.php
+$motivos_validos (array de strings): lista blanca de valores aceptados.
+$motivo_salida / $observacion (string recortado): categoria y detalle.
+$ids_productos / $cantidades (arrays POST): pares del formulario.
+$lineas_salida (array de arrays): ids/cantidades positivas normalizados.
+$indice (int, iteracion), $id_producto (int), $cantidad (float): valores por linea.
+$id_usuario (int|null): usuario autenticado, o null si falta id.
+$consulta_producto, $consulta_stock, $insertar_salida, $descontar_stock (mysqli_stmt): sentencias de consulta/registro/actualizacion.
+$linea (array, iteracion), $cantidad_retirada (float): salida actual.
+$producto (array asociativo|false): nombre y unidad obtenidos en SQL.
+$fila_stock (array|null): registro bloqueado de existencias.
+$stock_actual (float): saldo para comparar.
+$disponible / $pedido (string): cantidades formateadas en mensaje de falta.
+$error (Throwable): excepcion del proceso transaccional.
+$cantidad_productos (int): cantidad de renglones enviados.
+$conexion (objeto mysqli).
+
+PHP/envio_registro.php
+$campos_requeridos (array indexado): nombres de campos obligatorios.
+$campo (string, iteracion): clave revisada.
+$nombre_usuario / $apellido_usuario / $correo_usuario (string): datos recortados.
+$id_rol_seleccionado (int): rol posteado convertido a entero.
+$contrasena_nueva / $contrasena_repetida (string): entradas para validar.
+$rol_encontrado (mysqli_result|bool): resultado de consulta de rol.
+$datos_rol (array|null): fila de rol.
+$nombre_seguro / $apellido_seguro / $correo_seguro (string): copias escapadas para SQL.
+$correo_duplicado (mysqli_result|bool): resultado de busqueda de correo.
+$contrasena_hasheada (string): resultado unidireccional de password_hash.
+$registro_exitoso (bool): resultado del INSERT.
+$conexion (objeto mysqli).
+
+PHP/formulario_ayuda.php
+$conexion (objeto mysqli).
+$id_asunto_seleccionado / $nombre_remitente / $correo_remitente / $texto_mensaje (string escapados): valores destinados al INSERT.
+$consulta_asunto (mysqli_result|bool): busqueda SQL del asunto.
+$datos_asunto (array|null) y $nombre_asunto (string): asunto de catalogo o fallback.
+$mensaje_guardado (bool): resultado del INSERT de contacto.
+$consulta_administrador (mysqli_result|bool), $administrador (array|null): busqueda y fila del primer admin activo.
+$correo_administrador (string): direccion destinataria validada.
+$config_smtp (array): configuracion retornada por require.
+$smtp_usuario / $smtp_contrasena (string): credenciales, no divulgar.
+$correo (objeto PHPMailer): mensaje saliente.
+$excepcion (PHPMailer Exception): error de correo.
+
+PHP/PDF/reportes_pdf.php
+$pagina_actual (string) y $prefijo_redireccion (string): contexto para auth.
+$mes_seleccionado / $mes_solicitado (string|mixed): valor validado y valor original GET.
+$filtro_produccion / $filtro_compras / $filtro_salidas (fragmentos SQL string): WHERE del mes o vacio.
+$nombres_meses (array asociativo int=>string): traduccion de mes.
+$marca_tiempo_mes (int|false): timestamp para construir etiqueta.
+$etiqueta_periodo / $sufijo_vacio (string): texto impreso en el informe.
+$consumos_insumos, $ingresos_insumos, $produccion_registrada, $salidas_registradas (mysqli_result|bool): resultados SQL.
+$total_consumos / $total_ingresos / $total_produccion / $total_salidas (int): filas de cada conjunto.
+$fila (array asociativo, iteracion): registro de tabla PDF.
+$html (string): documento capturado/construido para Dompdf.
+$dompdf (objeto Dompdf), $opciones (array): motor y opciones de salida si estan asignadas.
+$conexion (objeto mysqli).
+
+JAVASCRIPT ACTIVO
+
+JS/AJAX.js
+formulario (HTMLFormElement): parametro con el formulario origen.
+url (string): endpoint PHP destino.
+opciones / config (object): opciones de comportamiento; config toma opciones o objeto vacio.
+evento (SubmitEvent): evento submit; preventDefault cancela el envio tradicional.
+boton (HTMLButtonElement|null): boton submit si el formulario tiene uno.
+textoOriginal (string): etiqueta del boton antes de cambiarla.
+contenedor (HTMLElement|null): nodo .notif donde se coloca el resultado.
+mensaje / tipo (string): texto y estado que recibe mostrarNotificacion.
+respuesta (Response): respuesta de fetch; response.json() la convierte a datos.
+datos (object JSON): incluye ok, mensaje y propiedades especificas del endpoint.
+mostrarNotificacion(formulario, mensaje, tipo): funcion local.
+window.enviarFormularioAjax: funcion global que acepta formulario/url/opciones.
+
+JS/datatables_config.js
+idiomaEspanol (object): mapa jerarquico de textos y textos de accesibilidad.
+selector (string): parametro CSS como '#tabla-productos'.
+opciones (object|undefined): sobreescrituras por pagina.
+configuracion (object): resultado de Object.assign combinando defaults, idioma y opciones.
+window.iniciarTabla: funcion global que devuelve null o instancia DataTable.
+
+nueva_receta.php (JavaScript inline)
+btnGenerar, inputCantidad, contenedor, btnGuardar (HTMLElement): nodos seleccionados por id.
+cantidad (int): valor obtenido por parseInt del numero de filas.
+i (int): indice del bucle.
+fila (HTMLDivElement): contenedor DOM de controles generados.
+
+produccion.php (JavaScript inline)
+formulario (HTMLFormElement): cada formulario de producto dentro de forEach.
+datos (object JSON) y form (HTMLFormElement): parametros del callback onSuccess.
+cant (HTMLInputElement|null): input de cantidad del formulario actual.
+
+OTRAS MARCAS SINTACTICAS
+window es el objeto global del navegador; document representa el DOM; DataTable es una clase/constructor externo. DOMContentLoaded es evento; FormData es clase nativa del navegador; fetch devuelve Promise; setTimeout programa callback diferido. PHP no declara una clase propia en estas paginas.
+
+CODIGO HISTORICO EN descartado/ (NO SE EJECUTA EN EL FLUJO ACTUAL)
+ventas.php: $pagina_actual='ventas' (identificador legado); $lista_productos y $ventas_hoy (resultados mysqli); $producto, $metodo, $venta y $linea (arrays asociativos de cada iteracion); $sin_stock (bool); $stock_formateado, $solo_lectura y $clase_fila (strings de presentacion); $lista_metodos_pago (resultado mysqli); $detalle (resultado de detalle de venta); $productos y $precios (arrays de strings para celdas); $cantidad (string formateado); JavaScript $evento (evento submit), $peticion (objeto XMLHttpRequest), $respuesta (objeto JSON).
+registrar_venta.php: $id_metodo_pago (int); $ids_productos, $cantidades, $precios_unitarios (arrays POST); $lineas_venta (array de arrays), $indice (int), $id_producto (int), $cantidad_vendida y $precio_por_unidad (float); $linea (array de venta); $stock_disponible (mysqli_result); $fila_stock (array asociativo); $total_venta y $subtotal_linea (float); $id_venta_nueva (int); conexion (objeto mysqli).
+tiquet_venta.php: $pagina_actual (string de permiso); $venta_resultado (mysqli_result|false); $venta (array|null); $detalle_venta (mysqli_result|null); $id_venta (int); $linea (array asociativo de producto); $html (string capturado por output buffer); $dompdf (objeto Dompdf); $options (objeto de opciones Dompdf).
+La regla $variable en PHP sigue aplicando, pero su presencia en esos archivos no significa que formen parte del menu o de la base activa.
+
+FUNCIONES DEFINIDAS POR EL PROYECTO
+formatear_cantidad($numero): acepta cantidad, la convierte a float, la formatea y retorna string.
+enviar_alerta_stock(mysqli $conexion): consulta saldos y envia correo si cambia la lista de bajo minimo; retorna bool.
+responder_compra(array $datos, int $codigo_http=200): emite JSON/status HTTP y termina la solicitud; retorno void.
+responder_receta(array $datos, int $codigo_http=200): respuesta JSON equivalente para endpoint de recetas; retorno void.
+mostrarNotificacion(formulario, mensaje, tipo): funcion local de interfaz en JS/AJAX.js; no se publica en window.
+window.enviarFormularioAjax(formulario, url, opciones): helper publico que enlaza el evento submit y manda fetch.
+window.iniciarTabla(selector, opciones): helper publico de DataTables que devuelve instancia o null.
+No hay constructores/destructores/metodos de clases propias.
+
+VARIABLES CSS PERSONALIZADAS
+styles.css define en :root:
+--cream, --cream-dark (fondos crema); --brown-dark, --brown-mid (texto/identidad marron); --amber, --gold-light (acentos); --red-accent, --green (estados); --text-main, --text-muted (texto); --sidebar-w (ancho lateral); --shadow (sombra reutilizable).
+Tambien redefine variables del framework: --bs-body-font-family, --bs-body-color, --bs-body-bg, --bs-emphasis-color, --bs-secondary-color, --bs-border-color, --bs-border-radius, --bs-border-radius-lg, --bs-link-color, --bs-link-hover-color, --bs-primary, --bs-primary-rgb, --bs-success, --bs-success-rgb, --bs-danger, --bs-danger-rgb y --bs-focus-ring-color.
+Variables Bootstrap de offcanvas: --bs-offcanvas-width, --bs-offcanvas-bg.
+Variables de card: --bs-card-border-width, --bs-card-border-radius, --bs-card-inner-border-radius, --bs-card-bg, --bs-card-cap-bg.
+Variables de botones: --bs-btn-font-family, --bs-btn-font-weight, --bs-btn-padding-y, --bs-btn-padding-x, --bs-btn-border-radius, --bs-btn-color, --bs-btn-bg, --bs-btn-border-color, --bs-btn-hover-color, --bs-btn-hover-bg, --bs-btn-hover-border-color, --bs-btn-active-color, --bs-btn-active-bg, --bs-btn-active-border-color, --bs-btn-disabled-color, --bs-btn-disabled-bg, --bs-btn-disabled-border-color, --bs-btn-focus-shadow-rgb. Se establecen para variantes principal, secundaria y contorno.
+Variables de tabla: --bs-table-color, --bs-table-bg, --bs-table-border-color, --bs-table-striped-color, --bs-table-striped-bg, --bs-table-hover-color, --bs-table-hover-bg.
+Variables de paginacion: --bs-pagination-color, --bs-pagination-bg, --bs-pagination-border-color, --bs-pagination-hover-color, --bs-pagination-hover-bg, --bs-pagination-hover-border-color, --bs-pagination-focus-color, --bs-pagination-focus-bg, --bs-pagination-focus-box-shadow, --bs-pagination-active-color, --bs-pagination-active-bg, --bs-pagination-active-border-color, --bs-pagination-disabled-color, --bs-pagination-disabled-bg, --bs-pagination-disabled-border-color.
+Variables de acordeon: --bs-accordion-border-color, --bs-accordion-border-radius, --bs-accordion-inner-border-radius, --bs-accordion-btn-bg, --bs-accordion-btn-color, --bs-accordion-active-bg, --bs-accordion-active-color, --bs-accordion-btn-focus-box-shadow, --bs-accordion-body-padding-x, --bs-accordion-body-padding-y.
+Variables de alertas: --bs-alert-color, --bs-alert-bg, --bs-alert-border-color.
+Son propiedades CSS, no variables PHP ni valores almacenados en servidor. La definicion proporciona valores y var() los consume en reglas.
+
+VARIABLES SQL Y DE PLANTILLA
+SQL no usa variables de aplicacion declaradas con $nombre. Los signos ? de prepared statements son marcadores que mysqli_stmt recibe por bind_param. Los alias SQL con AS, por ejemplo cantidad AS stock_actual, son nombres temporales de columnas en el resultado, no variables PHP hasta que fetch_assoc crea el array de fila.
+Los nombres name="id_producto[]" del HTML no son variables JavaScript/PHP en el navegador; son claves de controles que el navegador serializa y PHP materializa en $_POST cuando llega la solicitud.

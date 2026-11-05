@@ -1,0 +1,6 @@
+ARCHIVO: descartado/database/panaderia_sin_datos_20261028_133549.sql
+ESTADO: exportacion historica sin registros de negocio, fechada 28-10-2026.
+TIPO: dump SQL de estructura/catálogos base.
+
+Por su nombre y cabecera representa una copia sin datos de negocio: conserva definiciones (CREATE TABLE), indices y claves (ALTER TABLE), tipos y valores iniciales que el dump incluya. SET SQL_MODE y START TRANSACTION ajustan importacion; COMMIT confirma.
+Aunque vacio de movimientos, puede pertenecer a un esquema antiguo. No sustituye a database/panaderia.sql y no se debe confundir con una migracion automatica. Los comandos SQL estructurales pueden reemplazar o colisionar con tablas existentes.

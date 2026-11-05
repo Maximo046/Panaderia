@@ -1,0 +1,10 @@
+ARCHIVO: PHP/utilidades.php
+PROPOSITO: centralizar una funcion para mostrar cantidades decimales sin ceros innecesarios.
+TIPO: archivo PHP reutilizable que declara una funcion global.
+
+if (!function_exists('formatear_cantidad')) comprueba que la funcion no haya sido declarada previamente; evita un error fatal si los includes se organizan de forma no esperada. function define la funcion sin crear una instancia de clase.
+El parametro $numero no tiene type hint; (float) lo convierte a numero decimal. number_format(..., 3, ',', '') redondea a tres decimales, usa coma decimal y no usa separador de miles.
+rtrim($texto, '0') quita ceros finales; el segundo rtrim quita una coma que quedara al final. ?: '0' evita devolver string vacio cuando el numero era cero.
+
+ENTRADA Y SALIDA
+Ejemplos: 10.500 produce "10,5"; 10.000 produce "10"; 0.000 produce "0". La salida es string, no float, porque se usa para mostrar valores en HTML, emails y PDF. La funcion no cambia el valor almacenado en la base de datos.

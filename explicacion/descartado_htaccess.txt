@@ -1,0 +1,7 @@
+ARCHIVO: descartado/.htaccess
+PROPOSITO: impedir que Apache entregue directamente por HTTP los respaldos dentro de descartado/.
+TIPO: configuracion de servidor Apache, no es codigo PHP/SQL.
+
+IfModule mod_authz_core.c comprueba si el servidor tiene el modulo moderno de autorizacion. Require all denied niega acceso HTTP a todos los clientes.
+IfModule !mod_authz_core.c selecciona el caso inverso: Apache antiguo sin ese modulo. Order allow,deny y Deny from all son sintaxis heredada de autorizacion y tambien niegan acceso.
+La regla protege la lectura por URL si Apache permite .htaccess y AllowOverride esta configurado. No reemplaza controles del sistema operativo ni cambia el estado de archivos en Git.

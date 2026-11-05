@@ -1,0 +1,6 @@
+ARCHIVO: descartado/database/migracion_stock_inicial.sql
+ESTADO: migracion historica que creo saldos iniciales para filas de catalogo antiguas.
+TIPO: script SQL de mantenimiento; no se ejecuta desde la aplicacion.
+
+El objetivo es insertar una fila de stock con cantidad cero y minimo diez por cada insumo/producto que aun no tuviera una. INSERT ... SELECT crea filas a partir de consultas; LEFT JOIN con condicion de ausencia detecta catalogos sin stock; NOT EXISTS puede expresar el mismo chequeo. La idempotencia significa que volver a ejecutarlo no duplica filas ya creadas, normalmente por filtro de ausencia o clave UNIQUE.
+DECIMAL/enteros describen saldos/minimos; claves foraneas conectan la fila de stock a su catalogo. Este tipo de script debe ejecutarse tras revisar el esquema y mantener backup. La estructura y semillas para instalar el sistema actual estan en database/panaderia.sql.

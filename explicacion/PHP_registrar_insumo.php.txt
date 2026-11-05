@@ -1,0 +1,14 @@
+ARCHIVO: PHP/registrar_insumo.php
+PROPOSITO: crear un insumo y su fila inicial de stock dentro de la misma transaccion.
+TIPO: endpoint PHP que devuelve JSON.
+
+1. header indica JSON; require_once carga conexion.php.
+2. empty valida que nombre_insumo e idunidad tengan contenido. Los valores POST se escapan con mysqli_real_escape_string.
+3. mysqli_begin_transaction inicia una transaccion en $conexion (objeto mysqli).
+4. INSERT INTO insumos crea el registro. Si falla, mysqli_rollback revierte y se responde JSON con error.
+5. mysqli_insert_id obtiene el identificador generado por AUTO_INCREMENT.
+6. INSERT INTO stock_insumos crea cantidad 0 y stock_minimo 10. Si falla, se revierte tambien el INSERT de insumo.
+7. mysqli_commit confirma ambos cambios; mysqli_close cierra la conexion.
+8. json_encode convierte un array asociativo a JSON. La respuesta incluye ok booleano, mensaje string, id entero y nombre escapado para HTML.
+
+Los valores de $_POST son datos externos. Escape de SQL y htmlspecialchars tienen objetivos distintos: el primero se usa para la consulta; el segundo para una salida HTML. El JSON de respuesta debe tratarse como dato al insertarse en una pagina.

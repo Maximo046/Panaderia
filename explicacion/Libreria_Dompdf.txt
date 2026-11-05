@@ -1,0 +1,16 @@
+LIBRERIA: Dompdf
+UBICACION: Libreria/dompdf/.
+PROPOSITO: convertir una plantilla HTML/CSS creada por PHP en un documento PDF.
+
+DEPENDENCIAS
+PHP/PDF/reportes_pdf.php carga Libreria/dompdf/autoload.inc.php, que registra clases de Dompdf y dependencias. El paquete trae Dompdf y componentes auxiliares para parsear HTML/CSS, fuentes y SVG. La aplicacion usa API Dompdf; no llama directamente a esas dependencias internas.
+
+FLUJO DE USO
+use Dompdf\Dompdf importa la clase. new Dompdf() crea el objeto del motor. loadHtml($html, 'UTF-8') define contenido; setPaper('A4', 'portrait') define papel y orientacion; render() analiza HTML/CSS y compone paginas; stream('Reporte-movimientos.pdf', ['Attachment'=>false]) envia PDF al navegador para vista en linea.
+El HTML se compone en el mismo archivo PHP a partir de consultas de MariaDB. El CSS se define dentro de <style>; algunas propiedades web modernas no son compatibles con todos los motores PDF. El codigo ya elige una fuente DejaVu Sans para cobertura de caracteres.
+
+LIMITES Y CONFIGURACION
+Dompdf requiere extensiones PHP indicadas por el paquete (DOM y mbstring, ademas de sus dependencias); soporte de imagenes puede requerir GD. Una plantilla no debe aceptar HTML/CSS arbitrario de usuarios sin control. El autoload es la inclusion, no un proceso que descarga paquetes.
+
+TIPOS
+Dompdf es clase; $dompdf es objeto; $html es string; las opciones de stream son array asociativo. A diferencia de Bootstrap, esta libreria se ejecuta del lado servidor y devuelve bytes de archivo PDF.

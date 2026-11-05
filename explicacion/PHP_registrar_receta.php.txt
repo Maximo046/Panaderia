@@ -1,0 +1,17 @@
+ARCHIVO: PHP/registrar_receta.php
+PROPOSITO: asociar uno o mas insumos y cantidades a la receta de un producto.
+TIPO: endpoint PHP que valida listas, usa prepared statements y responde JSON.
+
+FUNCION DE RESPUESTA
+responder_receta(array $datos, int $codigo_http=200): void establece status HTTP, serializa con JSON_UNESCAPED_UNICODE, imprime y termina.
+
+LECTURA Y VALIDACION
+id_producto se castea a integer. id_insumo y cantidad se esperan como arrays. is_array rechaza formatos inesperados. Un for recorre sus indices; ?? null aporta valor si falta la posicion. Se omiten pares incompletos.
+filter_var valida entero positivo. str_replace cambia coma decimal por punto; trim quita espacios; FILTER_VALIDATE_FLOAT convierte cantidad. $entradas[] agrega arrays asociativos solo con valores correctos. Si no hay entradas, se responde HTTP 400.
+
+TRANSACCION
+mysqli_begin_transaction inicia cambios atomicos. prepare crea SELECT con marcador ?. bind_param('i',...) enlaza entero; execute ejecuta; store_result permite consultar num_rows para detectar ids inexistentes. La receta se inserta con INSERT IGNORE: si la clave unica ya existe, esa fila no se agrega.
+foreach verifica cada insumo y enlaza producto/id como enteros y cantidad como decimal usando 'iid'. affected_rows cuenta inserciones nuevas. commit confirma; close cierra statements y conexion. Si todo ya existia, se responde error de negocio aunque la transaccion ya se haya confirmado sin insertar filas.
+catch(Throwable $e) cubre excepciones y errores; rollback revierte, cierra conexion y responde HTTP 500 con mensaje generico.
+
+La tabla receta tiene clave unica para el par producto-insumo, lo que permite que INSERT IGNORE evite duplicar un ingrediente.

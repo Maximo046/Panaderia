@@ -1,0 +1,19 @@
+ARCHIVO: auth.php
+PROPOSITO: barrera comun que exige sesion y autoriza la pagina actual segun rol.
+TIPO: archivo PHP incluido como componente reutilizable; no genera una pagina completa.
+
+ORDEN DE EJECUCION
+1. session_status() consulta si PHP ya inicio sesion. La comparacion estricta === PHP_SESSION_NONE evita iniciar dos veces. session_start() inicia la sesion cuando hace falta.
+2. $prefijo_redireccion usa el operador ?? para aceptar un prefijo definido por la pagina que incluye este archivo, o usar una cadena vacia. El prefijo permite redirigir correctamente desde subdirectorios.
+3. isset($_SESSION['usuario_rol']) comprueba que exista el rol guardado. Si falta, header() indica volver a index.php y exit termina la ejecucion.
+4. $rol_del_usuario es una variable string tomada de la sesion.
+5. $permisos_por_rol es un array asociativo: cada clave es un rol y cada valor es un array numerico de identificadores de pagina permitidos.
+6. $paginas_del_rol busca el array de permisos con ?? []; el array vacio es el permiso por defecto para un rol desconocido.
+7. in_array($pagina_actual, $paginas_del_rol, true) verifica si la pagina solicitada esta permitida. El tercer argumento true exige coincidencia estricta de tipo y valor.
+8. Si no tiene permiso, se elige una pagina principal del rol mediante otro array asociativo, se envia una redireccion y se detiene el programa.
+
+CONTRATO DE INCLUSION
+La pagina debe definir $pagina_actual antes de incluir auth.php. Las paginas dentro de subcarpetas tambien pueden definir $prefijo_redireccion. Este control protege solicitudes de pagina; cada endpoint que modifica datos debe comprobar permisos por separado, no debe suponerse que incluir este archivo protege automaticamente todos los endpoints.
+
+TIPOS DE DATOS
+$permisos_por_rol y $pagina_principal_por_rol son arrays asociativos de arrays/string. $_SESSION es un array superglobal. $paginas_del_rol es un array indexado. Las funciones usadas son funciones nativas de PHP; no hay clases ni objetos definidos aqui.

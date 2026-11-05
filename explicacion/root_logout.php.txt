@@ -1,0 +1,11 @@
+ARCHIVO: logout.php
+PROPOSITO: cerrar la sesion y volver a la pantalla de inicio de sesion.
+TIPO: endpoint PHP procedural que responde con una redireccion.
+
+COMANDOS EN ORDEN
+1. session_start() carga la sesion correspondiente a la cookie del navegador.
+2. session_destroy() elimina los datos persistidos de esa sesion en el servidor.
+3. header('Location: index.php') solicita al navegador abrir el login.
+4. exit detiene la solicitud para que no se ejecute contenido posterior.
+
+No define variables, arrays, funciones ni clases. La cookie de sesion del navegador no se elimina explicitamente aqui; session_destroy() destruye los datos del servidor, mientras la cookie puede continuar en el navegador hasta vencer o ser reemplazada.

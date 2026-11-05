@@ -1,0 +1,7 @@
+ARCHIVO: descartado/database/backup_ventas_2026-10-25.sql
+ESTADO: respaldo historico asociado a la eliminacion del modulo de ventas; no es el script de instalacion vigente.
+TIPO: volcado SQL de MariaDB 10.4 para la base historica panaderia_normal10.
+
+La cabecera identifica utilidad de exportacion/version y host/base; los comentarios -- son notas. Las sentencias SET guardan/restauran opciones de sesion; /*!...*/ son comentarios condicionales ejecutables por MySQL/MariaDB. Los bloques de creacion/carga ALTER/INSERT y constraints son un snapshot, no una migracion que deba ejecutarse en cada arranque.
+Puede contener historico de ventas/detalle_venta que ya no pertenece al modelo activo. Los INSERT guardan filas; valores y datos personales del respaldo no se reproducen en esta guia.
+Usar solo para restauracion controlada o auditoria de cambios, siempre en una base aislada. Para crear la base actual usar database/panaderia.sql.

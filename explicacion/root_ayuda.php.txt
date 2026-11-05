@@ -1,0 +1,18 @@
+ARCHIVO: ayuda.php
+PROPOSITO: presentar guia rapida, FAQ en acordeon y formulario de contacto.
+TIPO: pagina PHP con consultas SQL, plantillas HTML y JavaScript de navegador.
+
+PHP Y COLECCIONES
+$pagina_actual es una variable string que permite a auth.php reconocer la pantalla. session_start(), require_once y el control auth.php inicializan la sesion, conexion y permisos.
+$items_guia y $preguntas_frecuentes son arrays indexados; cada elemento interno es otro array con titulo/descripcion o pregunta/respuesta. foreach recorre cada elemento. En los bucles se usa destructuracion [$titulo, $descripcion] para asignar valores a variables.
+$lista_asuntos es un resultado mysqli de una consulta SELECT. mysqli_fetch_assoc obtiene cada fila como array asociativo mientras se imprime cada <option>.
+
+HTML Y BOOTSTRAP
+El encabezado contiene enlaces CSS de Bootstrap y del tema propio, y carga AJAX.js. La pagina usa row y col-lg-6 para distribuir las dos primeras tarjetas; antes del breakpoint grande se apilan. card, list-group, accordion, accordion-item, accordion-button, collapse, form-label, form-control, form-select y btn son componentes/clases Bootstrap.
+data-bs-toggle="collapse", data-bs-target y aria-controls asocian cada boton con su panel de respuesta; data-bs-parent hace que el acordeon mantenga una respuesta expandida por vez. La barra se genera mediante sidebar.php.
+htmlspecialchars() protege valores de asunto impresos en HTML. La lista de FAQ contiene fragmentos HTML escritos por el propio sistema, que se imprimen intencionalmente como marcado.
+
+FORMULARIO ASINCRONO
+El formulario envia nombre, correo, asunto y mensaje a PHP/formulario_ayuda.php. Un listener DOMContentLoaded espera que se construya el documento y despues llama enviarFormularioAjax(). La respuesta JSON se presenta en el contenedor .notif sin recargar la pagina.
+
+Esta pagina no implementa el envio de correo: eso lo realiza el endpoint de PHP y PHPMailer. El texto de la guia rapida es contenido de ayuda, no instrucciones ejecutables.

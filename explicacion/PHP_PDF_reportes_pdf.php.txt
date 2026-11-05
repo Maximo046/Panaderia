@@ -1,0 +1,17 @@
+ARCHIVO: PHP/PDF/reportes_pdf.php
+PROPOSITO: generar en PDF un resumen imprimible de movimientos para el mes seleccionado o todo el historial.
+TIPO: endpoint PHP que genera plantilla HTML temporal y la convierte a PDF mediante Dompdf.
+
+PREPARACION
+ob_start() inicia un buffer de salida para capturar HTML en vez de enviarlo al navegador inmediatamente. Se define pagina actual, se inicia sesion y $prefijo_redireccion permite que auth.php redirija correctamente desde PHP/PDF. require_once carga conexion, permisos y formateador.
+$mes_seleccionado y los filtros empiezan como strings vacios. $_GET['mes'] se valida con is_string y preg_match para formato YYYY-MM y rango mensual. El array $nombres_meses asocia enteros 1..12 con nombres. strtotime interpreta el inicio de mes; date('n'/'Y') extrae numero y ano; el array produce etiqueta del periodo.
+
+DATOS Y HTML
+Cuatro consultas SELECT calculan ingresos, consumo derivado de receta, produccion y salidas; JOINs agregan nombres, unidades y usuario. Los fragmentos WHERE solo se insertan despues de validar el mes. mysqli_num_rows produce contadores para resumen y estados vacios.
+La plantilla HTML contiene un bloque style interno. @page define papel A4 vertical y margenes. Reglas CSS controlan tipografia, tablas, alineacion y saltos de pagina. La cabecera indica periodo y fecha; las secciones recorren resultados con while y mysqli_fetch_assoc. htmlspecialchars escapa texto, date/strtotime formatean fechas y formatear_cantidad muestra cantidades. El operador ternario crea plural segun conteo.
+
+CONVERSION PDF
+Al final ob_get_clean() detiene el buffer y devuelve el documento completo como string $html. Se requiere Libreria/dompdf/autoload.inc.php. use Dompdf\Dompdf importa la clase. new Dompdf() crea $dompdf. $opciones = $dompdf->getOptions() obtiene un objeto de opciones; set(['isRemoteEnabled' => false]) desactiva la carga de recursos remotos y setOptions lo asigna al motor. loadHtml($html, 'UTF-8') entrega el documento, setPaper('A4','portrait') configura hoja, render() compone el PDF y stream(..., ['Attachment'=>false]) lo envia para mostrar en navegador en vez de forzar descarga.
+
+TIPOS
+Resultados SQL son resultados mysqli; filtros y etiquetas son strings; contadores son enteros; $nombres_meses es array asociativo; $dompdf es objeto Dompdf.

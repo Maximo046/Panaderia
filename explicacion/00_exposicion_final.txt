@@ -1,0 +1,84 @@
+PANADERIA NORMAL 10 - GUIA PARA DEFENSA TECNICA FINAL
+
+1. PRESENTACION BREVE (1-2 MINUTOS)
+"Mi trabajo es una aplicacion web de gestion para una panaderia. El sistema permite controlar materias primas, productos, recetas, produccion, salidas de deposito, stock, reportes y usuarios. La aplicacion esta construida con PHP en el servidor, MariaDB como base de datos, HTML/CSS/JavaScript en el navegador, Bootstrap para la interfaz, DataTables para tablas, PHPMailer para correo y Dompdf para PDF. El proyecto sigue una arquitectura cliente-servidor de paginas PHP, con algunos formularios enviados asincronicamente mediante fetch. La base conserva por un lado los movimientos historicos y por otro un saldo actual de stock para consultar rapidamente."
+
+2. PROBLEMA, ALCANCE Y REGLAS DEL NEGOCIO
+El problema abordado es reemplazar el registro manual de existencias y movimientos. El catalogo define insumos y productos; una receta vincula producto e ingredientes con cantidades. Al registrar produccion, el sistema calcula cuanto de cada ingrediente se consume, registra unidades producidas, resta insumos y suma producto terminado. Al registrar una salida, guarda motivo/observacion y resta producto terminado. Una compra de insumos registra el movimiento de entrada y aumenta el saldo. El minimo de stock sirve para detectar situaciones que requieren reposicion.
+
+Los roles son Administrador y Panadero. El menu diferencia las pantallas visibles y auth.php protege las paginas segun rol. El Administrador tiene reportes y alta de usuarios; el Panadero opera los modulos diarios.
+
+3. ARQUITECTURA Y CICLO DE UNA PETICION
+CAPA CLIENTE: navegador interpreta HTML que entrega PHP, aplica Bootstrap y CSS/styles.css, ejecuta JavaScript y DataTables y envia formularios.
+CAPA DE APLICACION: Apache ejecuta PHP. Las paginas de raiz preparan datos y presentan HTML; PHP/ contiene endpoints que reciben datos, validan reglas y escriben en la base. conexion.php crea la conexion MySQLi compartida. auth.php valida sesion/rol.
+CAPA DE DATOS: MariaDB/MySQL persiste entidades y movimientos. database/panaderia.sql define y llena el esquema.
+
+Una peticion GET solicita una pagina. PHP se ejecuta en el servidor de arriba abajo, carga dependencias, consulta la base y emite HTML. Para un formulario AJAX, el JavaScript captura submit, cancela la navegacion normal, construye FormData y envia POST con fetch. PHP responde JSON; el navegador interpreta el JSON y muestra resultado, limpia campos, redirige o recarga segun las opciones.
+
+No es una aplicacion de una sola pagina (SPA): cada modulo sigue siendo una pagina PHP independiente; AJAX solo evita recargar durante ciertas operaciones. Tampoco se utiliza MVC formal, ORM, framework PHP ni clases de dominio propias. El acceso a datos se hace directamente con MySQLi.
+
+4. MODELO DE DATOS QUE CONVIENE DIBUJAR
+Catalogos: roles, usuarios, unidad_de_medida, insumos, productos, asunto.
+Relaciones y definiciones: receta vincula productos con insumos y guarda la cantidad del ingrediente necesaria para una unidad; las claves foraneas preservan integridad referencial.
+Movimientos: entrada_insumos registra ingresos; produccion registra elaboracion; salidas_productos registra retiros; contacto registra consultas.
+Estado actual: stock_insumos y stock_productos guardan cantidad actual y minimo.
+
+La relacion productos-insumos es muchos a muchos: un producto puede usar varios insumos y un insumo puede aparecer en varias recetas. La tabla receta materializa esa relacion e incluye el atributo cantidad. Cada fila de stock se relaciona con un elemento de catalogo. Las claves primarias identifican filas, las claves foraneas conectan tablas, y las claves unicas evitan duplicaciones como dos filas de stock del mismo elemento o dos veces el mismo ingrediente en la receta.
+
+Las cantidades se guardan como DECIMAL, no como FLOAT, porque son magnitudes decimales de negocio y se quiere evitar error binario de redondeo. La base usa InnoDB, que soporta transacciones y claves foraneas. utf8mb4 permite guardar texto Unicode.
+
+5. FLUJOS QUE DEBO PODER EXPLICAR
+LOGIN: index.php inicia/recupera la sesion, recibe correo/clave por POST, busca usuario y rol, comprueba estado activo y verifica el hash con password_verify. Si es correcto coloca id, nombre, correo y rol en $_SESSION y redirige. La contrasena no se guarda en sesion ni se descifra.
+
+COMPRA DE INSUMOS: insumos.php muestra datos y crea un token de sesion para el formulario. PHP/registrar_compra.php valida token, arrays, fecha, ids y cantidades; dentro de transaccion inserta movimientos y actualiza stock mediante consulta preparada y upsert. Ante fallo revierte; tras confirmar, intenta alerta y devuelve JSON.
+
+ALTA DE PRODUCTO/INSUMO: el endpoint inserta entidad y saldo inicial en una transaccion. El usuario ve la respuesta JSON en la tarjeta.
+
+RECETA: nueva_receta.php genera filas de ingrediente en DOM; PHP/registrar_receta.php valida listas, verifica el producto e insumos y agrega filas con prepared statement. La restriccion unica evita repetir un ingrediente para el mismo producto.
+
+PRODUCCION: PHP/registrar_produccion.php obtiene receta, calcula cantidad requerida por linea, valida stocks, registra produccion, resta insumos y suma producto final. IMPORTANTE: en la version actual, estas operaciones no estan agrupadas en transaccion, por lo que un fallo parcial puede dejar saldos inconsistentes.
+
+SALIDA: PHP/registrar_salida.php comprueba rol, motivo y cantidades; abre transaccion, bloquea la fila de stock con SELECT ... FOR UPDATE, comprueba saldo, registra salida y resta cantidad. El bloqueo reduce condiciones de carrera entre retiros concurrentes.
+
+REPORTE/PDF: reportes.php valida un filtro YYYY-MM, hace consultas SELECT y presenta tablas con DataTables. PHP/PDF/reportes_pdf.php reutiliza el filtro/datos, genera una plantilla HTML/CSS y Dompdf la convierte a PDF.
+
+CONTACTO/ALERTAS: formulario_ayuda.php guarda consulta y usa PHPMailer para avisar al administrador. alerta_stock.php forma lista de valores bajo minimo y envia correo solo cuando el estado serializado difiere del anterior.
+
+6. SEGURIDAD Y MANEJO DE ERRORES
+Protecciones existentes: password_hash/password_verify para claves; sesiones para identidad; auth.php para paginas; listas permitidas de roles/motivos; htmlspecialchars para salida HTML; validacion de tipos/cantidades; consultas preparadas en algunas escrituras; transacciones en compras, altas y salidas; FOR UPDATE al leer stock de salidas; token CSRF parcial en compras; errores de correo al log.
+
+Deudas que se deben explicar con honestidad: credenciales SMTP escritas en config_panaderia.php; conexion local root sin clave; varios endpoints no validan sesion/rol y la proteccion CSRF no cubre todos los formularios; hay SQL concatenado en lugar de consultas preparadas en algunos archivos; produccion no es transaccional; conexion.php muestra error de conexion; no se regenera el identificador de sesion en login; la ruta del JSON de alertas es absoluta de XAMPP. No afirmar "sistema totalmente seguro". Presentar medidas existentes, limites y plan de mejora.
+
+7. DECISIONES TECNICAS Y LIMITACIONES
+- Bootstrap 5.3.3 se carga localmente y la hoja propia adapta variables y componentes a la identidad grafica.
+- DataTables mejora tablas en el navegador; los datos iniciales se imprimen desde PHP, no hay procesamiento server-side.
+- Stock actual esta duplicado de forma intencional respecto a movimientos para lectura rapida; debe mantenerse consistente.
+- Los reportes de consumo multiplican cantidades de produccion por la receta que existe al consultar. Si una receta cambia, no se conserva una foto historica de consumo por produccion.
+- El envio de alerta se intenta al consultar el panel o completar movimientos; el correo depende de SMTP externo y configuracion valida.
+- Las bibliotecas locales simplifican la ejecucion en XAMPP, pero las versiones y compatibilidad se administran manualmente.
+
+8. GUIA DE PRESENTACION (5-8 MINUTOS)
+1. Explicar el problema y mostrar el flujo de stock.
+2. Presentar las tres capas y explicar que pagina y endpoint no son lo mismo.
+3. Mostrar el DER: catalogos, tablas de movimientos, tabla de stock y receta N:M.
+4. Seguir un caso de produccion desde la pantalla, por AJAX, PHP, SQL, actualizacion de saldos y respuesta.
+5. Explicar una decision de integridad: transaccion en salidas o unique en receta; compararla con la carencia de transaccion en produccion.
+6. Resumir autenticacion, hashing, autorizacion y validacion, y reconocer limites concretos.
+7. Cerrar con mejoras futuras: parametrizar todas las consultas, asegurar todos los endpoints y CSRF, externalizar y rotar secretos, transaccionar produccion, agregar pruebas automatizadas y conservar consumos historicos.
+
+9. POSIBLES PREGUNTAS Y RESPUESTAS
+¿Por que hay una tabla de stock y tablas de movimiento? El movimiento conserva historial; la tabla de stock representa saldo actual y acelera lectura. Ambas deben actualizarse coordinadamente.
+¿Por que la receta es una tabla? Resuelve una relacion muchos-a-muchos e incorpora cantidad por unidad de producto.
+¿Que hace una transaccion? Garantiza atomicidad: commit confirma todo; rollback revierte el conjunto. Esto evita que parte de una operacion quede persistida.
+¿Que hace una sentencia preparada? Separa SQL y valores, con lo que los datos no pasan a ser sintaxis SQL.
+¿Que diferencia hay entre hash y cifrado? Un hash de contrasena es unidireccional; se valida con password_verify, no se recupera.
+¿Por que escapar HTML? htmlspecialchars transforma caracteres para que el navegador los muestre como texto y no los ejecute como marcado.
+¿Que hace AJAX aqui? Envia un formulario de manera asincrona y procesa la respuesta sin navegar a otro documento; el backend sigue siendo PHP.
+¿Bootstrap reemplaza CSS? No. Aporta grilla/utilidades/componentes; styles.css aplica identidad y personalizacion.
+¿Cual es un riesgo de concurrencia? Dos usuarios podrian intentar retirar el mismo saldo. FOR UPDATE bloquea la fila durante la transaccion de salida.
+¿Cual es una limitacion importante? Produccion no es atomica: una falla entre insercion y actualizacion puede dejar datos incoherentes.
+
+10. CRITERIO PARA LEER LA DOCUMENTACION POR ARCHIVO
+Para cada archivo explicar: a) responsabilidad en la arquitectura; b) datos que recibe; c) variables, tipo y origen; d) instrucciones y funciones usadas; e) consultas o salida que produce; f) errores/limites; g) que archivo lo llama y a cual llama. El inventario de variables esta en 01_inventario_variables.txt y la sintaxis comun en 02_comandos_y_sintaxis.txt.
+
+Esta guia se preparo para ensayar una defensa, no como guion para memorizar palabra por palabra. Conviene acompañar la exposicion con DER.pdf y una demostracion funcional.

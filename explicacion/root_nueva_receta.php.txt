@@ -1,0 +1,16 @@
+ARCHIVO: nueva_receta.php
+PROPOSITO: seleccionar un producto y construir dinamicamente una lista de ingredientes con sus cantidades.
+TIPO: pagina PHP/HTML con JavaScript integrado y envio AJAX.
+
+PHP Y CONSULTAS
+$pagina_actual, session_start(), conexion.php y auth.php inicializan la pagina y sus permisos. La consulta SELECT obtiene productos ordenados y mysqli_fetch_assoc recorre las filas. El mismo patron se ejecuta dentro del fragmento JavaScript para insertar opciones de insumos en cada fila generada.
+
+FORMULARIO
+El select id_producto identifica el producto. cantidad-ingredientes define cuantos pares de campos se crean, pero no tiene name y por ello no se envia al servidor. Los controles dinamicos usan id_insumo[] y cantidad[]: PHP los recibe como arrays en $_POST. required y min/max agregan validacion en el navegador; el endpoint tambien verifica tipo y rango.
+Bootstrap row, col-12, col-md-7/5, d-flex, flex-wrap, gap-2, form-select, form-control y btn establecen estructura responsive, espacios y apariencia. La clase d-none oculta el boton de guardado hasta que existan filas.
+
+JAVASCRIPT
+document.addEventListener('DOMContentLoaded', ...) registra una funcion para cuando el DOM esta listo. const declara referencias constantes a elementos DOM; addEventListener enlaza eventos click y submit. parseInt(..., 10) convierte la cantidad decimal de base diez a entero; isNaN y la comparacion < 1 rechazan valores invalidos.
+document.createElement('div') construye un nodo; className asigna clases; innerHTML inserta el marcado de los controles; appendChild agrega la fila al contenedor. Al guardar, enviarFormularioAjax manda FormData a PHP/registrar_receta.php. onSuccess limpia el formulario, retira las filas y vuelve a ocultar el boton.
+
+El endpoint debe validar datos aun cuando el navegador ya los haya validado, porque una solicitud HTTP puede fabricarse sin utilizar esta pantalla.

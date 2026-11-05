@@ -1,0 +1,6 @@
+ARCHIVO: descartado/database/panaderia_normal10.sql
+ESTADO: volcado phpMyAdmin anterior del 27-10-2026.
+TIPO: snapshot SQL de desarrollo.
+
+Contiene cabecera de herramienta, servidor y fecha; las sentencias SQL describen configuracion de sesion, definicion de entidades, datos, indices/keys, restricciones y autoincrementos. CREATE define, ALTER modifica, INSERT inserta y COMMIT confirma la importacion. No se ejecuta automaticamente al cargar PHP.
+Se conserva para rastrear una version previa del esquema panaderia_normal10. Sus tablas/datos no necesariamente coinciden con la instalacion actual. El archivo vigente para una instalacion limpia es database/panaderia.sql.

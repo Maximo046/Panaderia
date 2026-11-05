@@ -1,0 +1,17 @@
+ARCHIVO: PHP/envio_registro.php
+PROPOSITO: validar y crear una cuenta desde el formulario de registro.
+TIPO: endpoint PHP que responde JSON.
+
+FLUJO
+header('Content-Type: application/json') declara el formato de respuesta. session_start() permite consultar el rol; require_once '../conexion.php' obtiene $conexion.
+La primera condicion compara $_SESSION['usuario_rol'] con Administrador. Si no coincide, json_encode convierte un array asociativo {ok, mensaje} a JSON, echo lo envia y exit interrumpe el proceso.
+$campos_requeridos es un array indexado de claves esperadas. foreach recorre nombres; empty($_POST[$campo]) rechaza campos vacios.
+Se asignan valores de $_POST a variables. trim quita espacios a nombre, apellido y correo; (int) convierte id_rol; las contrasenas se conservan como strings.
+filter_var valida correo. strlen mide bytes para longitud minima de clave. !== compara strings y detecta claves diferentes. La consulta de roles usa el id numerico para confirmar que exista y que no se cree otro rol Administrador.
+mysqli_real_escape_string escapa nombres/correo antes de concatenarlos en SQL. Una consulta SELECT busca duplicados. password_hash($clave, PASSWORD_DEFAULT) produce un hash unidireccional adecuado para guardado.
+INSERT INTO crea la fila. Si falla, la respuesta JSON contiene error; si funciona, mysqli_close cierra conexion y se retorna {ok:true, mensaje:...}.
+
+TIPOS Y CONCEPTOS
+$campos_requeridos es array; cada dato es string salvo id rol, convertido a integer. mysqli_query devuelve resultado/booleano; mysqli_fetch_assoc transforma una fila a array asociativo; el hash es string. json_encode serializa el array de respuesta.
+
+La comprobacion de rol en servidor es imprescindible aunque el formulario oculte el campo de rol. La autenticacion se comprueba por sesion; la cuenta creada queda con hash, no con contrasena legible.

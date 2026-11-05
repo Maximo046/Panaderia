@@ -1,0 +1,18 @@
+ARCHIVO: JS/AJAX.js
+PROPOSITO: enviar formularios con fetch sin recargar toda la pagina y mostrar mensajes.
+TIPO: modulo JavaScript clasico encerrado en una funcion anonima autoejecutable (IIFE).
+
+ESTRUCTURA Y FUNCIONES
+(function () { ... })() crea un ambito privado inmediato para no agregar cada variable interna al objeto global. 'use strict' habilita modo estricto.
+mostrarNotificacion(formulario, mensaje, tipo) es una funcion declarada. formulario es un objeto DOM; mensaje/tipo son strings. closest('.card') busca la tarjeta antecesora y querySelector('.notif') el contenedor local. Si falta, busca cualquier .notif del documento; si tampoco existe, window.alert() muestra un dialogo nativo.
+classList.remove/add manipula clases CSS. textContent escribe texto sin interpretarlo como HTML. setAttribute asigna role=alert para tecnologias de asistencia.
+
+API GLOBAL
+window.enviarFormularioAjax = function(formulario, url, opciones) publica una funcion en window para que las paginas puedan invocarla. opciones es un objeto de configuracion; var config = opciones || {} usa objeto vacio si no se da valor. addEventListener('submit', ...) registra el manejador del envio.
+evento.preventDefault() cancela la navegacion normal. querySelector encuentra el boton; el codigo guarda textContent, deshabilita el boton y muestra "Guardando...".
+fetch(url, {method:'POST', body:new FormData(formulario)}) manda campos como multipart/form-data. response.json() convierte JSON recibido a objeto JavaScript.
+El segundo then interpreta datos.ok, mensaje y callbacks. reset limpia el formulario; onSuccess/onError son funciones opcionales; recargar usa window.location.reload().
+catch maneja fallas de red o parseo y finally se ejecuta tanto en exito como en error, volviendo a habilitar el boton y restaurando texto.
+
+TIPOS
+Los datos JSON son objetos con propiedades; datos.ok es booleano y datos.mensaje normalmente string. FormData, Promise, Response y los elementos DOM son objetos proporcionados por el navegador. No se declaran clases propias.

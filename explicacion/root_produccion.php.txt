@@ -1,0 +1,16 @@
+ARCHIVO: produccion.php
+PROPOSITO: ofrecer un formulario para producir cualquier producto registrado y mostrar su stock actual.
+TIPO: pagina PHP de lectura y HTML, con una rutina JavaScript para cada formulario.
+
+PHP Y DATOS
+$pagina_actual etiqueta la pagina para auth.php. Se inicia sesion y se cargan conexion, autorizacion y utilidades.
+$lista_productos almacena una consulta mysqli. SELECT recupera id, nombre y abreviatura; LEFT JOIN de stock permite mostrar productos sin stock; COALESCE convierte una cantidad NULL a cero. if (mysqli_num_rows(...) === 0) presenta el estado vacio; de otro modo while recorre las filas.
+$producto dentro del while es un array asociativo de la fila. htmlspecialchars() codifica texto, (int) castea el id y formatear_cantidad() convierte decimales a presentacion local.
+
+HTML/BOOTSTRAP
+Cada producto tiene un formulario con id_producto oculto y cantidad numerica. Los nombres se envian mediante POST. row/col adaptan las columnas, d-flex y gap organizan formularios, border-bottom separa productos, y form-control/btn-sm/btn-primary son controles Bootstrap.
+
+JAVASCRIPT
+DOMContentLoaded espera el arbol HTML. querySelectorAll('.form-produccion') retorna una coleccion de nodos; forEach recorre todos los formularios y registrar su envio con enviarFormularioAjax. La funcion onSuccess limpia la cantidad y usa setTimeout para volver a cargar la pagina despues de 500 milisegundos.
+
+El navegador inicia la solicitud a PHP/registrar_produccion.php; el servidor calcula consumo segun receta, comprueba stock y registra movimientos. La informacion visual de stock no sustituye esa comprobacion en servidor.

@@ -1,0 +1,19 @@
+ARCHIVO: PHP/registrar_produccion.php
+PROPOSITO: comprobar que la receta tenga insumos suficientes, registrar produccion, descontar insumos y sumar stock final.
+TIPO: endpoint PHP JSON con operaciones SQL.
+
+VALIDACION Y RECETA
+header declara JSON. require_once carga conexion, alerta de stock y formateador. empty rechaza id_producto o cantidad vacios. Los valores se escapan y guardan como strings de entrada.
+SELECT obtiene las filas de receta. mysqli_num_rows comprueba que exista al menos un ingrediente. while + mysqli_fetch_assoc recorre las filas y las copia al array indexado $lineas_receta para reutilizarlas.
+
+VERIFICACION DE EXISTENCIAS
+foreach itera cada ingrediente. Multiplica cantidad_por_unidad por cantidad producida para obtener lo necesario. SELECT une stock_insumos con insumos para obtener cantidad y nombre. Si falta fila se responde error. Si stock_actual es menor, formatear_cantidad prepara valores legibles y se devuelve JSON de stock insuficiente.
+
+ESCRITURA Y RESPUESTA
+INSERT INTO produccion crea el movimiento. Luego otro foreach ejecuta UPDATE stock_insumos y resta la cantidad consumida. INSERT INTO stock_productos crea o aumenta el saldo; ON DUPLICATE KEY UPDATE ejecuta la suma si ya existe esa fila. enviar_alerta_stock consulta el resultado actualizado.
+Una consulta final recupera nombre y unidad. mysqli_close cierra la conexion; json_encode devuelve estado, mensaje y datos de producto.
+
+TIPOS
+$lineas_receta es array de arrays asociativos; cantidades de formulario suelen representarse como strings, cantidades de calculo son numericas, resultados SQL son objetos/valores mysqli y la respuesta final es un array asociativo serializado como JSON.
+
+En este archivo las escrituras no estan agrupadas en una transaccion. Cada consulta puede completarse de manera independiente; la explicacion refleja el flujo actual y no implica atomicidad.

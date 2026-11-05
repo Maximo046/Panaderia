@@ -1,0 +1,16 @@
+ARCHIVO: salidas.php
+PROPOSITO: registrar retiros de stock de productos por motivo y observacion.
+TIPO: pagina PHP, formulario HTML y JavaScript AJAX.
+
+PHP
+$pagina_actual identifica el permiso; se inicia sesion y se incluyen conexion, auth y formateador de cantidades. $motivos_salida es un array indexado de strings permitido para la interfaz.
+La consulta SELECT une productos con unidades y usa LEFT JOIN para conservar productos sin una fila de stock. COALESCE trata la cantidad NULL como cero. Para cada fila, $sin_stock es booleano, $stock_formateado es texto, y $solo_lectura/$clase_fila son strings usados en atributos HTML. El operador ternario ?: elige entre dos valores.
+
+FORMULARIO
+Los campos id_producto[] y cantidad[] son arrays paralelos que relacionan cada id con la cantidad solicitada. max expresa el stock en HTML, readonly impide editar productos agotados desde la interfaz, y el endpoint vuelve a validar todo. motivo se construye con foreach. maxlength limita la observacion en cliente. required requiere motivo.
+Bootstrap table-responsive, table, row/col, form-label, form-select, form-control, d-flex, justify-content-end y btn-primary dan estructura y estilo; el CSS propio distingue filas sin stock.
+
+JAVASCRIPT
+DOMContentLoaded espera que el documento exista y enlaza #form-salida a PHP/registrar_salida.php con recargar al exito. enviarFormularioAjax serializa los controles mediante FormData.
+
+La vista presenta estado, pero no disminuye inventario. La transaccion, validacion de permiso y descuento atomico ocurren en PHP/registrar_salida.php.

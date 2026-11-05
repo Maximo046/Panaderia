@@ -1,0 +1,17 @@
+ARCHIVO: nuevo_producto.php
+PROPOSITO: formulario para crear un producto y asignarle una unidad de medida.
+TIPO: pagina PHP/HTML con JavaScript de envio.
+
+PHP
+$pagina_actual es una variable string consumida por auth.php. session_start() abre la sesion; require_once carga el objeto de base de datos y el control de permisos. La consulta SELECT de unidades produce un resultado mysqli y while (mysqli_fetch_assoc(...)) crea un option por cada fila. (int) convierte el id a entero al imprimirlo.
+
+HTML
+El formulario contiene nombre y un select de unidad. Los atributos id y for enlazan control y etiqueta; name define la clave enviada a $_POST. required ejecuta una comprobacion basica del navegador. htmlspecialchars() evita que el nombre de unidad se interprete como codigo HTML.
+
+BOOTSTRAP
+Se cargan Bootstrap 5.3.3 y el tema propio; card, card-header/card-body, row, col-12, form-label, form-control, form-select, btn-primary y btn-outline-secondary aportan componentes y adaptabilidad. sidebar.php dibuja la navegacion.
+
+JAVASCRIPT
+Cuando DOMContentLoaded, enviarFormularioAjax conecta el formulario con PHP/registrar_producto.php y define reset: true. El helper envia FormData usando fetch y limpia el formulario al recibir ok=true.
+
+La pagina solo muestra el formulario; el INSERT real y la creacion del stock inicial estan en el endpoint registrar_producto.php.
